@@ -32,6 +32,12 @@ describe('vnodeToHTML', () => {
     expect(vnodeToHTML(v)).toBe('<input disabled>');
   });
 
+  it('style 객체의 숫자 값은 HTML로 쓸 때도 px를 붙인다 (단위 없는 속성은 제외)', () => {
+    expect(vnodeToHTML(h('div', { style: { width: 10, opacity: 1 } }))).toBe(
+      '<div style="width: 10px; opacity: 1;"></div>',
+    );
+  });
+
   it('className과 style 객체를 HTML 속성으로 바꾼다', () => {
     const v = h('div', { className: 'a', style: { color: 'red', fontSize: '12px' } });
     expect(vnodeToHTML(v)).toBe('<div class="a" style="color: red; font-size: 12px;"></div>');

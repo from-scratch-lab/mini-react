@@ -7,9 +7,10 @@ import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const PUBLIC_DIRS = ['demo', 'src'].map((dir) => resolve(ROOT, dir) + sep);
+const PUBLIC_DIRS = ['demo', 'src'].map((dir) => resolve(ROOT, dir));
 const HOST = '127.0.0.1';
-const PORT = Number(process.env.PORT) || 5173;
+// PORT=0이면 운영체제가 빈 포트를 고른다 (테스트용)
+const PORT = process.env.PORT === undefined || process.env.PORT === '' ? 5173 : Number(process.env.PORT);
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -26,7 +27,7 @@ function send(res, status, body, headers = {}) {
   res.end(body);
 }
 
-createServer(async (req, res) => {
+const server = createServer(async (req, res) => {
   let pathname;
   try {
     pathname = decodeURIComponent(new URL(req.url, `http://${HOST}`).pathname);
@@ -36,7 +37,9 @@ createServer(async (req, res) => {
   if (pathname === '/') return send(res, 302, '', { Location: '/demo/' });
 
   const filePath = resolve(ROOT, `.${pathname.endsWith('/') ? `${pathname}index.html` : pathname}`);
-  if (!PUBLIC_DIRS.some((dir) => filePath.startsWith(dir))) return send(res, 404, 'Not Found');
+  // 폴더 자체(/demo)이거나 그 안(/demo/...)만 허용한다. 구분자까지 비교해야 /demo-x 같은 옆 폴더가 걸리지 않는다.
+  const allowed = PUBLIC_DIRS.some((dir) => filePath === dir || filePath.startsWith(dir + sep));
+  if (!allowed) return send(res, 404, 'Not Found');
 
   try {
     const info = await stat(filePath);
@@ -50,6 +53,8 @@ createServer(async (req, res) => {
   } catch {
     send(res, 404, 'Not Found');
   }
-}).listen(PORT, HOST, () => {
-  console.log(`mini-react 데모: http://${HOST}:${PORT}/demo/`);
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(`mini-react 데모: http://${HOST}:${server.address().port}/demo/`);
 });

@@ -274,6 +274,19 @@ describe('patch: 폼 상태와 특수 속성', () => {
     expect(textarea.value).toBe('xyz');
   });
 
+  it('style 객체의 숫자 값은 px를 붙이고, 단위 없는 속성과 0은 그대로 쓴다', () => {
+    const v1 = h('div', { style: { width: 100, marginTop: 0, opacity: 0.5, zIndex: 3, '--gap': 4 } });
+    const c = mount(v1);
+    const { style } = c.firstChild;
+    expect(style.width).toBe('100px');
+    expect(style.marginTop).toBe('0px');
+    expect(style.opacity).toBe('0.5');
+    expect(style.zIndex).toBe('3');
+    expect(style.getPropertyValue('--gap')).toBe('4');
+    update(c, v1, h('div', { style: { width: 50, marginTop: 0, opacity: 0.5, zIndex: 3, '--gap': 4 } }));
+    expect(style.width).toBe('50px');
+  });
+
   it('style이 문자열에서 객체로 바뀌면 이전 선언을 지운다', () => {
     const v1 = h('div', { style: 'color: red; margin: 4px' });
     const c = mount(v1);

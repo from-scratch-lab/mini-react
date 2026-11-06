@@ -51,7 +51,8 @@ export function commitTree(container, prev, next) {
 }
 
 function restore(container, prev) {
-  const now = domToVNode(container, { attach: true });
+  // 공백 텍스트까지 읽어야 prev에 있던 '\n  ' 같은 텍스트 노드를 다시 만들지 않고 그대로 짝지을 수 있다.
+  const now = domToVNode(container, { attach: true, preserveWhitespace: true });
   const restored = prev ? cloneVNode(prev) : null;
   // 컨테이너 자신을 루트로 놓고 자식만 prev와 같게 맞춘다. (루트는 type·props가 같아 그대로 둔다)
   const target = createVNode(now.type, now.props, restored ? [restored] : [], now.key);

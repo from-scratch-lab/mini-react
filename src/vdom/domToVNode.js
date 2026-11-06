@@ -36,15 +36,16 @@ const VALID_ATTRIBUTE_NAME = new RegExp(`^[${NAME_START}][${NAME_CHAR}]*$`);
  * - DOM API가 받지 않는 태그·속성 이름은 버린다(요소는 자식만 남긴다). 버린 것은 onWarning으로 알린다.
  *
  * @param {Node} node
- * @param {{ attach?: boolean, sanitize?: boolean, onWarning?: (message: string) => void }} options
+ * @param {{ attach?: boolean, preserveWhitespace?: boolean, sanitize?: boolean, onWarning?: (message: string) => void }} options
  *   attach: 가상 노드에 원래 DOM 노드를 연결한다. 이미 화면에 있는 DOM을 이어받아 patch할 때(hydration) 쓴다.
+ *   preserveWhitespace: 들여쓰기 공백 텍스트도 버리지 않고 읽는다. 실제 DOM을 노드 하나까지 그대로 옮겨야 할 때(실패 복구) 쓴다.
  *   sanitize: 사용자가 입력한 HTML을 화면에 옮길 때의 "실수 방지" 필터.
  *     script·iframe·object·embed·base·meta·link 요소, on* 속성, srcdoc, javascript:/data: URL을 버린다.
  *     신뢰할 수 없는 HTML을 안전하게 만드는 보안 sanitizer는 아니다.
  * @returns {object|null} 변환할 수 없는 노드면 null
  */
 export function domToVNode(node, options = {}) {
-  return convert(node, options, false)[0] ?? null;
+  return convert(node, options, Boolean(options.preserveWhitespace))[0] ?? null;
 }
 
 /**
