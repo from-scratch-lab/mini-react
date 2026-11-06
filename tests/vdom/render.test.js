@@ -33,6 +33,14 @@ describe('render', () => {
     expect(c.querySelector('p')).toBe(p);
   });
 
+  it('되돌릴 때 줄바꿈 공백 텍스트 노드도 그대로 맞춘다 (중복으로 만들지 않는다)', () => {
+    const c = document.createElement('div');
+    render(h('div', null, h('b', null, 'a'), '\n  ', h('i', null, 'b')), c);
+    expect(() => render(h('div', null, h('b', null, 'x'), h('span', { 'bad name': '1' })), c)).toThrow();
+    expect(c.firstChild.childNodes).toHaveLength(3);
+    expect(c.innerHTML).toBe('<div><b>a</b>\n  <i>b</i></div>');
+  });
+
   it('첫 render가 실패하면 컨테이너를 비운 상태로 되돌린다', () => {
     const c = document.createElement('div');
     expect(() => render(h('div', null, h('p', null, 'a'), h('span', { 'bad name': '1' })), c)).toThrow();

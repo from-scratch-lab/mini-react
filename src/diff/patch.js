@@ -1,6 +1,6 @@
 import { TEXT_NODE } from '../vdom/vnode.js';
 import { PatchType } from './diff.js';
-import { toAttributeName, toKebabCase } from '../vdom/serialize.js';
+import { toAttributeName, toKebabCase, styleValue } from '../vdom/serialize.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -181,7 +181,7 @@ function setStyle(dom, prev, next) {
   }
   for (const [name, value] of Object.entries(next)) {
     if (value == null || value === '') dom.style.removeProperty(toKebabCase(name));
-    else dom.style.setProperty(toKebabCase(name), String(value));
+    else dom.style.setProperty(toKebabCase(name), styleValue(name, value));
   }
   if (dom.getAttribute('style') === '') dom.removeAttribute('style');
 }

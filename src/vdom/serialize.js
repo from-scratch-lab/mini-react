@@ -98,8 +98,24 @@ export function toAttributeName(name) {
 export function styleToString(style) {
   return Object.entries(style)
     .filter(([, v]) => v != null && v !== '')
-    .map(([k, v]) => `${toKebabCase(k)}: ${v};`)
+    .map(([k, v]) => `${toKebabCase(k)}: ${styleValue(k, v)};`)
     .join(' ');
+}
+
+// 숫자만 써도 되는(단위가 없는) CSS 속성. 나머지 속성의 숫자 값에는 px를 붙인다(React와 같은 규칙).
+const UNITLESS_STYLES = new Set([
+  'animationIterationCount', 'aspectRatio', 'columnCount', 'columns', 'flex', 'flexGrow', 'flexShrink',
+  'fontWeight', 'gridArea', 'gridColumn', 'gridColumnEnd', 'gridColumnStart', 'gridRow', 'gridRowEnd',
+  'gridRowStart', 'lineClamp', 'lineHeight', 'opacity', 'order', 'orphans', 'scale', 'tabSize', 'widows',
+  'zIndex', 'zoom', 'fillOpacity', 'floodOpacity', 'stopOpacity', 'strokeOpacity', 'strokeWidth',
+]);
+
+/** style 객체 값 하나를 CSS 문자열로. 숫자면 단위 없는 속성·사용자 정의 속성(--x)·0이 아닌 한 px를 붙인다. */
+export function styleValue(name, value) {
+  if (typeof value !== 'number' || value === 0 || name.startsWith('--') || UNITLESS_STYLES.has(name)) {
+    return String(value);
+  }
+  return `${value}px`;
 }
 
 export function toKebabCase(name) {
