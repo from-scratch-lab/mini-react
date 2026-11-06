@@ -1,0 +1,216 @@
+import { TEXT_NODE, cloneVNode } from '../vdom/vnode.js';
+import { longestIncreasingSubsequence } from './lis.js';
+
+/**
+ * 패치 종류. diff가 만든 패치 목록을 patch가 순서대로 실제 DOM에 반영한다.
+ *
+ *   CREATE  { parent, vnode, before }    새 노드를 만들어 parent.dom 안, before.dom 앞에 넣는다 (before가 null이면 맨 뒤)
+ *   REMOVE  { vnode }                    vnode.dom을 떼어 낸다
+ *   REPLACE { oldVNode, vnode }          태그·key가 다르면 하위 트리째 새로 만들어 바꾼다
+ *   PROPS   { vnode, set, remove, prev } 바뀐 속성만 고친다
+ *   TEXT    { vnode, value, oldValue }   텍스트 노드의 내용만 바꾼다
+ *   MOVE    { parent, vnode, before }    key로 찾은 기존 노드를 before 앞으로 옮긴다
+ */
+export const PatchType = Object.freeze({
+  CREATE: 'CREATE',
+  REMOVE: 'REMOVE',
+  REPLACE: 'REPLACE',
+  PROPS: 'PROPS',
+  TEXT: 'TEXT',
+  MOVE: 'MOVE',
+});
+
+/**
+ * 이전·다음 가상 트리를 비교해 최소 패치 목록을 만든다. 실제 DOM API는 쓰지 않는다.
+ *
+ * 재사용하는 노드는 이전 가상 노드의 dom 참조를 다음 가상 노드로 옮긴다(next.dom = prev.dom).
+ * 그래서 다음 번 비교에서는 이번 "다음 트리"를 그대로 "이전 트리"로 쓸 수 있다.
+ *
+ * vnode 객체 재사용: dom 참조가 vnode 객체에 붙어 있어서, 한 객체가 두 자리를 차지하면 참조가 덮인다.
+ *   - 짝이 된 이전 노드와 같은 객체면(old === new) 하위 트리를 비교하지 않고 건너뛴다. (상수로 빼 둔 하위 트리)
+ *   - 이전 트리의 객체가 다른 자리에 오거나, 다음 트리에 같은 객체가 두 번 나오면 복제본으로 바꿔 끼운다.
+ *     이때 다음 트리의 children 배열이 바뀐다.
+ */
+export function diff(oldVNode, newVNode) {
+  const ctx = { patches: [], oldNodes: collectNodes(oldVNode), seen: new Set() };
+  if (oldVNode === newVNode) return ctx.patches;
+
+  if (oldVNode == null) {
+    ctx.patches.push({ type: PatchType.CREATE, parent: null, vnode: own(newVNode, ctx, true), before: null });
+  } else if (newVNode == null) {
+    ctx.patches.push({ type: PatchType.REMOVE, vnode: oldVNode });
+  } else {
+    diffNode(oldVNode, own(newVNode, ctx, false), ctx);
+  }
+  return ctx.patches;
+}
+
+function collectNodes(root, out = new Set()) {
+  if (root == null) return out;
+  out.add(root);
+  for (const child of root.children) collectNodes(child, out);
+  return out;
+}
+
+/**
+ * 다음 트리의 이 자리에 쓸 vnode를 정한다. 이전 트리의 객체이거나 이번 트리에서 이미 쓴 객체면 복제한다.
+ * deep이 true면(새로 만들 하위 트리) 자손까지 같은 검사를 한다. 비교할 하위 트리는 diffNode가 내려가며 검사한다.
+ */
+function own(vnode, ctx, deep) {
+  const result = ctx.oldNodes.has(vnode) || ctx.seen.has(vnode) ? cloneVNode(vnode) : vnode;
+  ctx.seen.add(result);
+  if (deep) {
+    result.children.forEach((child, i) => {
+      result.children[i] = own(child, ctx, true);
+    });
+  }
+  return result;
+}
+
+function diffNode(oldVNode, newVNode, ctx) {
+  const { patches } = ctx;
+  // 경우 3: 태그나 key가 다르면 같은 노드로 보지 않는다. 하위 트리를 비교하지 않고 통째로 새로 만든다.
+  if (oldVNode.type !== newVNode.type || oldVNode.key !== newVNode.key) {
+    newVNode.children.forEach((child, i) => {
+      newVNode.children[i] = own(child, ctx, true);
+    });
+    patches.push({ type: PatchType.REPLACE, oldVNode, vnode: newVNode });
+    return;
+  }
+
+  newVNode.dom = oldVNode.dom;
+
+  // 경우 5: 텍스트 내용 변경
+  if (newVNode.type === TEXT_NODE) {
+    if (oldVNode.props.nodeValue !== newVNode.props.nodeValue) {
+      patches.push({
+        type: PatchType.TEXT,
+        vnode: newVNode,
+        value: newVNode.props.nodeValue,
+        oldValue: oldVNode.props.nodeValue,
+      });
+    }
+    return;
+  }
+
+  diffChildren(oldVNode, newVNode, ctx);
+
+  // 경우 4: 속성 변경. 자식 패치 뒤에 둔다. <select value>는 새 option이 생긴 뒤에 넣어야 선택된다.
+  const propsPatch = diffProps(oldVNode.props, newVNode.props);
+  if (propsPatch) patches.push({ type: PatchType.PROPS, vnode: newVNode, ...propsPatch });
+}
+
+function diffProps(oldProps, newProps) {
+  const set = {};
+  const prev = {};
+  const remove = [];
+  let changed = false;
+
+  for (const [name, value] of Object.entries(newProps)) {
+    if (value == null) continue; // null·undefined는 "없음"과 같다. 아래에서 remove로 처리된다.
+    if (!samePropValue(oldProps[name], value)) {
+      set[name] = value;
+      prev[name] = oldProps[name];
+      changed = true;
+    }
+  }
+  for (const name of Object.keys(oldProps)) {
+    if (oldProps[name] != null && newProps[name] == null) {
+      remove.push(name);
+      prev[name] = oldProps[name];
+      changed = true;
+    }
+  }
+  return changed ? { set, remove, prev } : null;
+}
+
+function samePropValue(a, b) {
+  if (Object.is(a, b)) return true;
+  // style 객체는 매 렌더마다 새로 만들어지므로 내용으로 비교한다.
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    return keysA.length === keysB.length && keysA.every((k) => Object.is(a[k], b[k]));
+  }
+  return false;
+}
+
+/**
+ * 자식 목록 비교. key가 있으면 key로, 없으면 위치로 짝을 짓는다.
+ *
+ * 1) 짝 찾기: 자식마다 비교용 이름을 붙인다. key가 있으면 "k:key", 없으면 key 없는 형제 중 몇 번째인지 "u:n".
+ *    그래서 key 없는 목록은 위치끼리, key 있는 목록은 key끼리 비교된다.
+ *    같은 key가 중복되면 짝을 확정할 수 없으므로 경고하고 전체를 위치로 비교한다.
+ * 2) 짝이 있는 자식은 재귀 비교, 짝이 없는 이전 자식은 REMOVE (경우 2).
+ * 3) 자리 맞추기: 짝이 있는 자식의 "이전 위치"를 새 순서대로 늘어놓고 LIS를 구한다.
+ *    LIS에 든 노드는 상대 순서가 이미 맞으니 그대로 두고, 나머지는 MOVE, 짝이 없는 새 자식은 CREATE (경우 1).
+ *    뒤에서부터 처리하므로 "바로 뒤 형제(before)"는 항상 이미 제자리에 있다.
+ */
+function diffChildren(oldParent, newParent, ctx) {
+  const { patches } = ctx;
+  const oldChildren = oldParent.children;
+  const newChildren = newParent.children;
+
+  let oldNames = matchNames(oldChildren);
+  let newNames = matchNames(newChildren);
+  if (hasDuplicate(oldNames) || hasDuplicate(newNames)) {
+    console.warn(
+      `[mini-react] <${newParent.type}>의 자식에 같은 key가 있습니다. 이 목록은 key 대신 위치로 비교합니다.`,
+    );
+    oldNames = oldChildren.map((_, i) => `p:${i}`);
+    newNames = newChildren.map((_, i) => `p:${i}`);
+  }
+
+  const oldIndexByName = new Map(oldNames.map((name, i) => [name, i]));
+  const matchedOldIndex = new Array(newChildren.length).fill(-1);
+  const used = new Set();
+
+  newChildren.forEach((child, i) => {
+    const j = oldIndexByName.get(newNames[i]);
+    if (j !== undefined && oldChildren[j] === child && !ctx.seen.has(child)) {
+      // 같은 객체를 같은 자리에 다시 썼다: 하위 트리 전체가 그대로다.
+      ctx.seen.add(child);
+      matchedOldIndex[i] = j;
+      used.add(j);
+      return;
+    }
+    const owned = own(child, ctx, j === undefined);
+    newChildren[i] = owned;
+    if (j === undefined) return;
+    matchedOldIndex[i] = j;
+    used.add(j);
+    diffNode(oldChildren[j], owned, ctx);
+  });
+
+  oldChildren.forEach((child, j) => {
+    if (!used.has(j)) patches.push({ type: PatchType.REMOVE, vnode: child });
+  });
+
+  const matchedNewIndexes = [];
+  const sequence = [];
+  matchedOldIndex.forEach((j, i) => {
+    if (j !== -1) {
+      matchedNewIndexes.push(i);
+      sequence.push(j);
+    }
+  });
+  const stays = new Set(longestIncreasingSubsequence(sequence).map((k) => matchedNewIndexes[k]));
+
+  for (let i = newChildren.length - 1; i >= 0; i -= 1) {
+    const before = newChildren[i + 1] ?? null;
+    if (matchedOldIndex[i] === -1) {
+      patches.push({ type: PatchType.CREATE, parent: newParent, vnode: newChildren[i], before });
+    } else if (!stays.has(i)) {
+      patches.push({ type: PatchType.MOVE, parent: newParent, vnode: newChildren[i], before });
+    }
+  }
+}
+
+function matchNames(children) {
+  let unkeyed = 0;
+  return children.map((child) => (child.key != null ? `k:${child.key}` : `u:${unkeyed++}`));
+}
+
+function hasDuplicate(names) {
+  return new Set(names).size !== names.length;
+}

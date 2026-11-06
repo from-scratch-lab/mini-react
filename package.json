@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "serve": "node scripts/serve.js"
   },
   "devDependencies": {
     "jsdom": "26.1.0",

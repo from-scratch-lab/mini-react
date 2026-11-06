@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase 1 · Virtual DOM Diff</title>
+    <link rel="stylesheet" href="../style.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <header class="page-head">
+      <a class="back-link" href="../">mini-react</a>
+      <h1>Phase 1 · Virtual DOM + Diff + Patch</h1>
+      <p>
+        오른쪽 테스트 영역의 HTML을 고치고 <b>Patch</b>를 누르면, 이전 가상 트리와 비교해
+        <b>바뀐 부분만</b> 왼쪽 실제 영역에 반영합니다. 바뀐 노드는 잠깐 노랗게 표시됩니다.
+      </p>
+    </header>
+
+    <main class="phase1">
+      <section class="panel">
+        <div class="panel-head"><h2>실제 영역</h2></div>
+        <div id="actual" class="actual-area">
+          <article class="card">
+            <h1 class="card-title">미니 리액트 체크리스트</h1>
+            <p>테스트 영역에서 이 카드를 고쳐 보세요. <b>텍스트</b>, <i>속성</i>, 목록 순서 모두 바꿀 수 있습니다.</p>
+            <ul class="todo">
+              <li key="vdom" class="done">Virtual DOM 만들기</li>
+              <li key="diff">Diff 알고리즘</li>
+              <li key="patch">Patch로 실제 DOM 반영</li>
+            </ul>
+            <label><input type="checkbox" checked /> key로 목록 비교하기</label>
+            <svg width="160" height="20" viewBox="0 0 160 20" role="img" aria-label="진행률">
+              <rect x="0" y="4" width="160" height="12" rx="6" fill="#d9def0"></rect>
+              <rect x="0" y="4" width="54" height="12" rx="6" fill="#5b7cfa"></rect>
+            </svg>
+          </article>
+        </div>
+        <details class="tips">
+          <summary>이렇게 바꿔 보세요</summary>
+          <ul>
+            <li>텍스트 수정 → <code>TEXT</code></li>
+            <li><code>class</code>·속성 수정 → <code>PROPS</code></li>
+            <li><code>&lt;li&gt;</code> 추가·삭제 → <code>CREATE</code> / <code>REMOVE</code></li>
+            <li><code>&lt;p&gt;</code>를 <code>&lt;blockquote&gt;</code>로 → <code>REPLACE</code></li>
+            <li><code>key</code> 있는 <code>&lt;li&gt;</code> 순서 바꾸기 → <code>MOVE</code></li>
+          </ul>
+        </details>
+      </section>
+
+      <section id="app" class="panel"></section>
+    </main>
+  </body>
+</html>
