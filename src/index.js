@@ -5,3 +5,5 @@ export { vnodeToHTML, childrenToHTML } from './vdom/serialize.js';
 export { render, commitTree } from './vdom/render.js';
 export { diff, PatchType } from './diff/diff.js';
 export { patch } from './diff/patch.js';
+export { FunctionComponent, mountComponent, flushUpdates } from './hooks/component.js';
+export { useState, useEffect, useMemo } from './hooks/hooks.js';

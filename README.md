@@ -4,6 +4,7 @@
 ## 데모 실행
 - `npm run serve` → http://127.0.0.1:5173/demo/ (이 컴퓨터에서만 열리고 `demo/`·`src/`만 내보낸다)
 - Phase 1: Virtual DOM + Diff + Patch 검증 페이지 (`demo/phase1/`)
+- Phase 2: Component · State · Hooks로 만든 학습 트래커 (`demo/phase2/`). 렌더마다 패치 목록과 `hooks` 배열을 옆 패널에 보여 준다.
 
 ## 개발 환경
 - Node `^20.19.0 || >=22.12.0` (CI는 Node 20)

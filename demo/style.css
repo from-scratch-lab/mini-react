@@ -294,6 +294,206 @@ button.primary {
 .op-text { background: var(--op-text); }
 .op-move { background: var(--op-move); }
 
+/* Phase 2: 학습 트래커 */
+.phase2 {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .phase2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tracker-head h2 {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats strong {
+  color: var(--text);
+}
+
+.progress {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+.todo-form {
+  display: flex;
+  gap: 8px;
+}
+
+.todo-form input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+}
+
+.todo-form input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filters button {
+  padding: 3px 12px;
+  font-size: 0.88rem;
+}
+
+.filters button.current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+button.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.filters .ghost {
+  margin-left: auto;
+}
+
+.todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.todo-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+}
+
+.todo-list li:first-child {
+  border-top: 0;
+}
+
+.todo-list label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.todo-list li.done .todo-text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.empty {
+  color: var(--muted);
+  margin: 0;
+}
+
+.timer {
+  border-top: 1px dashed var(--line);
+  padding-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.timer h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.timer-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-buttons {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.inspector h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.inspector ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.inspector .patch-list {
+  max-height: 260px;
+  overflow: auto;
+}
+
+.inspector li.empty {
+  list-style: none;
+  margin-left: -22px;
+}
+
+.inspector .note {
+  margin: -8px 0 16px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.hook-list code {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
 /* 첫 화면 */
 .index {
   max-width: 1200px;
