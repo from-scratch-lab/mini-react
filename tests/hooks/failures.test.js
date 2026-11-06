@@ -149,6 +149,20 @@ describe('effect·정리 함수가 실패할 때', () => {
     expect(c.innerHTML).toBe('');
   });
 
+  it('effect가 자기 안에서 unmount하고 정리 함수를 돌려주면 그 정리 함수를 바로 부른다', () => {
+    const cleanup = vi.fn();
+    let component;
+    component = new FunctionComponent(() => {
+      useEffect(() => {
+        component.unmount();
+        return cleanup;
+      }, []);
+      return h('p');
+    }, {}, container());
+    component.mount();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+  });
+
   it('effect 실행 도중 unmount되면 뒤의 effect는 실행하지 않는다', () => {
     const later = vi.fn();
     let component;
@@ -163,6 +177,30 @@ describe('effect·정리 함수가 실패할 때', () => {
 });
 
 describe('렌더가 실패할 때', () => {
+  it('update 렌더가 실패한 뒤 같은 값으로 setState해도 화면을 상태에 맞춘다', async () => {
+    const errors = [];
+    let failOnce = true;
+    let setN;
+    const App = () => {
+      const [n, set] = useState(0);
+      setN = set;
+      if (n === 1 && failOnce) {
+        failOnce = false;
+        throw new Error('render boom');
+      }
+      return h('p', null, String(n));
+    };
+    const c = container();
+    mountComponent(App, c, {}, { onError: (e) => errors.push(e.message) });
+    setN(1); // 렌더 실패: 상태는 1, 화면은 0
+    await flushUpdates();
+    expect(errors).toEqual(['render boom']);
+    expect(c.textContent).toBe('0');
+    setN(1); // 같은 값이지만 화면이 따라오지 못했으므로 다시 그려야 한다
+    await flushUpdates();
+    expect(c.textContent).toBe('1');
+  });
+
   it('첫 mount가 실패하면 hooks를 비워, 고친 뒤 다시 mount할 수 있다', () => {
     let broken = true;
     const App = () => {

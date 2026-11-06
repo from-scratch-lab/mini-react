@@ -292,14 +292,33 @@ function formatTime(total) {
   return `${m}:${s}`;
 }
 
+/**
+ * 저장소의 값은 다른 버전의 코드나 사용자가 손으로 바꿨을 수 있으므로 믿지 않는다.
+ * 모양이 맞는 항목만 남기고, id가 겹치면 처음 것만 쓴다(key가 겹치면 체크·삭제가 엉뚱한 항목에 걸린다).
+ * 쓸 만한 항목이 하나도 없으면 null을 돌려 기본 목록으로 시작한다.
+ */
 function loadTodos(storage) {
+  let parsed;
   try {
     const raw = storage?.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    return Array.isArray(parsed) ? parsed : null;
+    parsed = raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
+  if (!Array.isArray(parsed)) return null;
+  const seen = new Set();
+  const todos = parsed.filter((t) => {
+    const valid =
+      t !== null &&
+      typeof t === 'object' &&
+      Number.isSafeInteger(t.id) &&
+      typeof t.text === 'string' &&
+      typeof t.done === 'boolean' &&
+      !seen.has(t.id);
+    if (valid) seen.add(t.id);
+    return valid;
+  });
+  return todos.length > 0 ? todos.map(({ id, text, done }) => ({ id, text, done })) : null;
 }
 
 function saveTodos(storage, todos) {

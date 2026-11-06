@@ -74,6 +74,13 @@ describe('자식 컴포넌트 (상태 없는 순수 함수)', () => {
     expect(c.innerHTML).toBe('<div><span class="badge ok">완료</span></div>');
   });
 
+  it('children을 props로 넘겨도 자식 컴포넌트가 받는다', () => {
+    const Box = ({ children }) => h('section', null, children);
+    const c = container();
+    mountComponent(() => h(Box, { children: 'hello' }), c);
+    expect(c.innerHTML).toBe('<section>hello</section>');
+  });
+
   it('자식 컴포넌트 안의 자식 컴포넌트도 펼친다', () => {
     const Inner = ({ n }) => h('i', null, String(n));
     const Outer = ({ n }) => h('b', null, h(Inner, { n: n + 1 }));
