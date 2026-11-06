@@ -14,6 +14,10 @@ const DEFERRED_PROPS = ['value', 'checked', 'selected'];
 // on + 이름을 소문자로 바꾼 것과 실제 이벤트 이름이 다른 경우
 const EVENT_NAME_ALIASES = { doubleclick: 'dblclick' };
 const HANDLERS = Symbol('miniReactHandlers');
+const ATTRIBUTE_NAMESPACES = {
+  xlink: 'http://www.w3.org/1999/xlink',
+  xml: 'http://www.w3.org/XML/1998/namespace',
+};
 
 /**
  * diff가 만든 패치 목록을 실제 DOM에 순서대로 반영한다.
@@ -47,11 +51,18 @@ function applyPatch(container, p) {
     }
     case PatchType.PROPS:
       for (const name of p.remove) setProp(p.vnode.dom, name, null, p.prev[name]);
-      for (const [name, value] of Object.entries(p.set)) setProp(p.vnode.dom, name, value, p.prev[name]);
+      for (const [name, value] of deferLast(Object.entries(p.set))) setProp(p.vnode.dom, name, value, p.prev[name]);
       break;
-    case PatchType.TEXT:
-      p.vnode.dom.nodeValue = p.value;
+    case PatchType.TEXT: {
+      const dom = p.vnode.dom;
+      dom.nodeValue = p.value;
+      // textarea의 텍스트 자식은 "기본값"일 뿐이다. 사용자가 입력한 뒤에도 화면 값이 따라오도록 value도 맞춘다.
+      const parent = dom.parentNode;
+      if (parent && parent.localName === 'textarea' && parent.value !== parent.defaultValue) {
+        parent.value = parent.defaultValue;
+      }
       break;
+    }
     case PatchType.MOVE:
       childContainer(p.parent.dom).insertBefore(p.vnode.dom, p.before ? p.before.dom : null);
       break;
@@ -82,17 +93,24 @@ function createDom(vnode, parentDom) {
 
   // 속성은 자식을 만든 뒤에 넣고, value·checked는 그중에서도 마지막에 넣는다.
   // <select value>는 option이 있어야 선택되고, range input의 value는 max를 알아야 잘리지 않는다.
-  const entries = Object.entries(vnode.props);
-  const isDeferred = ([name]) => DEFERRED_PROPS.includes(name);
-  for (const [name, value] of entries.filter((e) => !isDeferred(e))) setProp(dom, name, value, undefined);
-  for (const [name, value] of entries.filter(isDeferred)) setProp(dom, name, value, undefined);
+  for (const [name, value] of deferLast(Object.entries(vnode.props))) setProp(dom, name, value, undefined);
   return dom;
+}
+
+/** [이름, 값] 목록에서 value·checked·selected를 맨 뒤로 보낸다. 만들 때와 갱신할 때 모두 쓴다. */
+function deferLast(entries) {
+  const isDeferred = ([name]) => DEFERRED_PROPS.includes(name);
+  return [...entries.filter((e) => !isDeferred(e)), ...entries.filter(isDeferred)];
 }
 
 function setProp(dom, name, value, prevValue) {
   if (name.startsWith('on') && (typeof value === 'function' || typeof prevValue === 'function')) {
     setEventHandler(dom, toEventName(name), typeof value === 'function' ? value : null);
-    if (typeof value === 'function') return;
+    if (typeof value === 'function') {
+      // 문자열 인라인 핸들러(onclick="...")였다면 속성을 지운다. 남겨 두면 두 핸들러가 함께 실행된다.
+      if (prevValue != null && typeof prevValue !== 'function') dom.removeAttribute(name.toLowerCase());
+      return;
+    }
     // 함수였다가 함수가 아닌 값(문자열 등)으로 바뀌면 핸들러를 뗀 뒤, 아래에서 일반 속성으로 쓴다.
   }
   if (name === 'style' && (isObject(value) || isObject(prevValue))) {
@@ -116,8 +134,17 @@ function setProp(dom, name, value, prevValue) {
 }
 
 function setAttribute(dom, name, value) {
-  if (value == null || value === false || typeof value === 'function') dom.removeAttribute(name);
-  else dom.setAttribute(name, value === true ? '' : String(value));
+  const remove = value == null || value === false || typeof value === 'function';
+  const text = value === true ? '' : String(value);
+  // xlink:href, xml:lang 같은 접두어 속성은 네임스페이스가 있어야 SVG(<use> 등)가 알아본다.
+  const ns = ATTRIBUTE_NAMESPACES[name.split(':')[0]];
+  if (ns && name.includes(':')) {
+    if (remove) dom.removeAttributeNS(ns, name.slice(name.indexOf(':') + 1));
+    else dom.setAttributeNS(ns, name, text);
+    return;
+  }
+  if (remove) dom.removeAttribute(name);
+  else dom.setAttribute(name, text);
 }
 
 function toEventName(propName) {

@@ -9,6 +9,7 @@ const WHITESPACE_SENSITIVE = new Set(['pre', 'textarea', 'listing', 'plaintext']
 // sanitize: 스크립트를 실행하거나 페이지 전체에 영향을 주는 요소
 const BLOCKED_ELEMENTS = new Set([
   'script', 'iframe', 'frame', 'frameset', 'object', 'embed', 'base', 'meta', 'link', 'plaintext',
+  'style', // 페이지 전체 스타일을 덮어써 버튼을 숨기는 등 되돌릴 수 없게 만들 수 있다 (style 속성은 허용)
 ]);
 // sanitize: URL을 받는 속성 (javascript: 같은 스킴을 막는다)
 const URL_ATTRIBUTES = new Set(['href', 'src', 'action', 'formaction', 'xlink:href', 'poster', 'background']);
@@ -28,6 +29,8 @@ const VALID_ATTRIBUTE_NAME = new RegExp(`^[${NAME_START}][${NAME_CHAR}]*$`);
  * - 주석·처리 지시 노드는 버린다.
  * - 줄바꿈이 들어 있는 공백 전용 텍스트(들여쓰기)는 버린다. 줄바꿈 없는 공백(`<b>a</b> <i>b</i>`)은 글자 사이 간격이라 남긴다.
  *   공백은 HTML의 ASCII 공백만 본다(&nbsp;는 내용이다).
+ *   절충: 인라인 요소 사이의 줄바꿈(`<b>a</b>\n<i>b</i>`)도 들여쓰기로 보고 버리므로 화면의 "a b"가 "ab"가 된다.
+ *   JSX가 줄바꿈 공백을 버리는 것과 같은 규칙이다. 띄어쓰기가 필요하면 같은 줄에 공백을 쓴다.
  * - `key` 속성은 가상 노드의 key로도 읽는다. (HTML로 쓴 목록도 key로 비교할 수 있게)
  * - <template>는 template.content 안의 노드를 자식으로 읽는다.
  * - DOM API가 받지 않는 태그·속성 이름은 버린다(요소는 자식만 남긴다). 버린 것은 onWarning으로 알린다.

@@ -235,6 +235,45 @@ describe('patch: 폼 상태와 특수 속성', () => {
     expect(c.firstChild.value).toBe('150');
   });
 
+  it('속성을 갱신할 때도 value는 max 같은 다른 속성 뒤에 넣는다', () => {
+    const v1 = h('input', { type: 'range', value: '5', max: '10' });
+    const c = mount(v1);
+    update(c, v1, h('input', { type: 'range', value: '50', max: '100' }));
+    expect(c.firstChild.value).toBe('50');
+  });
+
+  it('on* 값이 문자열에서 함수로 바뀌면 문자열 속성을 지운다 (둘 다 실행되지 않게)', () => {
+    window.__inline = vi.fn();
+    const handler = vi.fn();
+    const v1 = h('button', { onclick: 'window.__inline()' });
+    const c = mount(v1);
+    update(c, v1, h('button', { onclick: handler }));
+    c.firstChild.click();
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(window.__inline).not.toHaveBeenCalled();
+    expect(c.firstChild.hasAttribute('onclick')).toBe(false);
+    delete window.__inline;
+  });
+
+  it('xlink:href 같은 접두어 속성은 네임스페이스와 함께 쓴다', () => {
+    const XLINK = 'http://www.w3.org/1999/xlink';
+    const v1 = h('svg', null, h('use', { 'xlink:href': '#a' }));
+    const c = mount(v1);
+    const use = c.querySelector('use');
+    expect(use.getAttributeNS(XLINK, 'href')).toBe('#a');
+    update(c, v1, h('svg', null, h('use', null)));
+    expect(use.hasAttributeNS(XLINK, 'href')).toBe(false);
+  });
+
+  it('textarea 안의 텍스트가 바뀌면 사용자가 입력한 뒤라도 화면 값도 바꾼다', () => {
+    const v1 = h('textarea', null, 'abc');
+    const c = mount(v1);
+    const textarea = c.firstChild;
+    textarea.value = '사용자 입력';
+    update(c, v1, h('textarea', null, 'xyz'));
+    expect(textarea.value).toBe('xyz');
+  });
+
   it('style이 문자열에서 객체로 바뀌면 이전 선언을 지운다', () => {
     const v1 = h('div', { style: 'color: red; margin: 4px' });
     const c = mount(v1);
