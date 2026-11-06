@@ -1,0 +1,227 @@
+import {
+  createElement as h,
+  createVNode,
+  render,
+  diff,
+  patch,
+  domToVNode,
+  htmlToVNodes,
+  childrenToHTML,
+  cloneVNode,
+} from '../../src/index.js';
+import { VNodeHistory } from './history.js';
+import { describePatch } from './describe.js';
+
+/**
+ * Phase 1 검증 페이지.
+ *
+ *   실제 영역(actual): 페이지에 있던 샘플 HTML. 처음에 읽어 가상 트리로 만들고, 이후에는 patch로만 바뀐다.
+ *   테스트 영역(root): 가상 트리를 HTML 코드로 보여 주는 편집기와 버튼. 이 화면도 render(가상 DOM)로 그린다.
+ *
+ * Patch 버튼: 편집기 코드 → 가상 트리 → 이전 트리와 diff → 바뀐 부분만 실제 영역에 patch → 기록에 저장
+ * 뒤로가기/앞으로가기: 기록의 가상 트리로 diff·patch하고, 편집기 코드도 그 트리로 다시 쓴다.
+ *
+ * @returns {{ destroy(): void }}
+ */
+export function startPhase1({ actual, root }) {
+  // 실제 영역에 지금 그려진 가상 트리. 이미 화면에 있는 DOM을 이어받는다(attach) → 첫 Patch부터 부분 갱신.
+  let rendered = domToVNode(actual, { attach: true });
+  const history = new VNodeHistory(rendered);
+
+  const state = {
+    code: childrenToHTML(rendered.children),
+    patches: null, // null: 아직 아무것도 하지 않음, []: 변경 없음
+    mutations: 0,
+    warnings: [], // 입력 HTML에서 건너뛴 것
+    error: null, // patch 도중 실패한 이유
+  };
+
+  // 실제 DOM 변화를 감지하는 브라우저 API. patch가 실제로 몇 번 DOM을 바꿨는지 세고, 바뀐 곳을 깜빡여 보여 준다.
+  const observer =
+    typeof MutationObserver === 'function' ? new MutationObserver(() => {}) : null;
+  observer?.observe(actual, { childList: true, subtree: true, attributes: true, characterData: true });
+
+  function applyTo(next) {
+    const patches = diff(rendered, next);
+    patch(actual, patches);
+    rendered = next;
+    const records = observer ? observer.takeRecords() : [];
+    flash(records);
+    state.patches = patches;
+    state.mutations = records.length;
+    state.code = childrenToHTML(rendered.children);
+    return patches;
+  }
+
+  /**
+   * 적용하다 실패하면(예: 브라우저가 받지 않는 이름) 앞쪽 패치만 반영된 채 멈춘다.
+   * 그러면 지금 실제 DOM을 다시 읽어(attach) 직전 가상 트리와 diff·patch해서 되돌린다.
+   * 실제 DOM과 rendered가 어긋난 채로 남으면 다음 Patch가 엉뚱한 노드를 고치기 때문이다.
+   */
+  function tryApply(next) {
+    try {
+      state.error = null;
+      return applyTo(next);
+    } catch (error) {
+      state.error = `Patch 실패: ${error.message} (실제 영역을 직전 상태로 되돌렸습니다)`;
+      const now = domToVNode(actual, { attach: true });
+      const target = cloneVNode(rendered);
+      patch(actual, diff(now, target));
+      rendered = target;
+      observer?.takeRecords();
+      state.patches = null;
+      return null;
+    }
+  }
+
+  function onPatch() {
+    const warnings = [];
+    const children = htmlToVNodes(state.code, { sanitize: true, onWarning: (m) => warnings.push(m) });
+    state.warnings = warnings;
+    // 루트(실제 영역 컨테이너)는 그대로 두고 자식만 바꾼다.
+    const next = createVNode(rendered.type, { ...rendered.props }, children, rendered.key);
+    const patches = tryApply(next);
+    if (patches && patches.length > 0) history.push(next);
+    draw();
+  }
+
+  function navigate(index) {
+    const target = history.go(index);
+    if (!target) return;
+    state.warnings = [];
+    tryApply(target);
+    draw();
+  }
+
+  const onBack = () => navigate(history.index - 1);
+  const onForward = () => navigate(history.index + 1);
+  const onInput = (event) => {
+    state.code = event.target.value;
+    draw();
+  };
+  const onKeyDown = (event) => {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      onPatch();
+    }
+  };
+
+  function view() {
+    const dirty = state.code !== childrenToHTML(rendered.children);
+    return h(
+      'div',
+      { class: 'test-area' },
+      h(
+        'div',
+        { class: 'panel-head' },
+        h('h2', null, '테스트 영역'),
+        h('span', { class: dirty ? 'badge badge-warn' : 'badge' }, dirty ? '수정됨 · 아직 반영 안 됨' : '실제 영역과 같음'),
+      ),
+      h('textarea', {
+        class: 'code',
+        value: state.code,
+        spellcheck: 'false',
+        'aria-label': '테스트 영역 HTML 코드',
+        onInput,
+        onKeyDown,
+      }),
+      h(
+        'div',
+        { class: 'toolbar' },
+        h('button', { type: 'button', 'data-action': 'back', disabled: !history.canBack, onClick: onBack }, '← 뒤로가기'),
+        h('button', { type: 'button', class: 'primary', 'data-action': 'patch', onClick: onPatch }, 'Patch'),
+        h(
+          'button',
+          { type: 'button', 'data-action': 'forward', disabled: !history.canForward, onClick: onForward },
+          '앞으로가기 →',
+        ),
+        h('span', { class: 'history-status', 'data-role': 'history-status' }, `${history.index + 1} / ${history.length}`),
+      ),
+      h('p', { class: 'hint' }, 'Ctrl+Enter로도 Patch할 수 있습니다.'),
+      h(
+        'ol',
+        { class: 'timeline', 'aria-label': 'State History' },
+        Array.from({ length: history.length }, (_, i) =>
+          h(
+            'li',
+            { key: String(i) },
+            h(
+              'button',
+              {
+                type: 'button',
+                class: i === history.index ? 'current' : null,
+                'data-history-index': String(i),
+                'aria-current': i === history.index ? 'step' : null,
+                onClick: () => navigate(i),
+              },
+              i === 0 ? '초기' : `#${i}`,
+            ),
+          ),
+        ),
+      ),
+      patchLogView(),
+    );
+  }
+
+  function patchLogView() {
+    const { patches, mutations } = state;
+    let body;
+    if (patches === null) {
+      body = [h('li', { class: 'empty' }, '아직 Patch하지 않았습니다.')];
+    } else if (patches.length === 0) {
+      body = [h('li', { class: 'empty' }, '변경 없음: 이전 가상 트리와 같습니다.')];
+    } else {
+      body = patches.map((p) =>
+        h('li', null, h('span', { class: `op op-${p.type.toLowerCase()}` }, p.type), ' ', describePatch(p)),
+      );
+    }
+    const notices = [...(state.error ? [state.error] : []), ...state.warnings];
+    return h(
+      'section',
+      { class: 'log' },
+      notices.length > 0
+        ? h('ul', { class: 'warnings', 'data-role': 'warnings', role: 'alert' }, notices.map((m) => h('li', null, m)))
+        : null,
+      h(
+        'h3',
+        null,
+        '마지막 변경 ',
+        patches && patches.length > 0
+          ? h('small', null, `패치 ${patches.length}개 · 실제 DOM 변경 ${mutations}건`)
+          : null,
+      ),
+      h('ol', { 'data-role': 'patch-log' }, body),
+    );
+  }
+
+  function draw() {
+    render(view(), root);
+  }
+
+  draw();
+
+  return {
+    destroy() {
+      observer?.disconnect();
+      render(null, root);
+    },
+  };
+}
+
+/** 바뀐 요소를 잠깐 강조한다. Web Animations API는 스타일 애니메이션만 걸고 DOM 트리·속성은 바꾸지 않는다. */
+function flash(records) {
+  const targets = new Set();
+  for (const record of records) {
+    const nodes = record.type === 'childList' ? [...record.addedNodes] : [record.target];
+    for (const node of nodes) {
+      const element = node.nodeType === 1 ? node : node.parentElement;
+      if (element) targets.add(element);
+    }
+  }
+  for (const element of targets) {
+    element.animate?.(
+      [{ backgroundColor: 'rgba(255, 196, 0, 0.55)', outline: '2px solid rgba(255, 160, 0, 0.9)' }, {}],
+      { duration: 900, easing: 'ease-out' },
+    );
+  }
+}

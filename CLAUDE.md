@@ -6,12 +6,15 @@
 - 의존성 설치: `npm ci`
 - 전체 검사: `bash .claude/check.sh` (작업을 마치기 전에 반드시 통과해야 함. Stop 훅과 CI가 같은 파일을 실행함)
 - 테스트만: `npm test`
+- 데모 서버: `npm run serve` (127.0.0.1:5173, 미리보기는 `.claude/launch.json`의 `demo`)
 
 ## 디렉터리
 - `src/vdom/`: `createElement`, 가상 노드 구조, 첫 `render`
 - `src/diff/`: 이전·다음 가상 트리 비교(diff)와 실제 DOM 반영(patch)
 - `src/hooks/`: `useState`, `useEffect`와 컴포넌트별 훅 저장소
-- `tests/`: 기능 단위 테스트
+- `tests/`: 기능 단위 테스트 (`tests/demo/`는 데모 페이지 기능 테스트)
+- `demo/`: 브라우저 데모 페이지 (`demo/phase1/`: Virtual DOM·Diff·Patch 검증 페이지). 화면도 `render`로 그린다.
+- `scripts/serve.js`: 데모용 정적 서버 (의존성 없음)
 
 ## 도메인 규칙
 - 실제 DOM은 `src/diff/`의 patch 단계에서만 바꾼다. 다른 곳에서 `document`를 직접 조작하지 않는다.

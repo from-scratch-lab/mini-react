@@ -1,6 +1,10 @@
 # Mini-Ract
 크래프톤 정글 13기 · Virtual DOM, Diff, Hooks를 직접 구현한 미니 React
 
+## 데모 실행
+- `npm run serve` → http://127.0.0.1:5173/demo/ (이 컴퓨터에서만 열리고 `demo/`·`src/`만 내보낸다)
+- Phase 1: Virtual DOM + Diff + Patch 검증 페이지 (`demo/phase1/`)
+
 ## 개발 환경
 - Node `^20.19.0 || >=22.12.0` (CI는 Node 20)
 - 설치: `npm ci` / 테스트: `npm test`
