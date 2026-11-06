@@ -1,0 +1,22 @@
+# 🟦 공통 — 세션 밖의 게이트: Claude 없이 만든 커밋, 훅을 끈 세션의 커밋도 같은 check.sh로 검사한다.
+# README의 "main 보호 체크리스트"대로 이 체크(check)를 병합 필수 조건으로 건다.
+# pull_request 이벤트는 fork에서 온 PR에 비밀 값(secrets)을 주지 않는다. pull_request_target으로 바꾸지 말 것.
+name: ci
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      # 🟩 특화: Node 버전 고정
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: bash .claude/check.sh

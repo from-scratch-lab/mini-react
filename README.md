@@ -1,2 +1,9 @@
 # Mini-Ract
 크래프톤 정글 13기 · Virtual DOM, Diff, Hooks를 직접 구현한 미니 React
+
+## 개발 환경
+- Node `^20.19.0 || >=22.12.0` (CI는 Node 20)
+- 설치: `npm ci` / 테스트: `npm test`
+- 의존성을 추가하거나 바꿀 때(lock 파일이 바뀌는 설치)는 `npx npm@11 install <패키지>`로 한다.
+  npm 10.9.x의 `npm install`은 vitest@4의 선택적 peer 의존성을 계산하다가 `Cannot read properties of null (reading 'edgesOut')`로 실패한다.
+  `npm ci`는 npm 10에서도 정상 동작한다.
