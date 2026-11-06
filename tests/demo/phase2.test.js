@@ -123,6 +123,30 @@ describe('Phase 2 데모: 학습 트래커', () => {
     expect(items()).toContain('저장 테스트');
   });
 
+  it('저장값에 잘못된 항목이나 중복 id가 있으면 걸러 내고 그린다', () => {
+    app.unmount();
+    root.innerHTML = '';
+    const broken = fakeStorage({
+      [STORAGE_KEY]: JSON.stringify([
+        null,
+        { id: 1, text: '정상', done: false },
+        { id: 1, text: '중복 id', done: true },
+        { id: 'x', text: 'id가 문자열', done: false },
+        { id: 2, text: 3, done: false },
+        { id: 3, text: '완료 표시가 없음' },
+      ]),
+    });
+    app = startPhase2({ root, log, storage: broken, initialTodos: [] });
+    expect(items()).toEqual(['정상']);
+  });
+
+  it('저장값이 전부 잘못됐으면 기본 목록으로 시작한다', () => {
+    app.unmount();
+    root.innerHTML = '';
+    app = startPhase2({ root, log, storage: fakeStorage({ [STORAGE_KEY]: '[null, 1]' }), initialTodos: SEED });
+    expect(items()).toEqual(['Virtual DOM 복습', 'useState 구현']);
+  });
+
   it('집중 타이머: 시작하면 1초마다 늘고, 멈추면 그대로, 초기화하면 0', async () => {
     const time = () => $('[data-role="timer"]').textContent;
     await click($('button[data-action="timer-toggle"]'));

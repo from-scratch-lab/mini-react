@@ -4,6 +4,8 @@ import { commitTree } from '../vdom/render.js';
 // 매크로태스크(이벤트·타이머)로 한 번도 양보하지 않고 이어진 렌더가 이 횟수를 넘으면 무한 반복으로 보고 멈춘다.
 // effect 안의 setState가 동기로 불리든 Promise로 불리든 모두 마이크로태스크 안에서 이어지므로 같은 방법으로 잡힌다.
 // (카운터는 setTimeout(0)으로 되돌린다. setTimeout까지 가짜로 바꾸는 테스트에서는 되돌려지지 않는다는 점에 주의)
+// 절충: 타이머·이벤트 없이 마이크로태스크(await)만으로 setState를 50번 넘게 이어 가는 정상 코드도 무한 반복으로 본다.
+// 이때는 onError로 알리고 그 렌더 하나만 버린다. 다음 setState에서는 같은 값이어도 다시 그려 화면이 따라온다(stale).
 const UPDATE_CHAIN_LIMIT = 50;
 
 // 지금 렌더 중인 루트 컴포넌트. 훅은 이 값으로 "어느 컴포넌트의 몇 번째 훅인지"를 찾는다.
@@ -93,13 +95,21 @@ export class FunctionComponent {
     let patches;
     let errors;
     try {
-      const next = this.renderTree();
+      let next;
+      try {
+        next = this.renderTree();
+      } catch (error) {
+        // 상태는 이미 바뀌었는데 화면은 이전 그대로다. 같은 값으로 setState해도 다시 그리도록 표시한다.
+        this.stale = true;
+        throw error;
+      }
       try {
         patches = commitTree(this.container, this.vnode, next);
       } catch (error) {
         // commitTree가 실제 DOM을 이전 트리 모습으로 되돌렸다. 기억하는 트리도 그 복사본으로 바꾼다.
         if ('restoredTree' in error) this.vnode = error.restoredTree;
         this.pendingEffects = [];
+        this.stale = true;
         throw error;
       }
       this.vnode = next;
@@ -224,23 +234,27 @@ export class FunctionComponent {
   }
 
   /**
-   * patch가 끝난 뒤(실제 DOM이 바뀐 뒤)에 effect를 실행한다. 다시 실행하기 전에는 이전 정리 함수부터 부른다.
+   * patch가 끝난 뒤(실제 DOM이 바뀐 뒤)에 effect를 실행한다.
+   * React와 같은 순서: 다시 실행할 effect들의 이전 정리 함수를 모두 먼저 부르고, 그다음 effect를 차례로 실행한다.
    * 하나가 던져도 나머지는 실행한다. 도중에 unmount되면 남은 effect는 실행하지 않는다(정리될 기회가 없으므로).
    */
   runEffects(errors) {
     const hooks = this.pendingEffects;
     this.pendingEffects = [];
+    for (const hook of hooks) callCleanup(hook, errors);
     for (const hook of hooks) {
       if (this.unmounted) break;
       const { effect, deps } = hook.next;
       hook.next = null;
       hook.deps = deps;
       hook.initialized = true;
-      callCleanup(hook, errors);
       try {
         const result = effect();
-        if (typeof result === 'function') hook.cleanup = result;
-        else if (result !== undefined) {
+        if (typeof result === 'function') {
+          hook.cleanup = result;
+          // effect 안에서 unmount됐다면 정리 단계는 이미 지나갔다. 받은 정리 함수를 바로 불러 누수를 막는다.
+          if (this.unmounted) callCleanup(hook, errors);
+        } else if (result !== undefined) {
           console.warn('[mini-react] useEffect는 정리 함수나 undefined만 돌려줘야 합니다. 받은 값:', result);
         }
       } catch (error) {

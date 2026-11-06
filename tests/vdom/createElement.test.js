@@ -33,6 +33,14 @@ describe('createElement', () => {
     expect(v.props).toEqual({ id: 'x' });
   });
 
+  it('위치 인자 자식이 없으면 props.children을 자식으로 쓴다', () => {
+    expect(h('p', { children: 'hello' }).children).toEqual([text('hello')]);
+    expect(h('p', { children: ['a', 'b'] }).children).toEqual([text('a'), text('b')]);
+    // 위치 인자가 있으면 그쪽이 우선이다
+    expect(h('p', { children: 'x' }, 'y').children).toEqual([text('y')]);
+    expect(h('p', { children: 'x' }).props).toEqual({});
+  });
+
   it('가상 노드가 아닌 객체 자식은 TypeError를 던진다', () => {
     expect(() => h('p', null, { foo: 1 })).toThrow(TypeError);
   });

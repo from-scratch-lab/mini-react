@@ -58,6 +58,28 @@ describe('useEffect', () => {
     expect(api.log).toEqual(['run 0', 'cleanup 0', 'run 1', 'cleanup 1']);
   });
 
+  it('다시 실행할 effect가 여럿이면 정리 함수를 모두 먼저 부르고 effect를 실행한다 (React와 같은 순서)', async () => {
+    const log = [];
+    let setN;
+    const App = () => {
+      const [n, set] = useState(0);
+      setN = set;
+      useEffect(() => {
+        log.push(`A${n}`);
+        return () => log.push(`cleanA${n}`);
+      }, [n]);
+      useEffect(() => {
+        log.push(`B${n}`);
+        return () => log.push(`cleanB${n}`);
+      }, [n]);
+      return h('p');
+    };
+    mountComponent(App, document.createElement('div'));
+    setN(1);
+    await flushUpdates();
+    expect(log).toEqual(['A0', 'B0', 'cleanA0', 'cleanB0', 'A1', 'B1']);
+  });
+
   it('deps가 없으면 렌더할 때마다 실행한다', async () => {
     const api = setup((a, n) => () => a.log.push(n));
     api.setN(1);

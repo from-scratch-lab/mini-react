@@ -10,9 +10,10 @@ import { createVNode, createTextVNode, isVNode } from './vnode.js';
  * - key는 props가 아니라 노드 자체에 문자열로 저장한다.
  */
 export function createElement(type, props, ...children) {
-  const { key = null, ...rest } = props ?? {};
-  delete rest.children;
-  return createVNode(type, rest, normalizeChildren(children), key == null ? null : String(key));
+  const { key = null, children: propChildren, ...rest } = props ?? {};
+  // 위치 인자 자식이 없으면 props.children을 쓴다. h(Box, { children: 'hi' })도 h(Box, null, 'hi')와 같게.
+  const source = children.length === 0 && propChildren !== undefined ? [propChildren] : children;
+  return createVNode(type, rest, normalizeChildren(source), key == null ? null : String(key));
 }
 
 export const h = createElement;
