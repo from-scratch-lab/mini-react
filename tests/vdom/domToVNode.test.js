@@ -96,6 +96,11 @@ describe('htmlToVNodes', () => {
     ]);
   });
 
+  it('sanitize 옵션이면 페이지 스타일을 덮어쓸 수 있는 <style>도 버린다', () => {
+    const list = htmlToVNodes('<style>#app{display:none}</style><p>x</p>', { sanitize: true });
+    expect(list.map((v) => v.type)).toEqual(['p']);
+  });
+
   it('DOM API가 받지 않는 태그·속성 이름은 버리고 경고로 알린다 (자식은 남긴다)', () => {
     const warnings = [];
     const list = htmlToVNodes('<div><x<y>안</x<y></div><button @click="go" title="t">ok</button>', {

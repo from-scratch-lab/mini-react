@@ -2,6 +2,6 @@ export { TEXT_NODE, createVNode, createTextVNode, isTextVNode, cloneVNode } from
 export { createElement, h } from './vdom/createElement.js';
 export { domToVNode, htmlToVNodes } from './vdom/domToVNode.js';
 export { vnodeToHTML, childrenToHTML } from './vdom/serialize.js';
-export { render } from './vdom/render.js';
+export { render, commitTree } from './vdom/render.js';
 export { diff, PatchType } from './diff/diff.js';
 export { patch } from './diff/patch.js';
