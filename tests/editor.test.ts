@@ -15,3 +15,22 @@ it('serializes live form state for the editor without changing the preview', () 
   const input = container.querySelector('input')!; input.value = 'new "value"'; input.checked = false; container.querySelector('textarea')!.value = 'new\ntext';
   const html = serializeTree(readDOM(container)); expect(html).toContain('value="new &quot;value&quot;"'); expect(html).not.toContain('checked'); expect(html).toContain('<textarea>new\ntext</textarea>'); expect(input.getAttribute('value')).toBe('default');
 });
+
+it('excludes attribute names that cannot be recreated by the DOM API', () => {
+  const result = parseEditorHTML('<p @click="x" foo@bar="x" [title]="x" data-note="keep" aria-label="keep" 한글="keep">safe</p>');
+  expect(result.removed).toBe(3);
+  const html = serializeTree(readDOM(result.content));
+  expect(html).toBe('<p data-note="keep" aria-label="keep" 한글="keep">safe</p>');
+});
+
+it.each(['', 'hello', '\n', '\nhello', '\n\nhello', '\n<&</textarea>'])('preserves textarea value through repeated HTML round trips: %j', value => {
+  const container = document.createElement('div'); container.innerHTML = '<textarea>default</textarea><p>old</p>';
+  const textarea = container.querySelector('textarea')!; textarea.value = value;
+  let tree = readDOM(container);
+  for (let i = 0; i < 3; i++) {
+    const parsed = parseEditorHTML(serializeTree(tree).replace('<p>old</p>', '<p>new</p>'));
+    expect(parsed.content.querySelector('textarea')!.value).toBe(value);
+    tree = readDOM(parsed.content);
+  }
+  expect(textarea.value).toBe(value); expect(textarea.textContent).toBe('default');
+});

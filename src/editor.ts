@@ -5,6 +5,12 @@ function isUnsafeURL(value: string): boolean {
   try { return !['http:', 'https:', 'mailto:', 'tel:'].includes(new URL(value, 'https://preview.invalid/').protocol); }
   catch { return true; }
 }
+function isValidAttributeName(name: string): boolean {
+  // Use portable names: newer browsers accept some names that other DOM implementations reject.
+  if (!/^[\p{L}_:][\p{L}\p{N}\p{M}_.:\-\u00b7]*$/u.test(name)) return false;
+  try { document.createAttribute(name); return true; }
+  catch { return false; }
+}
 export function parseEditorHTML(html: string): { content: DocumentFragment; removed: number } {
   const template = document.createElement('template'); template.innerHTML = html;
   let removed = 0;
@@ -16,7 +22,7 @@ export function parseEditorHTML(html: string): { content: DocumentFragment; remo
         const unsafeURL = ['href', 'src', 'action', 'formaction', 'poster', 'background', 'cite'].includes(name)
           && isUnsafeURL(attr.value);
         // Inline styles may load external resources; sample styles live outside managed content.
-        if (name.startsWith('on') || ['srcdoc', 'srcset', 'style', 'autofocus', 'is'].includes(name) || unsafeURL) { child.removeAttribute(attr.name); removed++; }
+        if (!isValidAttributeName(name) || name.startsWith('on') || ['srcdoc', 'srcset', 'style', 'autofocus', 'is'].includes(name) || unsafeURL) { child.removeAttribute(attr.name); removed++; }
       }
       if (child instanceof HTMLInputElement && child.type === 'file') { child.type = 'text'; removed++; }
       clean(child);
@@ -28,6 +34,10 @@ export function parseEditorHTML(html: string): { content: DocumentFragment; remo
 export function serializeTree(tree: VTree): string {
   const container = document.createElement('div');
   for (const vnode of tree) container.appendChild(createDOM(vnode));
-  for (const textarea of container.querySelectorAll('textarea')) textarea.textContent = textarea.value;
+  for (const textarea of container.querySelectorAll('textarea')) {
+    const value = textarea.value;
+    // The HTML parser consumes one LF immediately after the opening textarea tag.
+    textarea.textContent = value.startsWith('\n') ? `\n${value}` : value;
+  }
   return container.innerHTML;
 }

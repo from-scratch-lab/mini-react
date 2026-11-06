@@ -60,6 +60,7 @@ npm run build             # TypeScript 검사 + dist 프로덕션 빌드
 - `textarea`: 실제 자식 텍스트와 현재 `.value`를 **분리**합니다. VNode의 선택 필드 `value`에 현재 값을 저장하고, 별도 `value` 작업으로 현재 값만 바꿀 수 있습니다. 빈 textarea에 타이핑해도 존재하지 않는 자식 경로를 만들지 않습니다. 자식 변경 후 현재 값을 적용해 기본 텍스트와 dirty value의 차이를 보존합니다.
 - HTML 편집기에 직렬화할 때 textarea의 현재 값을 텍스트로 표현합니다. 따라서 dirty textarea의 실제 `innerHTML`은 기본 텍스트를 유지하면서 화면과 편집기는 새 값을 보일 수 있습니다. 이 경우 문자열 일치만으로 현재 상태를 검증할 수 없으며 `.value`도 확인해야 합니다. 편집기 HTML을 다시 파싱하면 표시된 현재 값이 새 기본 텍스트가 됩니다.
 - 테스트 미리보기의 input/change 이벤트는 편집기도 동기화하되 포커스가 있는 입력 노드를 다시 만들지 않습니다. Patch 시에는 편집 문자열 대신 **현재 미리보기 DOM을 읽어** 입력값을 확정합니다.
+- input의 속성 Patch는 변경되지 않은 현재 value/checked를 유지합니다. type 변경처럼 브라우저가 입력 상태를 바꿀 수 있는 경우에도 Patch 전 현재 상태와 명시된 변경을 기준으로 동기화합니다. textarea 값이 줄바꿈으로 시작하면 HTML 파서가 첫 줄바꿈을 소비하는 동작을 보정해 편집기 왕복 시 값을 보존합니다.
 - `select`/`option`은 HTML 속성과 자식 구조만 지원합니다. 사용자가 바꾼 현재 선택, input의 `indeterminate`, 파일 선택, 커서·포커스·스크롤 위치, DOM 이벤트 리스너는 스냅샷 대상이 아닙니다. 파일 input은 편집 파싱 시 text input으로 바꿉니다.
 
 ### 편집 HTML 지원 범위
@@ -69,6 +70,8 @@ npm run build             # TypeScript 검사 + dist 프로덕션 빌드
 주석은 보존합니다. SVG/MathML, script, style 태그, iframe, object/embed, template, 커스텀 요소 및 허용 목록 외 태그는 서브트리째 제외합니다. 인라인 이벤트 속성(`on*`), inline style, srcdoc, srcset, autofocus, is 속성을 제외합니다. URL 속성은 상대 경로 또는 http/https/mailto/tel 프로토콜만 허용하고 잘못된 URL과 javascript/data 등은 제거합니다. 제외 개수는 미리보기 갱신 시 상태 표시줄에 표시됩니다. 외부 이미지 URL은 브라우저가 로드할 수 있습니다.
 
 이는 과제용 제한 파서 정책이며 범용 보안 sanitizer를 제공하는 라이브러리는 아닙니다. `core`의 렌더러는 HTML 입력을 정제하지 않으므로 앱 외부에서 재사용할 때에도 신뢰·검증된 VTree를 전달해야 합니다. 앱은 사용자 HTML을 반드시 편집 파서 경계에서 처리합니다. Shadow DOM은 스타일·탐색 격리 수단이며 보안 sandbox 자체는 아닙니다.
+
+속성명은 환경 간 재생성이 가능한 범위로 제한합니다. 첫 글자는 유니코드 문자, `_`, `:`를 허용하고 이후에는 숫자·결합 문자·`.`·`-`·`·`도 허용하며 DOM API로 생성 가능한지 검사합니다. `@click`, `foo@bar`, `[title]` 같은 이름은 제외 개수에 포함합니다. 일부 Chrome 버전이 허용하더라도 jsdom 등에서 재생성할 때 실패하는 차이를 방지합니다.
 
 ### History
 
@@ -105,7 +108,7 @@ npm run build             # TypeScript 검사 + dist 프로덕션 빌드
 
 ## 검증
 
-실제로 실행한 최종 결과:
+초기 구현에서 실행한 검증 결과:
 
 - `npm test`: **31개 통과**. 텍스트·속성·자식 순서·공백·주석, 렌더링, 다섯 기본 Diff, 동일 트리, 동결 입력의 불변성, Patch 목표 일치, DOM 객체 동일성, MutationObserver 변경 0건, 빈/다중 루트, 깊은 중첩, 연속 삭제·중간 삽입·속성 삭제, live input/textarea, 빈 textarea, 이력 분기·스냅샷 보존, 편집 정책 검증.
 - `npm run test:e2e`: **7개 통과**. 초기 화면, 편집 중 실제 영역 보존, 부분 Patch 객체 동일성, 이력 왕복과 미확정 편집 폐기, no-op 이후 미래 보존, 분기, 다중/빈 콘텐츠와 중첩 변경, live 입력 복원, 금지 콘텐츠와 ID 격리, DOM mutation 0건, 빈 textarea의 값 변경·노드 유지 검증.
@@ -113,3 +116,9 @@ npm run build             # TypeScript 검사 + dist 프로덕션 빌드
 - 데스크톱 화면을 Chromium으로 캡처해 레이아웃을 확인했습니다. Firefox/WebKit 테스트는 실행하지 않았습니다.
 
 환경상 최초 npm 다운로드는 DNS 제한, 기본 Playwright 캐시는 쓰기 제한, 개발 서버는 포트 실행 제한이 있었습니다. 필요한 실행 권한과 프로젝트 내부 브라우저 경로로 해결했습니다. 설치된 Headless Shell에서는 프레임/스크린샷 대기가 멈췄으므로 Playwright 설정에 `channel: 'chromium'`을 명시해 전체 Chromium의 headless 모드에서 실제 클릭·입력 테스트를 통과했습니다. 클릭을 강제하거나 객체 동일성 검증을 생략하지 않았습니다.
+
+### 리뷰 수정 후 검증 (2026-11-06)
+
+- `npm test`: **43개 통과**. 속성명 제외와 유니코드 속성 보존, textarea 선행 줄바꿈·특수문자·반복 직렬화, dirty input의 무관한 속성 및 value/checked/type 변경 회귀 테스트를 추가했습니다. 수정 전 새 테스트 중 10개가 실패하는 것을 확인했습니다.
+- 브라우저 테스트: **9개 통과**. 잘못된 속성명을 포함한 편집의 Patch·이력 왕복, textarea 선행 줄바꿈 보존·DOM 객체 유지·변경 없는 재적용을 추가 검증했습니다. 프로젝트용 Chromium이 설치되지 않아 저장소 설정은 유지하고 임시 Playwright 설정의 `launchOptions.executablePath`로 설치된 Google Chrome을 실행했습니다. Firefox/WebKit은 검증하지 않았습니다.
+- `npm run build`: TypeScript 검사 및 프로덕션 빌드 성공.

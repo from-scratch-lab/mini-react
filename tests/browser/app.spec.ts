@@ -99,3 +99,37 @@ test('typing in an initially empty textarea patches its live value and keeps its
   await page.getByRole('button', { name: '앞으로가기' }).click();
   await expect(actual(page).locator('textarea')).toHaveValue('typed from empty'); await expect(preview(page).locator('textarea')).toHaveValue('typed from empty');
 });
+
+test('unsupported attribute names are removed before patching and history stays consistent', async ({ page }) => {
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await apply(page, '<p>A</p><div>B</div>');
+  await edit(page, '<p>X</p><div @click="x" foo@bar="x" data-note="keep">B</div>');
+  await expect(page.locator('#message')).toContainText('2개 제외');
+  await page.getByRole('button', { name: 'Patch 적용' }).click();
+  await synced(page, '<p>X</p><div data-note="keep">B</div>');
+  await expect(page.locator('#history-position')).toHaveText('3 / 3');
+  await page.getByRole('button', { name: '뒤로가기' }).click(); await synced(page, '<p>A</p><div>B</div>');
+  await page.getByRole('button', { name: '앞으로가기' }).click(); await synced(page, '<p>X</p><div data-note="keep">B</div>');
+  expect(errors).toEqual([]);
+});
+
+test('leading textarea newlines survive unrelated HTML edits and history navigation', async ({ page }) => {
+  await apply(page, '<textarea></textarea><p>old</p>');
+  await preview(page).locator('textarea').fill('\n\nhello');
+  await page.getByRole('button', { name: 'Patch 적용' }).click();
+  await actual(page).evaluate(element => { (window as any).savedTextarea = element.firstChild; });
+  const source = await page.locator('#html-editor').inputValue();
+  await apply(page, source.replace('<p>old</p>', '<p>new</p>'));
+  await expect(actual(page).locator('textarea')).toHaveValue('\n\nhello');
+  await expect(preview(page).locator('textarea')).toHaveValue('\n\nhello');
+  expect(await actual(page).evaluate(element => element.firstChild === (window as any).savedTextarea)).toBe(true);
+  await page.getByRole('button', { name: '뒤로가기' }).click();
+  await expect(actual(page).locator('textarea')).toHaveValue('\n\nhello');
+  await expect(preview(page).locator('textarea')).toHaveValue('\n\nhello');
+  await page.getByRole('button', { name: '앞으로가기' }).click();
+  await expect(actual(page).locator('textarea')).toHaveValue('\n\nhello');
+  await expect(preview(page).locator('textarea')).toHaveValue('\n\nhello');
+  await page.getByRole('button', { name: 'Patch 적용' }).click();
+  await expect(page.locator('#operation-count')).toHaveText('0 operations');
+  await expect(page.locator('#history-position')).toHaveText('4 / 4');
+});

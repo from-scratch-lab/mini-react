@@ -25,9 +25,16 @@ export function patch(container: Node, operations: Operation[]): void {
           break;
         case 'attributes': {
           if (!(current instanceof Element)) throw new Error('속성 Patch 대상이 요소가 아닙니다.');
+          // Capture unchanged live state before type/attribute changes can reset it.
+          const state = current instanceof HTMLInputElement ? {
+            value: Object.hasOwn(operation.set, 'value') ? operation.set.value
+              : operation.remove.includes('value') ? '' : current.value,
+            checked: Object.hasOwn(operation.set, 'checked') ? true
+              : operation.remove.includes('checked') ? false : current.checked,
+          } : undefined;
           for (const name of operation.remove) current.removeAttribute(name);
           for (const [name, value] of Object.entries(operation.set)) current.setAttribute(name, value);
-          syncControl(current);
+          syncControl(current, state);
         }
       }
     }

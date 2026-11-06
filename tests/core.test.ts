@@ -87,3 +87,25 @@ it('removes attributes whose names overlap Object.prototype', () => {
   const actual = container('<p constructor="remove" __proto__="remove">text</p>');
   const next = tree('<p>text</p>'); patch(actual, diff(readDOM(actual), next)); expect(readDOM(actual)).toEqual(next);
 });
+
+it.each([true, false])('preserves dirty value and checked=%s when unrelated attributes change', checked => {
+  const actual = container(`<input type="text" value="default" title="old"${checked ? '' : ' checked'}>`);
+  const input = actual.querySelector('input')!;
+  input.value = 'dirty'; input.checked = checked;
+  const before = readDOM(actual); const next = structuredClone(before);
+  if (next[0].type !== 'element') throw new Error('Expected input');
+  delete next[0].attrs.title; next[0].attrs.class = 'new';
+  patch(actual, diff(before, next));
+  expect(readDOM(actual)).toEqual(next); expect(actual.firstChild).toBe(input);
+  expect(input.getAttribute('value')).toBe('default');
+});
+
+it.each(['value', 'checked', 'type'])('preserves other dirty input state when %s changes', attribute => {
+  const actual = container('<input value="default" checked>');
+  const input = actual.querySelector('input')!; input.value = 'dirty'; input.checked = false;
+  const before = readDOM(actual); const next = structuredClone(before);
+  if (next[0].type !== 'element') throw new Error('Expected input');
+  next[0].attrs[attribute] = attribute === 'value' ? 'new' : attribute === 'type' ? 'checkbox' : '';
+  patch(actual, diff(before, next));
+  expect(readDOM(actual)).toEqual(next); expect(actual.firstChild).toBe(input);
+});

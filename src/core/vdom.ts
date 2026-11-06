@@ -23,12 +23,12 @@ export function readDOM(container: Node): VTree {
   return Array.from(container.childNodes, domToVNode);
 }
 
-/** Mirror managed form attributes into live properties, including dirty controls. */
-export function syncControl(element: Element): void {
+/** Initialize from attributes, or restore the intended live state after an attribute patch. */
+export function syncControl(element: Element, state?: { value: string; checked: boolean }): void {
   if (element instanceof HTMLInputElement) {
-    const value = element.getAttribute('value') ?? '';
+    const value = state?.value ?? element.getAttribute('value') ?? '';
     if (element.value !== value) element.value = value;
-    const checked = element.hasAttribute('checked');
+    const checked = state?.checked ?? element.hasAttribute('checked');
     if (element.checked !== checked) element.checked = checked;
   }
 }
