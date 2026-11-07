@@ -1,37 +1,63 @@
+/*
+ * 디자인 토큰: react.dev 학습 페이지(본문 #404756, 제목 #23272f, 링크 #087ea4, 카드 #f6f7f9·16px,
+ * Note #f4fbf9/#2b6e62, Pitfall #fef5e7/#c76a15)를 바탕으로, 한글은 Pretendard로 읽기 좋게 맞췄다.
+ */
 :root {
-  --bg: #f5f6fa;
+  --page-width: 1440px;
+  --bg: #ffffff;
   --panel: #ffffff;
-  --text: #1d2130;
-  --muted: #6b7185;
-  --line: #e2e5ef;
-  --accent: #5b7cfa;
+  --card: #f6f7f9;
+  --text: #404756;
+  --heading: #23272f;
+  --muted: #6b7385;
+  --line: #e5e7eb;
+  --accent: #087ea4;
   --accent-text: #ffffff;
-  --code-bg: #0f1424;
-  --code-text: #e6e9f5;
-  --warn-bg: #fff4d6;
-  --warn-text: #8a5a00;
+  --accent-soft: #e6f7ff;
+  --code-bg: #16181d;
+  --code-text: #e4e6eb;
+  --inline-code: rgba(153, 161, 179, 0.14);
+  --note-bg: #f4fbf9;
+  --note-text: #2b6e62;
+  --warn-bg: #fef5e7;
+  --warn-text: #c76a15;
+  --deep-bg: #f5f3ff;
+  --deep-text: #5b46b8;
+  --bezel: #23272f;
+  --key-shadow: #d4d8e0;
   --op-create: #1f9d55;
   --op-remove: #d64545;
-  --op-replace: #b45ad6;
-  --op-props: #2f80ed;
-  --op-text: #c77700;
+  --op-replace: #9b5bd0;
+  --op-props: #087ea4;
+  --op-text: #c76a15;
   --op-move: #0e9aa7;
+  --radius: 16px;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1017;
-    --panel: #161a24;
-    --text: #e6e9f5;
-    --muted: #9aa1b8;
-    --line: #262c3b;
-    --accent: #7b95ff;
-    --accent-text: #0d1017;
-    --code-bg: #0a0d14;
-    --code-text: #e6e9f5;
-    --warn-bg: #3a2e10;
-    --warn-text: #ffd27a;
+    --bg: #1b1e24;
+    --panel: #23272f;
+    --card: #2b303a;
+    --text: #c9cdd6;
+    --heading: #f3f4f6;
+    --muted: #99a1b3;
+    --line: #343a46;
+    --accent: #58c4dc;
+    --accent-text: #16181d;
+    --accent-soft: #10303a;
+    --code-bg: #16181d;
+    --code-text: #e4e6eb;
+    --inline-code: rgba(153, 161, 179, 0.18);
+    --note-bg: #13302b;
+    --note-text: #7fd6c2;
+    --warn-bg: #3a2a12;
+    --warn-text: #f2b56b;
+    --deep-bg: #2a2440;
+    --deep-text: #c2b5ff;
+    --bezel: #0f1115;
+    --key-shadow: #12151a;
     color-scheme: dark;
   }
 }
@@ -44,16 +70,43 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 15px/1.6 system-ui, -apple-system, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font: 16px/1.75 'Pretendard Variable', Pretendard, -apple-system, ui-sans-serif, system-ui, 'Segoe UI',
+    'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--heading);
+  letter-spacing: -0.01em;
+}
+
+code {
+  background: var(--inline-code);
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-size: 0.9em;
+}
+
+pre code,
+.vdom code {
+  background: none;
+  padding: 0;
+}
+
+a {
+  color: var(--accent);
 }
 
 code,
 textarea {
-  font-family: ui-monospace, SFMono-Regular, Consolas, 'D2Coding', monospace;
+  font-family: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Consolas, 'D2Coding', monospace;
 }
 
 .page-head {
-  max-width: 1200px;
+  max-width: var(--page-width);
   margin: 0 auto;
   padding: 16px 16px 8px;
 }
@@ -69,7 +122,7 @@ textarea {
 }
 
 .phase1 {
-  max-width: 1200px;
+  max-width: var(--page-width);
   margin: 0 auto;
   padding: 16px;
   display: grid;
@@ -290,7 +343,7 @@ button.primary {
 
 /* Phase 2: 학습 트래커 */
 .phase2 {
-  max-width: 1200px;
+  max-width: var(--page-width);
   margin: 0 auto;
   padding: 16px;
   display: grid;
@@ -490,7 +543,7 @@ button.ghost {
 
 /* 페이지 사이 내비게이션 */
 .site-nav {
-  max-width: 1200px;
+  max-width: var(--page-width);
   margin: 0 auto;
   padding: 14px 16px 0;
   display: flex;
@@ -540,19 +593,12 @@ button.ghost {
 }
 
 .integrated {
-  max-width: 1200px;
+  max-width: var(--page-width);
   margin: 0 auto;
   padding: 16px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 960px) {
-  .integrated {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .backlog-app {
@@ -689,8 +735,10 @@ button.ghost {
 }
 
 .stage {
-  border-top: 1px dashed var(--line);
-  padding: 10px 0 4px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px 18px 12px;
+  min-width: 0;
 }
 
 .stage h3 {
@@ -770,11 +818,11 @@ button.ghost {
 
 /* 방금 일어난 일 */
 .concept {
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
-  background: color-mix(in srgb, var(--accent) 7%, var(--panel));
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin: 4px 0 10px;
+  background: var(--deep-bg);
+  border-radius: var(--radius);
+  padding: 18px 22px 14px;
+  margin: 0;
+  min-width: 0;
 }
 
 .concept-kicker {
@@ -782,7 +830,7 @@ button.ghost {
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--accent);
+  color: var(--deep-text);
 }
 
 .concept h3 {
@@ -801,11 +849,16 @@ button.ghost {
 }
 
 .react-note {
-  margin: 8px 0 4px;
-  padding: 6px 10px;
-  border-left: 3px solid var(--accent);
-  background: var(--panel);
-  font-size: 0.84rem;
+  margin: 12px 0 6px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--note-bg);
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.react-note b {
+  color: var(--note-text);
 }
 
 .concept-link {
@@ -881,7 +934,7 @@ button.ghost {
 
 /* React의 본질: 기본 개념 */
 .basics {
-  max-width: 1200px;
+  max-width: var(--page-width);
   margin: 8px auto 40px;
   padding: 0 16px;
 }
@@ -930,9 +983,227 @@ button.ghost {
   opacity: 0.7;
 }
 
+/* ───────── 종합 페이지: 위 모니터(렌더 파이프라인) · 아래 키보드(앱) ───────── */
+.monitor {
+  background: var(--bezel);
+  border-radius: 22px;
+  padding: 10px 10px 14px;
+  box-shadow: 0 18px 40px -24px rgba(15, 17, 21, 0.55);
+}
+
+.monitor-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 8px 10px;
+  color: #9aa1b3;
+  font-size: 0.8rem;
+}
+
+.monitor-dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.monitor-dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ff5f57;
+}
+
+.monitor-dots i:nth-child(2) {
+  background: #febc2e;
+}
+
+.monitor-dots i:nth-child(3) {
+  background: #28c840;
+}
+
+.monitor-title {
+  font-family: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monitor-screen {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 20px;
+  min-height: 420px;
+}
+
+/* 받침대 */
+.monitor-stand {
+  display: flex;
+  justify-content: center;
+  height: 34px;
+}
+
+.monitor-stand span {
+  width: 160px;
+  height: 100%;
+  background: linear-gradient(var(--bezel), color-mix(in srgb, var(--bezel) 70%, var(--bg)));
+  clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%);
+}
+
+/* 모니터 화면 안 배치: 머리 / 설명·hooks / 가상 트리·패치 / 타임라인·DOM */
+.pipeline {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  grid-template-areas:
+    'head head'
+    'concept hooks'
+    'vdom patches'
+    'timeline dom';
+  gap: 16px;
+  align-items: start;
+}
+
+.pipeline-head { grid-area: head; margin-bottom: 0; }
+.pipeline > .concept { grid-area: concept; align-self: stretch; }
+.stage-hooks { grid-area: hooks; align-self: stretch; }
+.stage-vdom { grid-area: vdom; }
+.stage-patches { grid-area: patches; align-self: stretch; }
+.stage-dom { grid-area: dom; }
+.pipeline > .timeline-wrap { grid-area: timeline; }
+
+.pipeline-head h2 {
+  font-size: 1.25rem;
+}
+
+.commit-title {
+  font-size: 1.05rem;
+}
+
+.stage h3 {
+  font-size: 0.98rem;
+  margin-bottom: 10px;
+}
+
+.step {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.8em;
+  margin-right: 2px;
+}
+
+.stage-vdom .vdom {
+  height: 460px;
+  font-size: 13.5px;
+}
+
+.stage .patch-list {
+  max-height: 360px;
+}
+
+.timeline-wrap {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+}
+
+.timeline-wrap h3 {
+  margin-top: 0;
+}
+
+@media (max-width: 1100px) {
+  .pipeline {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'head' 'concept' 'hooks' 'vdom' 'patches' 'dom' 'timeline';
+  }
+
+  .stage-vdom .vdom {
+    height: 340px;
+  }
+}
+
+/* 키보드: 조작하는 앱 */
+.keyboard {
+  background: linear-gradient(var(--card), color-mix(in srgb, var(--card) 85%, var(--line)));
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 18px 22px 22px;
+  box-shadow: inset 0 -4px 0 var(--key-shadow);
+}
+
+.keyboard-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-bottom: 14px;
+}
+
+.keyboard-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.keyboard-hint {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* 툴바 버튼을 키캡처럼 */
+.keyboard .toolbar button,
+.keyboard .add-form button {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom-width: 4px;
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-weight: 600;
+  color: var(--heading);
+  transition: transform 0.06s ease, border-bottom-width 0.06s ease;
+}
+
+.keyboard .toolbar button:active,
+.keyboard .add-form button:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+.keyboard .add-form button.primary {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, #000);
+  color: var(--accent-text);
+}
+
+.keyboard .backlog {
+  background: var(--panel);
+}
+
+.keyboard .backlog {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: row;
+}
+
+.keyboard .backlog li {
+  padding: 9px 12px;
+  counter-increment: row;
+}
+
+/* 행이 flex라 ol 번호가 사라지므로 직접 그린다 (위치 비교·MOVE를 볼 때 순번이 필요하다) */
+.keyboard .backlog li::before {
+  content: counter(row);
+  min-width: 1.6em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 /* 첫 화면 */
 .index {
-  max-width: 1200px;
+  max-width: var(--page-width);
   margin: 0 auto;
   padding: 16px;
   display: grid;

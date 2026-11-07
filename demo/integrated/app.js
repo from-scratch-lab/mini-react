@@ -275,16 +275,16 @@ function PipelineInspector({ commits }) {
         : null,
     ),
     h(ConceptCard, { commit }),
-    h(Stage, { step: '①', title: 'setState → 상태 (hooks 배열)' }, h(HookList, { hooks: commit.hooks })),
+    h(Stage, { area: 'hooks', step: '①', title: 'setState → 상태 (hooks 배열)' }, h(HookList, { hooks: commit.hooks })),
     h(
       Stage,
-      { step: '②', title: '컴포넌트 다시 실행 → 새 가상 트리', note: `가상 노드 ${commit.nodeCount}개` },
+      { area: 'vdom', step: '②', title: '컴포넌트 다시 실행 → 새 가상 트리', note: `가상 노드 ${commit.nodeCount}개` },
       h('pre', { class: 'vdom', 'data-role': 'vdom' }, commit.vdom),
     ),
-    h(Stage, { step: '③', title: 'diff(이전 트리, 새 트리) → 패치 목록' }, h(PatchSummary, { commit })),
+    h(Stage, { area: 'patches', step: '③', title: 'diff(이전 트리, 새 트리) → 패치 목록' }, h(PatchSummary, { commit })),
     h(
       Stage,
-      { step: '④', title: 'patch → 실제 DOM' },
+      { area: 'dom', step: '④', title: 'patch → 실제 DOM' },
       h(
         'p',
         { 'data-role': 'mutations' },
@@ -321,10 +321,10 @@ function PipelineInspector({ commits }) {
   );
 }
 
-function Stage({ step, title, note, children }) {
+function Stage({ area, step, title, note, children }) {
   return h(
     'section',
-    { class: 'stage' },
+    { class: `stage stage-${area}` },
     h('h3', null, h('span', { class: 'step' }, step), ` ${title}`, note ? h('small', null, ` · ${note}`) : null),
     children,
   );

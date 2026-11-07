@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>종합 · 렌더 파이프라인</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
     <link rel="stylesheet" href="../style.css" />
     <script type="module" src="./main.js"></script>
   </head>
@@ -17,8 +18,8 @@
     <header class="page-head">
       <h1>종합 · 상태 변경부터 실제 DOM까지</h1>
       <p>
-        왼쪽 앱을 조작하면 오른쪽에 한 번의 렌더가 거친 네 단계가 나타납니다. Phase 2의 훅이 상태를 바꾸면,
-        Phase 1의 diff가 이전·새 가상 트리를 비교하고 patch가 <b>바뀐 실제 DOM만</b> 고칩니다.
+        아래 <b>키보드</b>(스프린트 백로그 앱)를 조작하면 위 <b>모니터</b>에 렌더 한 번이 거친 네 단계가 나타납니다.
+        Phase 2의 훅이 상태를 바꾸면, Phase 1의 diff가 이전·새 가상 트리를 비교하고 patch가 <b>바뀐 실제 DOM만</b> 고칩니다.
       </p>
       <ol class="flow" aria-label="렌더 파이프라인">
         <li><b>①</b> setState</li>
@@ -38,17 +39,31 @@
     </header>
 
     <main class="integrated">
-      <section class="panel">
-        <div class="panel-head"><h2>스프린트 백로그</h2><span class="badge">FunctionComponent + useState · useMemo · useEffect</span></div>
+      <!-- 모니터: 렌더 한 번의 과정을 보여 주는 화면 -->
+      <section class="monitor" aria-label="렌더 파이프라인">
+        <div class="monitor-bar" aria-hidden="true">
+          <span class="monitor-dots"><i></i><i></i><i></i></span>
+          <span class="monitor-title">render pipeline · 상태가 바뀌면 화면은 이렇게 다시 그려집니다</span>
+        </div>
+        <div id="inspector" class="monitor-screen"></div>
+      </section>
+      <div class="monitor-stand" aria-hidden="true"><span></span></div>
+
+      <!-- 키보드: 직접 조작하는 앱 -->
+      <section class="keyboard" aria-label="스프린트 백로그">
+        <div class="keyboard-head">
+          <h2>스프린트 백로그</h2>
+          <span class="badge">FunctionComponent + useState · useMemo · useEffect</span>
+          <span class="keyboard-hint">여기서 조작하면 위 모니터에 결과가 나타납니다</span>
+        </div>
         <div id="app"></div>
       </section>
-      <aside id="inspector" class="panel" aria-label="렌더 파이프라인"></aside>
     </main>
 
     <section class="basics" aria-labelledby="basics-title">
       <h2 id="basics-title">React의 본질: 기본 개념</h2>
       <p class="basics-lead">
-        왼쪽 앱을 조작하면 오른쪽 "방금 일어난 일" 카드가 아래 개념 중 하나로 이어집니다.
+        아래 키보드(앱)를 조작하면 위 모니터의 "방금 일어난 일" 카드가 이 개념 중 하나로 이어집니다.
         이 페이지의 모든 화면(앱과 파이프라인 패널)도 아래 원리로 그려집니다.
       </p>
 
