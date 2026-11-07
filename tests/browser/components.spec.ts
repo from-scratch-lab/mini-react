@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test('counter, memo, latest handlers and name input preserve existing DOM and focus', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
+  await page.getByRole('tab', { name: /^Phase 2/ }).click();
   const demo = page.locator('#hooks-lab');
   await expect(demo.locator('#counter-value')).toHaveText('0');
   await expect(demo.getByRole('button', { name: '카운터 감소' })).toBeDisabled();
@@ -28,19 +29,16 @@ test('counter, memo, latest handlers and name input preserve existing DOM and fo
 
 test('effect starts one timer, cleans it on stop and restarts without duplicate intervals', async ({ page }) => {
   await page.clock.install(); await page.goto('/'); const demo = page.locator('#hooks-lab');
+  await page.getByRole('tab', { name: /^Phase 2/ }).click();
   await demo.getByRole('button', { name: '자동 증가 시작' }).click();
   await expect(demo.getByRole('button', { name: '자동 증가 중지' })).toHaveAttribute('aria-pressed', 'true');
-  await page.clock.runFor(3000); await expect(demo.locator('#counter-value')).toHaveText('3');
+  await page.getByRole('tab', { name: /^Phase 1/ }).click();
+  await page.clock.runFor(3000);
+  await page.getByRole('tab', { name: /^Phase 2/ }).click();
+  await expect(demo.locator('#counter-value')).toHaveText('3');
   await demo.getByRole('button', { name: '자동 증가 중지' }).click();
   await page.clock.runFor(3000); await expect(demo.locator('#counter-value')).toHaveText('3');
   await demo.getByRole('button', { name: '자동 증가 시작' }).click();
   await page.clock.runFor(1000); await expect(demo.locator('#counter-value')).toHaveText('4');
   await demo.getByRole('button', { name: '자동 증가 중지' }).click();
-});
-
-test('mobile demo stays within viewport and remains interactive', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/');
-  const demo = page.locator('#hooks-lab');
-  await demo.getByRole('button', { name: '카운터 증가' }).click(); await expect(demo.locator('#counter-value')).toHaveText('1');
-  expect(await demo.evaluate(element => element.getBoundingClientRect().right <= window.innerWidth)).toBe(true);
 });

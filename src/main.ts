@@ -6,20 +6,63 @@ import { History } from './history';
 import { parseEditorHTML, serializeTree } from './editor';
 import { initialHTML, previewStyles } from './sample';
 import { mountComponentsDemo } from './components-demo';
+import { bindPhaseTabs } from './phase-tabs';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <header class="topbar"><a class="brand" href="/">m<span>·</span>dom</a><span class="phase">MINI REACT LAB <span>/</span> PHASE 01 + 02</span><span class="live-dot">Vanilla TypeScript</span></header>
-  <main>
-    <section id="hooks-lab" aria-label="Component State Hooks 실험"></section>
-    <div class="intro"><div><p class="overline">THE DOM PLAYGROUND</p><h1>변화를 작게, 이해는 깊게.</h1><p class="subtitle">HTML을 고치고, 두 트리의 차이만 실제 화면에 반영해 보세요.</p></div><span class="intro-mark" aria-hidden="true">&lt;/&gt;</span></div>
-    <div class="toolbar"><div class="history-controls"><button id="back" aria-label="뒤로가기">←</button><button id="forward" aria-label="앞으로가기">→</button><span>HISTORY <strong id="history-position"></strong></span></div><div class="patch-controls"><span id="edit-status">확정 상태와 동기화됨</span><button id="patch">Patch 적용 <span>↗</span></button></div></div>
-    <div class="workspace">
-      <section class="panel actual-panel"><div class="panel-heading"><div><span class="panel-number">01</span><h2>실제 영역</h2></div><span class="badge">COMMITTED</span></div><p class="panel-description">Patch로 확정된 DOM · 이력을 따라 이동합니다.</p><div class="canvas"><div id="actual-host"></div></div></section>
-      <section class="panel test-panel"><div class="panel-heading"><div><span class="panel-number">02</span><h2>테스트 영역</h2></div><span class="badge draft">DRAFT</span></div><p class="panel-description">자유롭게 실험하세요. 적용 전에는 실제 영역이 유지됩니다.</p><div class="editor-heading"><label for="html-editor">HTML EDITOR</label><span>실시간 미리보기</span></div><textarea id="html-editor" spellcheck="false" aria-label="HTML 편집기"></textarea><div class="preview-heading">PREVIEW <span>입력 요소도 직접 조작할 수 있어요</span></div><div class="canvas preview-canvas"><div id="preview-host"></div></div></section>
+  <aside class="sidebar">
+    <h1>Mini React</h1>
+    <div class="phase-tabs" role="tablist" aria-label="실험 단계" aria-orientation="vertical">
+      <button id="phase-1" type="button" role="tab" aria-selected="true" aria-controls="dom-lab">
+        <span>Phase 1</span>
+        <span class="tab-detail">DOM · Diff · Patch</span>
+      </button>
+      <button id="phase-2" type="button" role="tab" aria-selected="false" aria-controls="hooks-lab" tabindex="-1">
+        <span>Phase 2</span>
+        <span class="tab-detail">Component · Hooks</span>
+      </button>
     </div>
-    <div class="activity"><span class="activity-dot"></span><p id="message" role="status" aria-live="polite">초기 DOM에서 Virtual DOM을 생성했습니다.</p><span id="operation-count">0 operations</span></div>
-    <footer><span>DOM → VIRTUAL DOM → DIFF → PATCH</span><span>프레임워크 없이, 원리부터.</span></footer>
+  </aside>
+  <main class="workspace">
+    <section id="dom-lab" role="tabpanel" aria-labelledby="phase-1">
+      <header class="workspace-heading">
+        <div>
+          <h2>DOM 편집기</h2>
+          <p>Patch는 HTML에서 바뀐 부분만 실제 DOM에 반영합니다.</p>
+        </div>
+        <div class="history-controls" role="group" aria-label="변경 이력">
+          <span class="history-label">이력 <span id="history-position"></span></span>
+          <button id="back" type="button" aria-label="뒤로가기">←</button>
+          <button id="forward" type="button" aria-label="앞으로가기">→</button>
+        </div>
+      </header>
+      <div class="dom-workspace">
+        <section class="editor-panel">
+          <label class="panel-title" for="html-editor">HTML 편집기</label>
+          <textarea id="html-editor" spellcheck="false"></textarea>
+          <div class="editor-actions">
+            <div class="activity" role="status">
+              <p id="message">초기 DOM을 불러왔습니다.</p>
+              <span id="operation-count">작업 0개</span>
+            </div>
+            <button id="patch" type="button">Patch 적용</button>
+          </div>
+        </section>
+        <div class="note-panels">
+          <section class="note-panel">
+            <h3 id="preview-title" class="panel-title">미리보기</h3>
+            <div class="canvas" role="region" aria-labelledby="preview-title" tabindex="0"><div id="preview-host"></div></div>
+          </section>
+          <section class="note-panel">
+            <h3 id="actual-title" class="panel-title">실제 DOM</h3>
+            <div class="canvas" role="region" aria-labelledby="actual-title" tabindex="0"><div id="actual-host"></div></div>
+          </section>
+        </div>
+      </div>
+    </section>
+    <section id="hooks-lab" role="tabpanel" aria-labelledby="phase-2" hidden></section>
   </main>`;
+
+bindPhaseTabs(document.querySelector('.phase-tabs')!);
 const editor = document.querySelector<HTMLTextAreaElement>('#html-editor')!;
 const back = document.querySelector<HTMLButtonElement>('#back')!;
 const forward = document.querySelector<HTMLButtonElement>('#forward')!;
@@ -46,19 +89,21 @@ let renderedSource = editor.value;
 function updateControls(): void {
   back.disabled = !history.canBack; forward.disabled = !history.canForward;
   document.querySelector('#history-position')!.textContent = `${history.index + 1} / ${history.length}`;
-  const dirty = diff(history.current, readDOM(preview)).length > 0;
-  document.querySelector('#edit-status')!.textContent = dirty ? '적용되지 않은 변경 사항' : '확정 상태와 동기화됨';
 }
 function report(message: string, count: number): void {
   document.querySelector('#message')!.textContent = message;
-  document.querySelector('#operation-count')!.textContent = `${count} operation${count === 1 ? '' : 's'}`;
+  document.querySelector('#operation-count')!.textContent = `작업 ${count}개`;
+}
+function reportDraft(tree: VTree, removed = 0): void {
+  const pending = diff(history.current, tree).length;
+  const message = pending ? '적용 대기 중' : '적용할 변경 사항이 없습니다.';
+  report(removed ? `${message} · 지원하지 않는 요소/속성 ${removed}개 제외` : message, pending);
 }
 function updatePreviewFromEditor(): void {
   const result = parseEditorHTML(editor.value);
   preview.replaceChildren(result.content);
   renderedSource = editor.value;
-  updateControls();
-  report(result.removed ? `미리보기 갱신 · 지원하지 않는 요소/속성 ${result.removed}개 제외` : '미리보기를 갱신했습니다. Patch를 누르면 실제 영역에 반영됩니다.', 0);
+  reportDraft(readDOM(preview), result.removed);
 }
 function syncEditor(tree: VTree): void { editor.value = serializeTree(tree); renderedSource = editor.value; }
 function applyDraft(): void {
@@ -69,8 +114,10 @@ function applyDraft(): void {
     patch(actual, operations);
     const saved = history.commit(next);
     syncEditor(next); updateControls();
-    report(saved ? '변경된 부분을 실제 DOM에 적용하고 이력을 저장했습니다.' : '변경 사항이 없습니다. 기존 이력을 유지합니다.', operations.length);
-  } catch (error) { report(`적용 실패: ${error instanceof Error ? error.message : String(error)}`, 0); }
+    report(saved ? '실제 DOM에 적용했습니다.' : '적용할 변경 사항이 없습니다.', operations.length);
+  } catch (error) {
+    report(`적용 실패: ${error instanceof Error ? error.message : String(error)}`, 0);
+  }
 }
 function navigateHistory(index: number): void {
   const target = history.at(index);
@@ -82,7 +129,13 @@ function navigateHistory(index: number): void {
 }
 editor.addEventListener('input', updatePreviewFromEditor);
 // Keep the editor in sync with live values without replacing focused preview controls.
-for (const name of ['input', 'change']) preview.addEventListener(name, () => { syncEditor(readDOM(preview)); updateControls(); });
+for (const name of ['input', 'change']) {
+  preview.addEventListener(name, () => {
+    const tree = readDOM(preview);
+    syncEditor(tree);
+    reportDraft(tree);
+  });
+}
 patchButton.addEventListener('click', applyDraft);
 back.addEventListener('click', () => { if (history.canBack) navigateHistory(history.index - 1); });
 forward.addEventListener('click', () => { if (history.canForward) navigateHistory(history.index + 1); });

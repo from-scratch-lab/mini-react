@@ -1,0 +1,27 @@
+:root {
+  --color-shell: #2B1830;
+  --color-background: #1A1D21;
+  --color-surface: #22252A;
+  --color-editor: #15171A;
+  --color-text: #F0EEF2;
+  --color-text-muted: #B9B5C0;
+  --color-line: #373941;
+  --color-control-line: #66616D;
+  --color-accent: #D8B4E6;
+  --color-accent-hover: #E5CAEF;
+  --color-tab-hover: color-mix(in srgb, var(--color-accent) 10%, var(--color-shell));
+  --color-tab-selected: color-mix(in srgb, var(--color-accent) 24%, var(--color-shell));
+
+  --font-body: system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-code: ui-monospace, monospace;
+  --font-weight-body: 400;
+  --font-weight-heading: 700;
+  --font-size-small: .875rem;
+  --font-size-body: 1rem;
+  --font-size-heading: 1.25rem;
+  --font-size-display: 2rem;
+
+  --space-1: .5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+}

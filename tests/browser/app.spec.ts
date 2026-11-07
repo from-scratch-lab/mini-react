@@ -14,17 +14,20 @@ test('initial DOM conversion, isolated preview, text patch and preserved DOM ide
   await expect(page.locator('#html-editor')).toHaveValue(initial); await expect(page.locator('#history-position')).toHaveText('1 / 1');
   await expect(page.getByRole('button', { name: '뒤로가기' })).toBeDisabled(); await expect(page.getByRole('button', { name: '앞으로가기' })).toBeDisabled();
   await actual(page).evaluate(element => {
-    const paragraph = element.querySelector('article > p:not(.eyebrow)')!;
+    const paragraph = element.querySelector('article > p')!;
     (window as any).identities = { article: element.firstChild, heading: element.querySelector('h2'), paragraph, text: paragraph.firstChild, strong: paragraph.querySelector('strong'), input: element.querySelector('input') };
   });
-  const changed = initial.replace('이 문단을 수정하고', '문단 하나를 바꾸고');
+  const changed = initial.replace('오늘은 ', '이번에는 ');
   await edit(page, changed); expect(await actual(page).innerHTML()).toBe(initial); expect(await preview(page).innerHTML()).toBe(changed);
+  await expect(page.locator('#message')).toHaveText('적용 대기 중');
+  await expect(page.locator('#operation-count')).toHaveText('작업 1개');
   await page.getByRole('button', { name: 'Patch 적용' }).click(); await synced(page, changed);
+  await expect(page.locator('#message')).toHaveText('실제 DOM에 적용했습니다.');
   expect(await actual(page).evaluate(element => {
-    const saved = (window as any).identities; const paragraph = element.querySelector('article > p:not(.eyebrow)')!;
+    const saved = (window as any).identities; const paragraph = element.querySelector('article > p')!;
     return saved.article === element.firstChild && saved.heading === element.querySelector('h2') && saved.paragraph === paragraph && saved.text === paragraph.firstChild && saved.strong === paragraph.querySelector('strong') && saved.input === element.querySelector('input');
   })).toBe(true);
-  await expect(page.locator('#operation-count')).toHaveText('1 operation'); expect(errors).toEqual([]);
+  await expect(page.locator('#operation-count')).toHaveText('작업 1개'); expect(errors).toEqual([]);
 });
 test('history back, forward, discard draft, no-op future preservation and branching', async ({ page }) => {
   await apply(page, '<p>A</p>'); await apply(page, '<p>B</p>'); await apply(page, '<p>C</p>');
@@ -52,6 +55,7 @@ test('live controls are read from preview DOM and restored through history', asy
   await apply(page, '<input aria-label="note" value="original"><input aria-label="check" type="checkbox" checked><textarea aria-label="memo">original</textarea>');
   await preview(page).getByRole('textbox', { name: 'note', exact: true }).fill('live value');
   await preview(page).getByRole('checkbox').uncheck(); await preview(page).getByRole('textbox', { name: 'memo', exact: true }).fill('live\ntext');
+  await expect(page.locator('#message')).toHaveText('적용 대기 중');
   await expect(actual(page).getByRole('textbox', { name: 'note', exact: true })).toHaveValue('original');
   await page.getByRole('button', { name: 'Patch 적용' }).click();
   await expect(actual(page).getByRole('textbox', { name: 'note', exact: true })).toHaveValue('live value'); await expect(actual(page).getByRole('checkbox')).not.toBeChecked(); await expect(actual(page).locator('textarea')).toHaveValue('live\ntext');
@@ -81,6 +85,8 @@ test('no-change patch causes no actual DOM mutations and creates no history', as
     (window as any).observer.observe(element, { childList: true, subtree: true, attributes: true, characterData: true });
   });
   await page.getByRole('button', { name: 'Patch 적용' }).click(); await expect(page.locator('#history-position')).toHaveText('1 / 1');
+  await expect(page.locator('#message')).toHaveText('적용할 변경 사항이 없습니다.');
+  await expect(page.locator('#operation-count')).toHaveText('작업 0개');
   expect(await page.evaluate(() => (window as any).mutations.length)).toBe(0);
 });
 
@@ -92,7 +98,7 @@ test('typing in an initially empty textarea patches its live value and keeps its
   await expect(actual(page).locator('textarea')).toHaveValue('typed from empty');
   await expect(page.locator('#html-editor')).toHaveValue('<textarea aria-label="empty">typed from empty</textarea><p>keep</p>');
   expect(await actual(page).evaluate(element => element.firstChild === (window as any).emptyTextarea && element.lastChild === (window as any).keptParagraph)).toBe(true);
-  await expect(page.locator('#operation-count')).toHaveText('1 operation');
+  await expect(page.locator('#operation-count')).toHaveText('작업 1개');
   await page.getByRole('button', { name: '뒤로가기' }).click();
   await expect(actual(page).locator('textarea')).toHaveValue(''); await expect(preview(page).locator('textarea')).toHaveValue('');
   await expect(page.locator('#html-editor')).toHaveValue('<textarea aria-label="empty"></textarea><p>keep</p>');
@@ -130,6 +136,6 @@ test('leading textarea newlines survive unrelated HTML edits and history navigat
   await expect(actual(page).locator('textarea')).toHaveValue('\n\nhello');
   await expect(preview(page).locator('textarea')).toHaveValue('\n\nhello');
   await page.getByRole('button', { name: 'Patch 적용' }).click();
-  await expect(page.locator('#operation-count')).toHaveText('0 operations');
+  await expect(page.locator('#operation-count')).toHaveText('작업 0개');
   await expect(page.locator('#history-position')).toHaveText('4 / 4');
 });

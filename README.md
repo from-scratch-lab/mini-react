@@ -4,16 +4,16 @@ Vanilla TypeScript + Vite로 구현한 Mini React 실험 페이지입니다. Pha
 
 ## Phase 2 · Component, State, Hooks
 
-페이지 상단에서 카운터 증가·감소·초기화, 자동 증가 시작·중지, 이름 입력을 실행할 수 있습니다. 아래에는 기존 Phase 1 실험이 그대로 있습니다.
+왼쪽의 Phase 2 탭에서 카운터 증가·감소·초기화, 자동 증가 시작·중지, 이름 입력을 실행할 수 있습니다. Phase 1 탭에서는 왼쪽 HTML 편집기와 오른쪽 미리보기·실제 DOM을 나란히 확인할 수 있습니다. 탭을 이동해도 편집 내용과 이력, 카운터 상태는 유지됩니다.
 
 | 파일 | 역할 |
 | --- | --- |
 | `src/core/element.ts` | `h()`로 요소/함수 컴포넌트 표현 생성, stateless 자식 실행, Phase 1 VTree 및 이벤트 바인딩 생성 |
 | `src/core/component.ts` | `FunctionComponent`의 `hooks`, `mount()`, `update()`, `unmount()`와 `useState`, `useEffect`, `useMemo` |
 | `src/components-demo.ts` | 루트 App과 props만 사용하는 Counter/Summary 데모 |
-| `src/main.ts`, `src/style.css`, `index.html` | Phase 1과 Phase 2 통합 화면, 반응형 스타일, 제목 |
+| `src/main.ts`, `src/phase-tabs.ts`, `src/style.css` | Phase 탭, 키보드 탐색, 데스크톱 작업공간 |
 | `tests/components.test.ts` | 상태 보존, Hook 의존성·cleanup·제약, 이벤트, DOM 동일성 테스트 |
-| `tests/browser/components.spec.ts` | 실제 클릭·입력·포커스 보존, 타이머 정리, 모바일 테스트 |
+| `tests/browser/components.spec.ts`, `tests/browser/workspace.spec.ts` | 실제 클릭·입력·포커스 보존, 타이머 정리, 탭 전환과 데스크톱 배치 |
 
 ### 사용 예시
 
