@@ -40,7 +40,16 @@ const MAX_COMMITS = 60;
  */
 function createBacklogApp(track, getRoot) {
   return function BacklogApp() {
-    const [items, setItems] = useState(INITIAL_ITEMS);
+    // 목록은 기록(past·present·future)째 상태로 둔다. 상태를 바꾸지 않고 새 배열을 만들어 왔기 때문에(불변),
+    // 이전 배열을 그대로 쌓아 두기만 하면 뒤로가기·앞으로가기가 된다.
+    const [history, setHistory] = useState(() => ({ past: [], present: INITIAL_ITEMS, future: [] }));
+    const items = history.present;
+    // 목록을 바꾸는 setState. 실제로 바뀌면 이전 목록을 past에 쌓고, 새 갈래가 생겼으니 future는 비운다.
+    const setItems = (updater) =>
+      setHistory((hist) => {
+        const next = updater(hist.present);
+        return next === hist.present ? hist : { past: [...hist.past, hist.present], present: next, future: [] };
+      });
     const [draft, setDraft] = useState('');
     const [editing, setEditing] = useState(null); // { id, text } | null
     const [useKeys, setUseKeys] = useState(true);
@@ -55,6 +64,44 @@ function createBacklogApp(track, getRoot) {
     useEffect(() => {
       if (editingId != null) getRoot().querySelector('.title-input')?.focus();
     }, [editingId]);
+
+    const undo = () => {
+      setHistory((hist) =>
+        hist.past.length === 0
+          ? hist
+          : { past: hist.past.slice(0, -1), present: hist.past[hist.past.length - 1], future: [hist.present, ...hist.future] },
+      );
+      setEditing(null);
+    };
+    const redo = () => {
+      setHistory((hist) =>
+        hist.future.length === 0
+          ? hist
+          : { past: [...hist.past, hist.present], present: hist.future[0], future: hist.future.slice(1) },
+      );
+      setEditing(null);
+    };
+
+    // 단축키 Ctrl+Z / Ctrl+Shift+Z. 문서에 리스너를 다는 것은 부수 효과라 effect에서 하고, 정리 함수에서 뗀다.
+    // 처음 한 번만 달면 되므로 deps는 []. 핸들러가 함수형 업데이트만 써서 낡은 상태를 붙잡지 않는다.
+    useEffect(() => {
+      const doc = getRoot().ownerDocument;
+      const onKeyDown = (event) => {
+        if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z' || event.isComposing) return;
+        const target = event.target;
+        if (target && (target.localName === 'input' || target.localName === 'textarea' || target.isContentEditable)) return;
+        event.preventDefault();
+        if (event.shiftKey) {
+          track('앞으로가기 (Ctrl+Shift+Z)', 'undo');
+          redo();
+        } else {
+          track('뒤로가기 (Ctrl+Z)', 'undo');
+          undo();
+        }
+      };
+      doc.addEventListener('keydown', onKeyDown);
+      return () => doc.removeEventListener('keydown', onKeyDown);
+    }, []);
 
     const update = (id, change) => setItems((list) => list.map((item) => (item.id === id ? { ...item, ...change(item) } : item)));
     const move = (id, delta) =>
@@ -135,6 +182,24 @@ function createBacklogApp(track, getRoot) {
           setItems((list) => (list.length ? [{ ...list[0], points: list[0].points + 1 }, ...list.slice(1)] : list));
         }
       },
+      undo() {
+        track('뒤로가기', 'undo');
+        undo();
+      },
+      redo() {
+        track('앞으로가기', 'undo');
+        redo();
+      },
+      reset() {
+        track('초기화', 'reset');
+        // 처음 목록으로 돌아가는 것도 하나의 변경으로 기록해, 초기화도 뒤로가기로 되돌릴 수 있게 한다.
+        setHistory((hist) =>
+          hist.present === INITIAL_ITEMS ? hist : { past: [...hist.past, hist.present], present: INITIAL_ITEMS, future: [] },
+        );
+        setEditing(null);
+        setDraft('');
+        setUseKeys(true);
+      },
       toggleKeys() {
         track(useKeys ? 'key 끄기 (위치로 비교)' : 'key 켜기', 'keyToggle');
         setUseKeys((v) => !v);
@@ -148,7 +213,7 @@ function createBacklogApp(track, getRoot) {
     return h(
       'div',
       { class: 'backlog-app' },
-      h(Toolbar, { useKeys, handlers }),
+      h(Toolbar, { useKeys, handlers, canUndo: history.past.length > 0, canRedo: history.future.length > 0 }),
       h(AddForm, { draft, handlers }),
       h(BacklogList, { items, useKeys, editing, handlers }),
       h(Summary, { count: items.length, total, priorityCount }),
@@ -161,11 +226,19 @@ function keepIfSameOrder(list, next) {
   return next.every((item, i) => item === list[i]) ? list : next;
 }
 
-function Toolbar({ useKeys, handlers }) {
-  const button = (action, label, onClick) => h('button', { type: 'button', 'data-action': action, onClick }, label);
+function Toolbar({ useKeys, handlers, canUndo, canRedo }) {
+  const button = (action, label, onClick, extra = {}) =>
+    h('button', { type: 'button', 'data-action': action, onClick, ...extra }, label);
   return h(
     'div',
     { class: 'toolbar' },
+    h(
+      'div',
+      { class: 'history-keys', role: 'group', 'aria-label': '기록' },
+      button('undo', '← 뒤로가기', handlers.undo, { disabled: !canUndo, title: 'Ctrl+Z' }),
+      button('redo', '앞으로가기 →', handlers.redo, { disabled: !canRedo, title: 'Ctrl+Shift+Z' }),
+      button('reset', '초기화', handlers.reset),
+    ),
     button('rotate', '맨 아래 → 맨 위', handlers.rotate),
     button('reverse', '순서 뒤집기', handlers.reverse),
     button('sort', '점수순 정렬', handlers.sort),
@@ -402,12 +475,26 @@ function withoutHandlers(p) {
   };
 }
 
+function isHistory(value) {
+  return value !== null && typeof value === 'object' && Array.isArray(value.past) && 'present' in value && Array.isArray(value.future);
+}
+
+// 훅 값에서 목록을 꺼낸다 (기록 상태면 present)
+function itemsOf(value) {
+  return isHistory(value) ? value.present : value;
+}
+
 function describeHook(hook) {
   const short = (value, max = 70) => {
     const text = JSON.stringify(value) ?? String(value);
     return text.length > max ? `${text.slice(0, max)}…` : text;
   };
-  if (hook.kind === 'useState') return short(hook.value);
+  const value = hook.value;
+  // 기록 상태({ past, present, future })는 지금 목록과 쌓인 개수로 보여 준다
+  if (hook.kind === 'useState' && isHistory(value)) {
+    return `present ${short(value.present, 56)} · past ${value.past.length}개 · future ${value.future.length}개`;
+  }
+  if (hook.kind === 'useState') return short(value);
   if (hook.kind === 'useMemo') return `${short(hook.value)} · deps ${short(hook.deps, 30)}`;
   return `deps ${short(hook.deps, 40)}`;
 }
@@ -479,7 +566,7 @@ export function startIntegrated({ root, inspector }) {
     // 설명할 개념: 첫 렌더면 mount, 아니면 마지막으로 한 동작의 개념. 재정렬이면 이번 LIS 계산에 쓸 위치 정보도 남긴다.
     const conceptKey = commits.length === 0 ? 'mount' : concepts.at(-1) ?? null;
     const concept = { key: conceptKey };
-    if (conceptKey === 'reorder') concept.reorder = reorderInfo(previousHooks[0]?.value, component.hooks[0]?.value);
+    if (conceptKey === 'reorder') concept.reorder = reorderInfo(itemsOf(previousHooks[0]?.value), itemsOf(component.hooks[0]?.value));
     labels = [];
     concepts = [];
     flash(records);

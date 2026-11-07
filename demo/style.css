@@ -1152,6 +1152,22 @@ button.ghost {
   font-size: 0.85rem;
 }
 
+/* 뒤로가기·앞으로가기·초기화 묶음 */
+.history-keys {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-right: 12px;
+  margin-right: 4px;
+  border-right: 1px solid var(--line);
+}
+
+.keyboard .toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* 툴바 버튼을 키캡처럼 */
 .keyboard .toolbar button,
 .keyboard .add-form button {
