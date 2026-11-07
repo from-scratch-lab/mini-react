@@ -112,6 +112,27 @@ export const CONCEPTS = {
     ],
     react: 'React의 controlled input도 같은 원리이고, 값이 같으면 DOM value를 다시 쓰지 않습니다.',
   },
+  undo: {
+    title: '시간 여행: 이전 상태로 되돌리기',
+    basics: 'ui-function',
+    body: (c) => [
+      '목록을 바꿀 때 기존 배열을 고치지 않고 새 배열을 만들어 왔습니다(불변). 그래서 이전 배열을 그대로 쌓아 두기만 하면 그때 상태로 돌아갈 수 있습니다. 뒤로가기는 past의 마지막을 present로, 앞으로가기는 future의 첫 번째를 present로 옮깁니다.',
+      `화면 = f(상태)이므로 옛 상태로 다시 렌더하면 diff가 지금 화면과 비교해 필요한 만큼만 되돌립니다. 이번에는 패치 ${c.patches.length}개였습니다.`,
+      '배칭은 렌더만 묶습니다. "×3" 버튼은 상태를 3번 바꿨으므로 뒤로가기도 3번 해야 처음으로 돌아갑니다.',
+    ],
+    react:
+      'React 자체에는 되돌리기 기능이 없습니다. 상태를 불변으로 다루면 이처럼 쉽게 만들 수 있고, useReducer로 past·present·future를 관리하거나 Redux DevTools처럼 상태 기록을 오가는 "시간 여행 디버깅"도 같은 원리입니다.',
+  },
+  reset: {
+    title: '초기화: 처음 상태로 다시 렌더',
+    basics: 'ui-function',
+    body: (c) => [
+      '목록·입력칸·편집·key 설정을 처음 값으로 돌렸습니다. 화면을 지우고 새로 그리지 않고, 처음 상태로 다시 렌더해 diff가 지금 화면과 다른 곳만 고쳤습니다.',
+      `이번 패치는 ${c.patches.length}개입니다. 초기화도 기록에 남으므로 뒤로가기로 되돌릴 수 있습니다.`,
+    ],
+    react:
+      'React에서 상태를 "초기화"하는 또 다른 방법은 컴포넌트의 key를 바꾸는 것입니다. 그러면 컴포넌트가 새로 마운트되어 모든 상태가 처음 값으로 돌아갑니다.',
+  },
   unknown: {
     title: '다시 렌더',
     basics: 'render-commit',

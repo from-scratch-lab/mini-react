@@ -13,6 +13,11 @@ const rows = () => $$('[data-role="backlog"] > li');
 const titles = () => rows().map((li) => $('.title, .title-input', li).textContent || $('.title-input', li)?.value);
 const commitTitle = () => $('[data-role="commit-title"]', inspector).textContent;
 const patchTypes = () => $$('[data-role="patch-list"] li', inspector).map((li) => $('.op', li).textContent);
+// 뒤로가기·앞으로가기 버튼의 활성 상태(disabled) 변경을 뺀 패치. 앱 목록이 어떻게 바뀌었는지만 본다.
+const listPatchTypes = () =>
+  $$('[data-role="patch-list"] li', inspector)
+    .filter((li) => !li.textContent.includes('disabled'))
+    .map((li) => $('.op', li).textContent);
 
 async function click(element) {
   element.click();
@@ -43,7 +48,7 @@ describe('종합 데모: 렌더 파이프라인', () => {
     await click(action('rotate'));
     expect(rows()[0]).toBe(before[4]);
     expect(rows()[1]).toBe(before[0]);
-    expect(patchTypes()).toEqual(['MOVE']);
+    expect(listPatchTypes()).toEqual(['MOVE']);
     expect(commitTitle()).toContain('맨 아래 → 맨 위');
   });
 
@@ -79,7 +84,7 @@ describe('종합 데모: 렌더 파이프라인', () => {
 
   it('점수 +1은 항목 점수와 합계(useMemo) 텍스트만 바꾼다', async () => {
     await click(rowAction(0, 'points'));
-    expect(patchTypes()).toEqual(['TEXT', 'TEXT']);
+    expect(listPatchTypes()).toEqual(['TEXT', 'TEXT']);
     expect($('[data-role="summary"]').textContent).toContain('22점');
   });
 
@@ -119,6 +124,7 @@ describe('종합 데모: 렌더 파이프라인', () => {
 
   it('새 가상 트리와 실제 DOM 변경 기록 수(MutationObserver)를 보여 준다', async () => {
     await click(action('rotate'));
+    await click(action('rotate')); // 첫 변경 때는 뒤로가기 버튼이 활성화되며 disabled 기록이 더해지므로 두 번째를 센다
     expect($('[data-role="vdom"]', inspector).textContent).toContain('<ol');
     // MOVE 하나 = 빼기 + 넣기 기록 2건
     expect($('[data-role="mutations"]', inspector).textContent).toMatch(/변경 기록 2건/);
@@ -252,6 +258,94 @@ describe('종합 데모: 방금 일어난 일 설명 카드', () => {
     await click(action('rotate'));
     await click($('[data-commit="1"]', inspector));
     expect(conceptTitle()).toContain('첫 렌더');
+  });
+});
+
+describe('종합 데모: 뒤로가기·앞으로가기·초기화', () => {
+  const points = (i) => $('.points', rows()[i]).textContent;
+  const pressKey = (init, target = document.body) =>
+    target.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }));
+
+  it('처음에는 뒤로가기·앞으로가기가 비활성이다', () => {
+    expect(action('undo').disabled).toBe(true);
+    expect(action('redo').disabled).toBe(true);
+  });
+
+  it('뒤로가기는 직전 목록으로 돌아가며, diff는 역방향 MOVE 하나만 만든다 (li 재사용)', async () => {
+    const before = rows();
+    await click(action('rotate'));
+    await click(action('undo'));
+    expect(rows()).toEqual(before);
+    expect(listPatchTypes()).toEqual(['MOVE']);
+    expect(commitTitle()).toContain('뒤로가기');
+    expect($('[data-role="concept"] h3', inspector).textContent).toContain('시간 여행');
+  });
+
+  it('앞으로가기는 되돌린 변경을 다시 적용한다', async () => {
+    await click(rowAction(0, 'points'));
+    await click(action('undo'));
+    expect(points(0)).toBe('3점');
+    expect(action('redo').disabled).toBe(false);
+    await click(action('redo'));
+    expect(points(0)).toBe('4점');
+    expect(action('redo').disabled).toBe(true);
+  });
+
+  it('되돌린 뒤 새 동작을 하면 앞으로가기 기록은 사라진다', async () => {
+    await click(rowAction(0, 'points'));
+    await click(action('undo'));
+    await click(rowAction(1, 'points'));
+    expect(action('redo').disabled).toBe(true);
+  });
+
+  it('배칭은 렌더만 묶는다: ×3 뒤에는 상태 변경 3번이 기록되어 뒤로가기 3번으로 원래대로', async () => {
+    await click(action('batch'));
+    expect(points(0)).toBe('6점');
+    await click(action('undo'));
+    expect(points(0)).toBe('5점');
+    await click(action('undo'));
+    await click(action('undo'));
+    expect(points(0)).toBe('3점');
+    expect(action('undo').disabled).toBe(true);
+  });
+
+  it('초기화는 처음 목록으로 돌아가고, 초기화도 뒤로가기로 되돌릴 수 있다', async () => {
+    await click(action('rotate'));
+    await click(rowAction(0, 'remove'));
+    await click(action('reset'));
+    expect(titles()).toEqual(['Virtual DOM 구조 설계', 'Diff 5가지 경우', 'key + LIS 재정렬', 'useState 배칭', 'useEffect 정리 함수']);
+    expect($('[data-role="concept"] h3', inspector).textContent).toContain('초기화');
+    await click(action('undo'));
+    expect(rows()).toHaveLength(4);
+  });
+
+  it('이미 처음 상태면 초기화해도 렌더하지 않는다', async () => {
+    const before = commitTitle();
+    await click(action('reset'));
+    expect(commitTitle()).toBe(before);
+  });
+
+  it('Ctrl+Z / Ctrl+Shift+Z로도 뒤로·앞으로 간다 (입력칸에서는 글자 되돌리기를 방해하지 않는다)', async () => {
+    document.body.appendChild(root);
+    await click(rowAction(0, 'points'));
+    pressKey({ key: 'z', ctrlKey: true });
+    await flushUpdates();
+    expect(points(0)).toBe('3점');
+    pressKey({ key: 'Z', ctrlKey: true, shiftKey: true });
+    await flushUpdates();
+    expect(points(0)).toBe('4점');
+
+    const input = $('input[name="title"]');
+    pressKey({ key: 'z', ctrlKey: true }, input);
+    await flushUpdates();
+    expect(points(0)).toBe('4점');
+  });
+
+  it('unmount하면 단축키 리스너도 떼어 낸다 (useEffect 정리 함수)', async () => {
+    await click(rowAction(0, 'points'));
+    app.unmount();
+    expect(() => pressKey({ key: 'z', ctrlKey: true })).not.toThrow();
+    app = { unmount() {} };
   });
 });
 
