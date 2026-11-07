@@ -34,15 +34,42 @@ button, input, textarea { color: inherit; font: inherit; }
   padding: .75rem .75rem .75rem 0;
 }
 
+#app:has(#phase-navigation[hidden]) { grid-template-columns: 3.5rem minmax(0, 1fr); }
+
 .sidebar {
   padding: var(--space-3) var(--space-2);
 }
-.sidebar h1 { padding-inline: .75rem; }
-.phase-tabs {
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding-inline-start: .75rem;
+}
+#sidebar-toggle {
   display: grid;
+  place-items: center;
+  width: 2.25rem;
+  flex: none;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+#sidebar-toggle:hover { background: var(--color-tab-hover); }
+.sidebar:has(#phase-navigation[hidden]) { padding-inline: var(--space-1); }
+.sidebar:has(#phase-navigation[hidden]) .sidebar-header {
+  justify-content: center;
+  padding-inline-start: 0;
+}
+.sidebar:has(#phase-navigation[hidden]) h1 {
+  position: absolute;
+  clip-path: inset(50%);
+}
+.phase-tabs {
   gap: .25rem;
   margin-top: var(--space-3);
 }
+.phase-tabs:not([hidden]) { display: grid; }
 .phase-tabs button {
   display: grid;
   gap: .125rem;

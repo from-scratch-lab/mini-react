@@ -10,8 +10,16 @@ import { bindPhaseTabs } from './phase-tabs';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <aside class="sidebar">
-    <h1>Mini React</h1>
-    <div class="phase-tabs" role="tablist" aria-label="실험 단계" aria-orientation="vertical">
+    <div class="sidebar-header">
+      <h1>Mini React</h1>
+      <button id="sidebar-toggle" type="button" aria-label="사이드바" aria-expanded="true" aria-controls="phase-navigation" title="사이드바 접기">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="2"/>
+          <path d="M9 4v16"/>
+        </svg>
+      </button>
+    </div>
+    <div id="phase-navigation" class="phase-tabs" role="tablist" aria-label="실험 단계" aria-orientation="vertical">
       <button id="phase-1" type="button" role="tab" aria-selected="true" aria-controls="dom-lab">
         <span>Phase 1</span>
         <span class="tab-detail">DOM · Diff · Patch</span>
@@ -62,7 +70,14 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <section id="hooks-lab" role="tabpanel" aria-labelledby="phase-2" hidden></section>
   </main>`;
 
-bindPhaseTabs(document.querySelector('.phase-tabs')!);
+const phaseNavigation = document.querySelector<HTMLElement>('#phase-navigation')!;
+const sidebarToggle = document.querySelector<HTMLButtonElement>('#sidebar-toggle')!;
+bindPhaseTabs(phaseNavigation);
+sidebarToggle.addEventListener('click', () => {
+  phaseNavigation.hidden = !phaseNavigation.hidden;
+  sidebarToggle.setAttribute('aria-expanded', String(!phaseNavigation.hidden));
+  sidebarToggle.title = phaseNavigation.hidden ? '사이드바 열기' : '사이드바 접기';
+});
 const editor = document.querySelector<HTMLTextAreaElement>('#html-editor')!;
 const back = document.querySelector<HTMLButtonElement>('#back')!;
 const forward = document.querySelector<HTMLButtonElement>('#forward')!;

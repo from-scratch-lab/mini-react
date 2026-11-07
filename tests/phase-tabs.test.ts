@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { bindPhaseTabs } from '../src/phase-tabs';
 
 let phase1: HTMLButtonElement;
@@ -6,7 +6,7 @@ let phase2: HTMLButtonElement;
 let dom: HTMLElement;
 let hooks: HTMLElement;
 
-beforeEach(() => {
+function renderTabs(): void {
   document.body.innerHTML = `
     <div role="tablist">
       <button role="tab" aria-controls="dom" aria-selected="true">Phase 1</button>
@@ -19,9 +19,17 @@ beforeEach(() => {
   dom = document.querySelector('#dom')!;
   hooks = document.querySelector('#hooks')!;
   bindPhaseTabs(document.querySelector('[role="tablist"]')!);
+}
+
+beforeEach(() => {
+  sessionStorage.clear();
+  renderTabs();
 });
 
-afterEach(() => document.body.replaceChildren());
+afterEach(() => {
+  vi.restoreAllMocks();
+  document.body.replaceChildren();
+});
 
 it('selects one panel at a time and keeps only its tab in the tab order', () => {
   phase2.click();
@@ -32,6 +40,31 @@ it('selects one panel at a time and keeps only its tab in the tab order', () => 
   expect([dom.hidden, hooks.hidden]).toEqual([false, true]);
   expect([phase1.tabIndex, phase2.tabIndex]).toEqual([0, -1]);
   expect(phase2.getAttribute('aria-selected')).toBe('false');
+});
+
+it('restores the selected panel and its keyboard tab stop when the page is rebuilt', () => {
+  phase2.click();
+  renderTabs();
+
+  expect([dom.hidden, hooks.hidden]).toEqual([true, false]);
+  expect([phase1.tabIndex, phase2.tabIndex]).toEqual([-1, 0]);
+  expect(phase2.getAttribute('aria-selected')).toBe('true');
+});
+
+it('keeps the default panel when the stored panel no longer exists', () => {
+  sessionStorage.setItem('mini-react:active-panel', 'removed-panel');
+  renderTabs();
+  expect([dom.hidden, hooks.hidden]).toEqual([false, true]);
+});
+
+it('still switches panels when session storage is blocked', () => {
+  vi.spyOn(window, 'sessionStorage', 'get').mockImplementation(() => {
+    throw new DOMException('Storage is blocked', 'SecurityError');
+  });
+  renderTabs();
+  expect([dom.hidden, hooks.hidden]).toEqual([false, true]);
+  phase2.click();
+  expect([dom.hidden, hooks.hidden]).toEqual([true, false]);
 });
 
 it.each([
