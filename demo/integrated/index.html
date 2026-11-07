@@ -26,12 +26,12 @@
         <li><b>③</b> diff → 패치</li>
         <li><b>④</b> patch → 실제 DOM</li>
       </ol>
-      <details class="tips">
+      <details class="tips" open>
         <summary>이렇게 해 보세요</summary>
         <ul>
           <li><b>맨 아래 → 맨 위</b>: key가 있으면 <code>MOVE</code> 1개. "key로 비교"를 끄고 다시 하면 위치 비교라 <code>TEXT</code>가 줄줄이 생깁니다.</li>
           <li><b>편집</b>: 제목 <code>&lt;span&gt;</code>이 <code>&lt;input&gt;</code>으로 바뀌어 <code>REPLACE</code>.</li>
-          <li><b>☆</b>(우선순위): class만 바뀌어 <code>PROPS</code>. <b>+1</b>: 점수와 합계 <code>TEXT</code> 2개.</li>
+          <li><b>☆</b>(우선순위): 행의 class는 <code>PROPS</code>, ★ 글자와 "우선 N개"는 <code>TEXT</code>. <b>+1</b>: 점수와 합계 <code>TEXT</code> 2개.</li>
           <li><b>첫 항목 +1 ×3</b>: setState를 3번 불러도 렌더는 1번(배칭). 타임라인 번호가 하나만 늘어납니다.</li>
         </ul>
       </details>
@@ -44,5 +44,113 @@
       </section>
       <aside id="inspector" class="panel" aria-label="렌더 파이프라인"></aside>
     </main>
+
+    <section class="basics" aria-labelledby="basics-title">
+      <h2 id="basics-title">React의 본질: 기본 개념</h2>
+      <p class="basics-lead">
+        왼쪽 앱을 조작하면 오른쪽 "방금 일어난 일" 카드가 아래 개념 중 하나로 이어집니다.
+        이 페이지의 모든 화면(앱과 파이프라인 패널)도 아래 원리로 그려집니다.
+      </p>
+
+      <section id="basics-ui-function">
+        <h3>1. UI = f(state): 화면은 상태의 함수다</h3>
+        <p>
+          React의 출발점은 "DOM을 어떻게 바꿀지" 대신 "지금 상태라면 화면이 어떤 모습이어야 하는지"만 적게 하는 것입니다(선언형).
+          컴포넌트는 props와 state를 받아 가상 트리를 돌려주는 함수입니다. 같은 입력이면 같은 트리를 돌려줘야 하므로 렌더 중에는
+          부수 효과(서버 요청, 타이머, DOM 조작)를 하지 않고 <code>useEffect</code>로 미룹니다.
+        </p>
+        <p>
+          상태가 바뀌면 함수를 처음부터 다시 실행해 새 트리를 만들고, "이전 트리와 무엇이 다른가"는 라이브러리가 알아냅니다.
+          개발자는 바뀐 부분을 직접 찾아 고치지 않습니다.
+        </p>
+      </section>
+
+      <section id="basics-virtual-dom">
+        <h3>2. 가상 DOM이 필요한 이유: Reflow와 Repaint</h3>
+        <p>
+          실제 DOM이 바뀌면 브라우저는 레이아웃을 다시 계산하고(Reflow) 화면을 다시 칠해야 합니다(Repaint). 같은 작업 안의 변경은 모아서 한 번에
+          처리하지만, 바꾸는 노드가 많거나 중간에 크기·위치를 읽으면(강제 동기 레이아웃) 비용이 커집니다.
+          가상 DOM은 화면 구조를 가벼운 자바스크립트 객체(<code>{ type, props, children, key }</code>)로 들고 있다가,
+          새 트리와 비교해 <b>꼭 바뀐 곳만</b> 실제 DOM에 반영합니다. 오른쪽 패널 ④의 "변경 기록"이 가상 노드 수보다 훨씬 적은 이유입니다.
+        </p>
+        <p>
+          가상 DOM이 언제나 직접 조작보다 빠른 것은 아닙니다. 핵심은 "어디를 바꿀지 사람이 계산하지 않아도 충분히 적게 바꾼다"는 데 있습니다.
+        </p>
+      </section>
+
+      <section id="basics-reconcile">
+        <h3>3. 재조정(reconciliation): 두 가지 가정으로 O(n)에 비교한다</h3>
+        <p>두 트리를 완벽하게 비교하면 O(n³)이 걸립니다. React는 두 가지 가정을 두고 O(n)으로 줄입니다.</p>
+        <ul>
+          <li><b>타입이 다르면 다른 트리다.</b> <code>&lt;span&gt;</code>이 <code>&lt;input&gt;</code>이 되면 안쪽을 비교하지 않고 통째로 교체합니다(REPLACE).</li>
+          <li><b>형제 목록은 key로 짝을 찾는다.</b> key가 같으면 같은 항목으로 보고 내용만 비교하고, 자리가 바뀌었으면 옮깁니다(MOVE). key가 없으면 같은 위치끼리 비교합니다.</li>
+        </ul>
+        <p>
+          이 구현의 diff가 내놓는 패치는 6가지입니다. <code>CREATE</code>(추가), <code>REMOVE</code>(삭제), <code>REPLACE</code>(타입 변경),
+          <code>PROPS</code>(속성), <code>TEXT</code>(글자), <code>MOVE</code>(key 재정렬)입니다.
+        </p>
+      </section>
+
+      <section id="basics-lis">
+        <h3>4. LIS: key 목록에서 이동을 최소로 만드는 알고리즘</h3>
+        <p>
+          새 순서대로 각 항목의 "이전 위치"를 적으면 수열이 하나 나옵니다. 예를 들어 <code>[a b c d e]</code>가 <code>[e a b c d]</code>가 되면
+          수열은 <code>[4, 0, 1, 2, 3]</code>입니다. 이 수열에서 <b>증가하는 가장 긴 부분 수열(LIS)</b>은 <code>[0, 1, 2, 3]</code>(a b c d)입니다.
+          이 항목들은 서로의 순서가 이미 맞으므로 그대로 두고, 나머지(e)만 옮기면 됩니다. 이동 1번입니다.
+        </p>
+        <p>
+          LIS는 "각 길이별로 끝값이 가장 작은 수열"을 유지하며 이분 탐색하면 O(n log n)에 구합니다(<code>src/diff/lis.js</code>).
+          옮길 때는 목록을 뒤에서부터 처리합니다. 그러면 "바로 뒤 형제"가 항상 이미 제자리에 있어서 그 앞에 넣기만 하면 됩니다.
+        </p>
+        <p>
+          <b>실제 React는 LIS를 쓰지 않습니다.</b> 앞에서부터 훑으며 지금까지 둔 항목의 이전 위치 최댓값(lastPlacedIndex)보다
+          앞에 있던 항목을 옮깁니다. 위 예에서는 e가 먼저 놓여 최댓값이 4가 되므로 a b c d를 모두 옮깁니다(4번).
+          대신 구현이 단순하고 "뒤로 미는" 흔한 경우에 강합니다. LIS 방식은 Vue 3와 Inferno가 씁니다.
+        </p>
+      </section>
+
+      <section id="basics-render-commit">
+        <h3>5. 렌더 단계와 커밋 단계</h3>
+        <p>
+          한 번의 업데이트는 두 단계로 나뉩니다. <b>렌더 단계</b>는 컴포넌트를 실행하고 이전 트리와 비교해 바꿀 것을 정합니다(오른쪽 ①~③).
+          실제 DOM은 건드리지 않습니다. <b>커밋 단계</b>는 정해진 변경을 실제 DOM에 한 번에 반영합니다(④). 이 구현은 그 직후 useEffect를 동기로 실행합니다.
+        </p>
+        <p>
+          이 구현은 두 단계를 한 번에 끝까지 실행합니다. 실제 React는 렌더 단계를 Fiber라는 작은 작업 단위로 쪼갭니다.
+          <code>startTransition</code> 등으로 표시한 낮은 우선순위 업데이트는 렌더 도중 브라우저에 양보하거나, 더 급한 업데이트가 오면 버리고 다시 시작할 수 있습니다(Concurrent 렌더링).
+          클릭 같은 보통 업데이트는 멈추지 않습니다. 커밋 단계는 화면이 어긋나지 않도록 언제나 한 번에 합니다.
+          effect 시점도 다릅니다. React의 <code>useLayoutEffect</code>는 커밋 직후 화면을 그리기 전에 동기로, <code>useEffect</code>는 보통 화면을 그린 뒤 비동기로 실행됩니다.
+        </p>
+      </section>
+
+      <section id="basics-hooks">
+        <h3>6. 훅: 함수는 매번 새로 실행되는데 상태는 어디에 남는가</h3>
+        <p>
+          컴포넌트 함수는 렌더할 때마다 처음부터 실행되므로 지역 변수는 매번 초기화됩니다. 그래서 상태는 함수 밖, 컴포넌트마다 하나씩 있는
+          <code>hooks</code> 배열에 둡니다. 훅은 "이번 렌더에서 몇 번째로 불렸는가"로 자기 칸을 찾습니다. 오른쪽 ①의 번호가 그 칸입니다.
+        </p>
+        <ul>
+          <li><code>useState</code>: 칸에 값을 두고, setState는 값을 바꾼 뒤 다시 렌더를 예약합니다.</li>
+          <li><code>useMemo</code>: deps가 그대로면 이전 계산 결과를 돌려줍니다. 바뀌었을 때만 다시 계산합니다.</li>
+          <li><code>useEffect</code>: 화면 반영 뒤에 실행하고, 다음 실행 전과 사라질 때 정리 함수를 부릅니다.</li>
+        </ul>
+        <p>
+          조건문 안에서 훅을 부르면 칸 순서가 어긋나 다른 상태를 읽게 됩니다. 이 구현은 훅 개수가 바뀌거나 그 자리 훅의 종류가 바뀌면
+          바로 오류를 냅니다. 하지만 같은 종류끼리 순서만 바뀌면(예: useState 두 개가 자리를 바꿈) 잡지 못하고 조용히 다른 상태를 읽습니다.
+          그래서 "조건문·반복문 안에서 훅을 부르지 않는다"는 규칙 자체를 지켜야 합니다.
+        </p>
+      </section>
+
+      <section id="basics-batching">
+        <h3>7. 배칭: 여러 setState를 렌더 한 번으로</h3>
+        <p>
+          setState마다 바로 다시 그리면 한 이벤트에서 상태 세 개를 바꿀 때 렌더가 세 번 일어나고, 중간의 어정쩡한 화면이 보일 수도 있습니다.
+          그래서 setState는 렌더를 "예약"만 하고, 지금 하던 일이 끝난 뒤(마이크로태스크) 한 번에 다시 그립니다.
+          이 구현의 setState는 값을 바로 바꾸고 렌더만 미룹니다. 그래서 함수(<code>prev =&gt; prev + 1</code>)를 넘기면 매번 방금 바뀐 값을 받아
+          세 번의 +1이 모두 반영됩니다. 실제 React는 setState를 큐에 쌓아 두었다가 렌더 때 차례로 계산하므로 방식은 다르지만 결과는 같습니다.
+          React 18부터는 <code>createRoot</code>로 띄운 앱이면 이벤트·타이머·Promise 어디서든 자동으로 배칭합니다.
+        </p>
+      </section>
+    </section>
   </body>
 </html>

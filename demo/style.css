@@ -754,14 +754,171 @@ button.ghost {
 
 .vdom {
   margin: 0;
-  max-height: 180px;
+  height: 420px;
+  min-height: 160px;
+  max-height: 80vh;
   overflow: auto;
-  padding: 8px 10px;
+  resize: vertical;
+  padding: 12px 14px;
   border-radius: 8px;
   background: var(--code-bg);
   color: var(--code-text);
-  font-size: 11.5px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+/* 방금 일어난 일 */
+.concept {
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 4px 0 10px;
+}
+
+.concept-kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.concept h3 {
+  margin: 2px 0 6px;
+  font-size: 1rem;
+}
+
+.concept-body {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.88rem;
+}
+
+.concept-body li {
+  margin: 3px 0;
+}
+
+.react-note {
+  margin: 8px 0 4px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--accent);
+  background: var(--panel);
+  font-size: 0.84rem;
+}
+
+.concept-link {
+  font-size: 0.82rem;
+  color: var(--accent);
+}
+
+.lis {
+  margin: 8px 0 4px;
+  font-size: 0.86rem;
+}
+
+.lis p {
+  margin: 4px 0;
+}
+
+.lis-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 0;
+}
+
+.lis-chips li {
+  display: flex;
+  flex-direction: column;
+  min-width: 84px;
+  max-width: 140px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 0.78rem;
+}
+
+.lis-chips li.keep {
+  border-color: var(--op-create);
+}
+
+.lis-chips li.move {
+  border-color: var(--op-move);
+  background: color-mix(in srgb, var(--op-move) 14%, var(--panel));
+}
+
+.lis-old {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lis-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lis-tag {
+  font-weight: 700;
+}
+
+.lis-chips li.keep .lis-tag {
+  color: var(--op-create);
+}
+
+.lis-chips li.move .lis-tag {
+  color: var(--op-move);
+}
+
+.lis-compare {
+  font-weight: 600;
+}
+
+/* React의 본질: 기본 개념 */
+.basics {
+  max-width: 1200px;
+  margin: 8px auto 40px;
+  padding: 0 16px;
+}
+
+.basics h2 {
+  font-size: 1.2rem;
+  margin: 8px 0 4px;
+}
+
+.basics-lead {
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.basics > section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 8px 0;
+  scroll-margin-top: 12px;
+}
+
+.basics > section:target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.basics > section h3 {
+  margin: 4px 0 6px;
+  font-size: 1rem;
+}
+
+.basics > section p,
+.basics > section ul {
+  font-size: 0.92rem;
+  max-width: 78ch;
 }
 
 .timeline-wrap h3 {
