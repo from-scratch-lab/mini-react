@@ -9,6 +9,7 @@ import {
 } from '../../src/index.js';
 import { describePatch } from '../shared/describe.js';
 import { flash } from '../shared/flash.js';
+import { ConceptCard, reorderInfo } from './concepts.js';
 
 /*
  * 종합 데모: Phase 1(Virtual DOM·Diff·Patch)과 Phase 2(Component·Hooks)가 하나로 이어진 모습을 보여 준다.
@@ -34,7 +35,7 @@ const MAX_COMMITS = 60;
 /* ───────────── 왼쪽: 스프린트 백로그 앱 (상태는 루트에만) ───────────── */
 
 /**
- * @param {(label: string) => void} track 다음 렌더가 "무엇 때문에" 일어났는지 파이프라인 패널에 알리는 함수
+ * @param {(label: string, concept: string) => void} track 다음 렌더가 "무엇 때문에" 일어났고 어떤 개념(설명 카드)에 해당하는지 패널에 알리는 함수
  * @param {() => Element} getRoot 편집 칸에 포커스를 줄 때 쓰는 앱 루트
  */
 function createBacklogApp(track, getRoot) {
@@ -70,76 +71,76 @@ function createBacklogApp(track, getRoot) {
       add() {
         const title = draft.trim();
         if (!title) return;
-        track(`"${title}" 추가`);
+        track(`"${title}" 추가`, 'create');
         setItems((list) => [...list, { id: nextId, title, points: 1, priority: false }]);
         setNextId((n) => n + 1);
         setDraft('');
       },
       remove(item) {
-        track(`"${item.title}" 삭제`);
+        track(`"${item.title}" 삭제`, 'remove');
         setItems((list) => list.filter((i) => i.id !== item.id));
         setEditing((e) => (e?.id === item.id ? null : e)); // 지운 항목을 편집 중이었다면 편집도 끝낸다
       },
       up(item) {
-        track(`"${item.title}" 위로`);
+        track(`"${item.title}" 위로`, useKeys ? 'reorder' : 'reorderNoKey');
         move(item.id, -1);
       },
       down(item) {
-        track(`"${item.title}" 아래로`);
+        track(`"${item.title}" 아래로`, useKeys ? 'reorder' : 'reorderNoKey');
         move(item.id, 1);
       },
       points(item) {
-        track(`"${item.title}" 점수 +1`);
+        track(`"${item.title}" 점수 +1`, 'text');
         update(item.id, (i) => ({ points: i.points + 1 }));
       },
       priority(item) {
-        track(`"${item.title}" 우선순위 ${item.priority ? '해제' : '표시'}`);
+        track(`"${item.title}" 우선순위 ${item.priority ? '해제' : '표시'}`, 'props');
         update(item.id, (i) => ({ priority: !i.priority }));
       },
       startEdit(item) {
-        track(`"${item.title}" 편집 시작`);
+        track(`"${item.title}" 편집 시작`, 'replace');
         setEditing({ id: item.id, text: item.title });
       },
       editText(text) {
-        track('편집 중 입력');
+        track('편집 중 입력', 'input');
         setEditing((e) => (e ? { ...e, text } : e));
       },
       saveEdit() {
         if (!editing) return;
         const title = editing.text.trim();
-        track('편집 저장');
+        track('편집 저장', 'replace');
         if (title) update(editing.id, () => ({ title }));
         setEditing(null);
       },
       cancelEdit() {
-        track('편집 취소');
+        track('편집 취소', 'replace');
         setEditing(null);
       },
       rotate() {
-        track('맨 아래 → 맨 위');
+        track('맨 아래 → 맨 위', useKeys ? 'reorder' : 'reorderNoKey');
         setItems((list) => (list.length < 2 ? list : [list[list.length - 1], ...list.slice(0, -1)]));
       },
       reverse() {
-        track('순서 뒤집기');
+        track('순서 뒤집기', useKeys ? 'reorder' : 'reorderNoKey');
         setItems((list) => keepIfSameOrder(list, [...list].reverse()));
       },
       sort() {
-        track('점수순 정렬');
+        track('점수순 정렬', useKeys ? 'reorder' : 'reorderNoKey');
         setItems((list) => keepIfSameOrder(list, [...list].sort((a, b) => b.points - a.points)));
       },
       batch() {
         // 한 이벤트 안에서 setState 3번 → 렌더는 한 번(배칭)
-        track('setState 3번 (배칭 → 렌더 1번)');
+        track('setState 3번 (배칭 → 렌더 1번)', 'batch');
         for (let i = 0; i < 3; i += 1) {
           setItems((list) => (list.length ? [{ ...list[0], points: list[0].points + 1 }, ...list.slice(1)] : list));
         }
       },
       toggleKeys() {
-        track(useKeys ? 'key 끄기 (위치로 비교)' : 'key 켜기');
+        track(useKeys ? 'key 끄기 (위치로 비교)' : 'key 켜기', 'keyToggle');
         setUseKeys((v) => !v);
       },
       draft(text) {
-        track('새 항목 입력');
+        track('새 항목 입력', 'input');
         setDraft(text);
       },
     };
@@ -273,6 +274,7 @@ function PipelineInspector({ commits }) {
         ? h('button', { type: 'button', 'data-action': 'follow-latest', onClick: () => setSelected(null) }, '최신 따라가기')
         : null,
     ),
+    h(ConceptCard, { commit }),
     h(Stage, { step: '①', title: 'setState → 상태 (hooks 배열)' }, h(HookList, { hooks: commit.hooks })),
     h(
       Stage,
@@ -440,17 +442,20 @@ function countNodes(vnode) {
 export function startIntegrated({ root, inspector }) {
   const commits = [];
   let labels = [];
+  let concepts = [];
   let labelResetScheduled = false;
   let previousHooks = [];
 
   // 렌더는 마이크로태스크에서 일어나므로, 이 매크로태스크가 끝날 때까지 커밋이 없으면 그 라벨은 렌더를 만들지 못한 것이다
   // (맨 위 항목을 위로 올리기처럼 상태가 그대로인 동작). 다음 렌더에 붙지 않도록 버린다.
-  const track = (label) => {
+  const track = (label, concept) => {
     labels.push(label);
+    if (concept) concepts.push(concept);
     if (!labelResetScheduled) {
       labelResetScheduled = true;
       setTimeout(() => {
         labels = [];
+        concepts = [];
         labelResetScheduled = false;
       }, 0);
     }
@@ -470,8 +475,13 @@ export function startIntegrated({ root, inspector }) {
 
   function record(patches, component) {
     const records = observer ? observer.takeRecords() : [];
-    const label = labels.length > 0 ? [...new Set(labels)].join(' + ') : '(알 수 없음)';
+    const label = labels.length > 0 ? [...new Set(labels)].join(' + ') : commits.length === 0 ? '첫 렌더' : '(알 수 없음)';
+    // 설명할 개념: 첫 렌더면 mount, 아니면 마지막으로 한 동작의 개념. 재정렬이면 이번 LIS 계산에 쓸 위치 정보도 남긴다.
+    const conceptKey = commits.length === 0 ? 'mount' : concepts.at(-1) ?? null;
+    const concept = { key: conceptKey };
+    if (conceptKey === 'reorder') concept.reorder = reorderInfo(previousHooks[0]?.value, component.hooks[0]?.value);
     labels = [];
+    concepts = [];
     flash(records);
     const hooks = component.hooks.map((hook, i) => ({
       kind: hook.kind,
@@ -483,6 +493,7 @@ export function startIntegrated({ root, inspector }) {
     commits.push({
       n: (commits.at(-1)?.n ?? 0) + 1,
       label,
+      concept,
       hooks,
       vdom: vnodeToHTML(component.vnode),
       nodeCount: countNodes(component.vnode),
@@ -503,6 +514,7 @@ export function startIntegrated({ root, inspector }) {
           record(patches, component);
         } catch (error) {
           labels = [];
+          concepts = [];
           console.error('[파이프라인 기록]', error);
           return;
         }
@@ -518,6 +530,7 @@ export function startIntegrated({ root, inspector }) {
       onError(error) {
         // 렌더·patch가 실패하면 onCommit이 불리지 않는다. 그 동작의 라벨과 (되돌리기를 포함한) DOM 기록은 버린다.
         labels = [];
+        concepts = [];
         observer?.takeRecords();
         console.error(error);
       },

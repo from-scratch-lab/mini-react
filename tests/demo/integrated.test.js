@@ -181,6 +181,87 @@ describe('종합 데모: 렌더 파이프라인', () => {
     expect(inspector.innerHTML).toBe('');
     app = { unmount() {} };
   });
+});
+
+describe('종합 데모: 방금 일어난 일 설명 카드', () => {
+  const concept = () => $('[data-role="concept"]', inspector);
+  const conceptTitle = () => $('h3', concept()).textContent;
+
+  it('첫 렌더는 mount를 설명한다', () => {
+    expect(conceptTitle()).toContain('첫 렌더');
+  });
+
+  it('key로 재정렬하면 LIS를 이번 숫자로 보여 주고, 실제 React 방식의 이동 횟수와 비교한다', async () => {
+    await click(action('rotate'));
+    expect(conceptTitle()).toContain('LIS');
+    expect($('[data-role="lis-sequence"]', inspector).textContent).toBe('[4, 0, 1, 2, 3]');
+    expect($('[data-role="lis-result"]', inspector).textContent).toBe('[0, 1, 2, 3]');
+    expect($$('[data-role="lis-chips"] li.move', inspector)).toHaveLength(1);
+    expect($('[data-role="lis-ours"]', inspector).textContent).toContain('1번');
+    expect($('[data-role="lis-react"]', inspector).textContent).toContain('4번');
+  });
+
+  it('위·아래 이동도 같은 LIS 설명을 쓴다', async () => {
+    await click(rowAction(1, 'up'));
+    expect($('[data-role="lis-sequence"]', inspector).textContent).toBe('[1, 0, 2, 3, 4]');
+  });
+
+  it('key를 끄고 재정렬하면 위치 비교를 설명한다', async () => {
+    await click(action('toggle-keys'));
+    expect(conceptTitle()).toContain('key');
+    await click(action('rotate'));
+    expect(conceptTitle()).toContain('위치');
+    expect($('[data-role="lis-sequence"]', inspector)).toBeNull();
+  });
+
+  it('편집은 타입이 바뀌면 교체한다는 가정(REPLACE)을, 우선순위는 PROPS를, 점수는 TEXT와 useMemo를 설명한다', async () => {
+    await click(rowAction(0, 'edit'));
+    expect(conceptTitle()).toContain('REPLACE');
+    await click(rowAction(1, 'priority'));
+    expect(conceptTitle()).toContain('PROPS');
+    // 설명대로 class는 PROPS, ★ 글자와 "우선 N개"는 TEXT로 나온다
+    expect(patchTypes()).toEqual(expect.arrayContaining(['PROPS', 'TEXT']));
+    await click(rowAction(1, 'points'));
+    expect(conceptTitle()).toContain('TEXT');
+    expect(concept().textContent).toContain('useMemo');
+  });
+
+  it('추가는 CREATE, 삭제는 REMOVE, ×3은 배칭, 입력은 제어 컴포넌트를 설명한다', async () => {
+    const input = $('input[name="title"]');
+    input.value = '새 항목';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushUpdates();
+    expect(conceptTitle()).toContain('제어');
+    $('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await flushUpdates();
+    expect(conceptTitle()).toContain('CREATE');
+    await click(rowAction(0, 'remove'));
+    expect(conceptTitle()).toContain('REMOVE');
+    await click(action('batch'));
+    expect(conceptTitle()).toContain('배칭');
+    expect(concept().textContent).toContain('setState 3번');
+  });
+
+  it('설명 카드마다 실제 React와의 차이와 기본 개념 링크가 있다', async () => {
+    await click(action('rotate'));
+    expect($('[data-role="react-note"]', concept()).textContent.length).toBeGreaterThan(10);
+    expect($('a[href^="#basics-"]', concept())).not.toBeNull();
+  });
+
+  it('타임라인에서 지난 렌더를 고르면 그 렌더의 설명을 보여 준다', async () => {
+    await click(action('rotate'));
+    await click($('[data-commit="1"]', inspector));
+    expect(conceptTitle()).toContain('첫 렌더');
+  });
+});
+
+describe('종합 데모: 정리', () => {
+  it('unmount를 두 번 불러도 안전하다', () => {
+    app.unmount();
+    expect(() => app.unmount()).not.toThrow();
+    expect(root.innerHTML).toBe('');
+    app = { unmount() {} };
+  });
 
   it('타임라인에서 지난 렌더를 고르면 그 렌더의 패치를 보여 주고, 최신 따라가기로 돌아온다', async () => {
     await click(action('rotate'));
