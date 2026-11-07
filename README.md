@@ -5,6 +5,9 @@
 - `npm run serve` → http://127.0.0.1:5173/demo/ (이 컴퓨터에서만 열리고 `demo/`·`src/`만 내보낸다)
 - Phase 1: Virtual DOM + Diff + Patch 검증 페이지 (`demo/phase1/`)
 - Phase 2: Component · State · Hooks로 만든 학습 트래커 (`demo/phase2/`). 렌더마다 패치 목록과 `hooks` 배열을 옆 패널에 보여 준다.
+- 종합: 렌더 파이프라인 (`demo/integrated/`). 훅으로 만든 백로그 앱을 조작하면 렌더 한 번이 거치는
+  ① setState → ② 새 가상 트리 → ③ diff 패치 → ④ 실제 DOM 변경(MutationObserver)을 단계별로 보여 준다.
+  key를 끄고 켜 패치 수를 비교하고, 배칭과 REPLACE·MOVE 등 diff의 모든 경우를 직접 일으켜 볼 수 있다.
 
 ## 개발 환경
 - Node `^20.19.0 || >=22.12.0` (CI는 Node 20)

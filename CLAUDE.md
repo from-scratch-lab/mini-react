@@ -13,7 +13,7 @@
 - `src/diff/`: 이전·다음 가상 트리 비교(diff)와 실제 DOM 반영(patch)
 - `src/hooks/`: `FunctionComponent`(컴포넌트별 훅 저장소, mount·update), `useState`, `useEffect`, `useMemo`
 - `tests/`: 기능 단위 테스트 (`tests/demo/`는 데모 페이지 기능 테스트)
-- `demo/`: 브라우저 데모 페이지 (`demo/phase1/`: Virtual DOM·Diff·Patch 검증 페이지, `demo/phase2/`: 훅으로 만든 학습 트래커). 화면도 `render`·`mountComponent`로 그린다.
+- `demo/`: 브라우저 데모 페이지 (`demo/phase1/`: Virtual DOM·Diff·Patch 검증 페이지, `demo/phase2/`: 훅으로 만든 학습 트래커, `demo/integrated/`: 두 Phase를 잇는 렌더 파이프라인, `demo/shared/`: 공용 도우미). 화면도 `render`·`mountComponent`로 그린다.
 - `scripts/serve.js`: 데모용 정적 서버 (의존성 없음)
 
 ## 도메인 규칙
