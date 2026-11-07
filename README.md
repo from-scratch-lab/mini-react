@@ -1,6 +1,73 @@
-# Mini React · Phase 1
+# Mini React · Phase 1 + Phase 2
 
-Vanilla TypeScript + Vite로 구현한 DOM 실험 페이지입니다. 실제 DOM에서 Virtual DOM을 만들고, 편집한 테스트 DOM과 비교해 변경된 부분만 실제 영역에 반영합니다. UI 프레임워크나 Virtual DOM 라이브러리는 사용하지 않습니다. Component, State, Hooks는 이번 범위에 포함하지 않습니다.
+Vanilla TypeScript + Vite로 구현한 Mini React 실험 페이지입니다. Phase 1의 DOM 편집·Diff·Patch 실험과 Phase 2의 함수형 컴포넌트·상태·Hooks 데모를 함께 제공합니다. UI 프레임워크나 Virtual DOM 라이브러리는 사용하지 않습니다.
+
+## Phase 2 · Component, State, Hooks
+
+페이지 상단에서 카운터 증가·감소·초기화, 자동 증가 시작·중지, 이름 입력을 실행할 수 있습니다. 아래에는 기존 Phase 1 실험이 그대로 있습니다.
+
+| 파일 | 역할 |
+| --- | --- |
+| `src/core/element.ts` | `h()`로 요소/함수 컴포넌트 표현 생성, stateless 자식 실행, Phase 1 VTree 및 이벤트 바인딩 생성 |
+| `src/core/component.ts` | `FunctionComponent`의 `hooks`, `mount()`, `update()`, `unmount()`와 `useState`, `useEffect`, `useMemo` |
+| `src/components-demo.ts` | 루트 App과 props만 사용하는 Counter/Summary 데모 |
+| `src/main.ts`, `src/style.css`, `index.html` | Phase 1과 Phase 2 통합 화면, 반응형 스타일, 제목 |
+| `tests/components.test.ts` | 상태 보존, Hook 의존성·cleanup·제약, 이벤트, DOM 동일성 테스트 |
+| `tests/browser/components.spec.ts` | 실제 클릭·입력·포커스 보존, 타이머 정리, 모바일 테스트 |
+
+### 사용 예시
+
+```ts
+import { h } from './core/element';
+import { FunctionComponent, useState, useEffect, useMemo } from './core/component';
+
+function Counter({ value, onIncrease }: { value: number; onIncrease: () => void }) {
+  return h('button', { onClick: onIncrease }, value);
+}
+
+function App() {
+  const [count, setCount] = useState(0);
+  const doubled = useMemo(() => count * 2, [count]);
+  useEffect(() => {
+    const timer = setInterval(() => setCount(previous => previous + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  return h('section', null,
+    h(Counter, { value: count, onIncrease: () => setCount(previous => previous + 1) }),
+    h('p', null, '두 배: ', doubled));
+}
+
+const root = new FunctionComponent(App, document.querySelector('#root')!, {});
+root.mount(); // 비어 있는 전용 컨테이너에 처음 렌더링
+// root.update(); // 필요하면 명시적으로 재렌더링
+// root.unmount(); // Effect cleanup, 리스너 제거, 관리 DOM 제거
+```
+
+### 상태가 유지되는 원리와 렌더링 흐름
+
+1. 루트를 감싼 `FunctionComponent` 인스턴스가 렌더링 사이에도 살아 있으며 `hooks` 배열을 보관합니다.
+2. 매 렌더링 시작 시 Hook 인덱스를 0으로 되돌립니다. 호출 순서에 해당하는 슬롯에서 이전 상태·메모·Effect 정보를 읽습니다.
+3. 루트 함수가 `h()` 표현을 반환하면 Hook 실행 컨텍스트를 닫고 자식 함수를 props로 실행합니다. 자식도 `h(Child, props)`로 선언합니다. 자식은 별도 상태나 인스턴스를 가지지 않습니다.
+4. 표현을 기존 `VNode[]`로 변환합니다. 이벤트 함수는 별도 바인딩에 저장하여 Phase 1의 순수 데이터와 `structuredClone` 정책을 유지합니다.
+5. 기존 **`diff(previousTree, nextTree)` → `patch(container, operations)`** 를 그대로 호출합니다. 최초 mount도 빈 트리와 비교합니다. 상태 갱신 시 `innerHTML`이나 전체 DOM 교체를 사용하지 않습니다.
+6. 실제 노드에 이벤트를 연결하고, DOM 반영이 끝난 뒤 Effect를 실행합니다. 바뀐 핸들러와 삭제/교체된 노드의 리스너는 제거해 중복 등록과 오래된 상태 참조를 방지합니다.
+
+### Hook 동작과 제약
+
+- `useState(initial)`: 값 또는 지연 초기화 함수를 받습니다. setter는 새 값 또는 `previous => next`를 지원하고 같은 슬롯에서 동일한 함수로 유지됩니다. `Object.is`로 같은 상태는 재렌더링하지 않습니다. 객체·배열 상태는 새 참조로 교체해야 합니다. unmount 또는 이전 mount에서 보관한 setter는 무시합니다.
+- `useEffect(effect, deps?)`: DOM commit 직후 동기 실행합니다. 의존성이 바뀌면 이전 cleanup 후 새 Effect를 실행하고, unmount에도 cleanup합니다. `[]`는 mount마다 한 번, 생략하면 매 commit 실행합니다. Effect 안의 상태 변경은 현재 Effect 실행이 끝난 뒤 다음 렌더링으로 처리합니다.
+- `useMemo(factory, deps?)`: 의존성이 같으면 이전 결과를 반환합니다. `[]`는 mount마다 한 번 계산하고, 생략하면 매 렌더링 계산합니다. Effect/Memo 의존성은 길이 및 각 값의 `Object.is`로 비교하고 배열을 복사해 보관합니다.
+- Hook은 루트 함수 실행 중에만 호출합니다. 조건문/반복문에 따라 Hook 호출 개수나 종류 순서를 바꾸면 오류입니다. 같은 종류 Hook끼리의 의미적 순서 변경은 검출할 수 없으므로 항상 고정된 순서로 호출해야 합니다. 자식·이벤트·Effect 안에서 Hook 호출, 렌더링 중 setter 호출도 오류입니다.
+- 일반 setter는 동기 갱신하며 React의 비동기 스케줄러나 이벤트 배칭을 구현하지 않습니다. 무한 Effect 업데이트는 100회에서 오류로 중단합니다. JSX, keyed reconciliation, 자식 Hook, Fragment 컴포넌트, 오류 경계는 구현 범위에 포함하지 않습니다. 배열·빈 값·여러 루트 반환은 지원합니다.
+- `h()`는 문자열/숫자 자식, 중첩 배열, `null`/`undefined`/boolean 자식 생략을 지원합니다. HTML 속성, `className`, `htmlFor`, boolean 및 `aria-*`/`data-*` 속성, input/textarea 값을 지원합니다. `onClick`, `onInput`, `onChange`는 각각 네이티브 DOM 이벤트이며 React의 합성 이벤트가 아닙니다. JSX식 style 객체나 이벤트 capture 옵션은 지원하지 않습니다.
+- DOM 보존 범위는 Phase 1과 동일한 **인덱스 기반 비교**입니다. 같은 위치·타입·태그의 요소와 텍스트 노드는 유지하며, 키 기반 정렬/이동 최적화는 없습니다. 관리 컨테이너 내부를 외부 코드로 직접 변경하지 않아야 합니다.
+
+### Phase 2 검증 (2026-11-07)
+
+- `npm test`: **67개 통과** (기존 43개 + Phase 2 24개).
+- `npm run build`: TypeScript 검사 및 Vite 프로덕션 빌드 성공.
+- 브라우저 테스트: **12개 통과** (기존 9개 + Phase 2 3개). 프로젝트용 Chromium 미설치로 기본 명령의 브라우저 실행은 실패했으며, 임시 Playwright 설정에서 `channel: 'chrome'`으로 설치된 Google Chrome을 사용해 전체 테스트를 통과했습니다. 임시 설정은 검증 후 제거했습니다.
+- DOM 객체·텍스트 노드·입력 포커스 보존, 최신 이벤트 핸들러, 타이머 중지/재시작, 390px 모바일 화면의 조작을 확인했습니다. Firefox/WebKit은 검증하지 않았습니다.
 
 ## 실행
 

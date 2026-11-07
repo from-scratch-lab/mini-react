@@ -5,10 +5,12 @@ import { patch } from './core/patch';
 import { History } from './history';
 import { parseEditorHTML, serializeTree } from './editor';
 import { initialHTML, previewStyles } from './sample';
+import { mountComponentsDemo } from './components-demo';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <header class="topbar"><a class="brand" href="/">m<span>·</span>dom</a><span class="phase">MINI REACT LAB <span>/</span> PHASE 01</span><span class="live-dot">Vanilla TypeScript</span></header>
+  <header class="topbar"><a class="brand" href="/">m<span>·</span>dom</a><span class="phase">MINI REACT LAB <span>/</span> PHASE 01 + 02</span><span class="live-dot">Vanilla TypeScript</span></header>
   <main>
+    <section id="hooks-lab" aria-label="Component State Hooks 실험"></section>
     <div class="intro"><div><p class="overline">THE DOM PLAYGROUND</p><h1>변화를 작게, 이해는 깊게.</h1><p class="subtitle">HTML을 고치고, 두 트리의 차이만 실제 화면에 반영해 보세요.</p></div><span class="intro-mark" aria-hidden="true">&lt;/&gt;</span></div>
     <div class="toolbar"><div class="history-controls"><button id="back" aria-label="뒤로가기">←</button><button id="forward" aria-label="앞으로가기">→</button><span>HISTORY <strong id="history-position"></strong></span></div><div class="patch-controls"><span id="edit-status">확정 상태와 동기화됨</span><button id="patch">Patch 적용 <span>↗</span></button></div></div>
     <div class="workspace">
@@ -85,3 +87,5 @@ patchButton.addEventListener('click', applyDraft);
 back.addEventListener('click', () => { if (history.canBack) navigateHistory(history.index - 1); });
 forward.addEventListener('click', () => { if (history.canForward) navigateHistory(history.index + 1); });
 updateControls();
+const componentsDemo = mountComponentsDemo(document.querySelector('#hooks-lab')!);
+if (import.meta.hot) import.meta.hot.dispose(() => componentsDemo.unmount());
