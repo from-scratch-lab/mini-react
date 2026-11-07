@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
+    <nav class="site-nav" aria-label="데모 페이지">
+      <a href="./" aria-current="page">mini-react</a>
+      <a href="./phase1/">Phase 1 · Diff</a>
+      <a href="./phase2/">Phase 2 · Hooks</a>
+      <a href="./integrated/">종합</a>
+    </nav>
     <header class="page-head">
       <h1>mini-react</h1>
       <p>크래프톤 정글 13기 · Virtual DOM, Diff, Hooks를 직접 구현한 미니 React</p>
@@ -19,6 +25,10 @@
       <a class="index-card" href="./phase2/">
         <strong>Phase 2</strong>
         <span>Component · State · Hooks로 만든 학습 트래커</span>
+      </a>
+      <a class="index-card" href="./integrated/">
+        <strong>종합</strong>
+        <span>상태 변경 → 새 가상 트리 → diff → 실제 DOM, 렌더 한 번의 파이프라인을 단계별로</span>
       </a>
     </main>
   </body>

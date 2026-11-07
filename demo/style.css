@@ -55,7 +55,7 @@ textarea {
 .page-head {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 28px 16px 8px;
+  padding: 16px 16px 8px;
 }
 
 .page-head h1 {
@@ -66,12 +66,6 @@ textarea {
 .page-head p {
   margin: 0;
   color: var(--muted);
-}
-
-.back-link {
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 0.9rem;
 }
 
 .phase1 {
@@ -492,6 +486,291 @@ button.ghost {
 .hook-list code {
   font-size: 0.8rem;
   color: var(--accent);
+}
+
+/* 페이지 사이 내비게이션 */
+.site-nav {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.9rem;
+}
+
+.site-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 2px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.site-nav a:hover {
+  color: var(--text);
+}
+
+.site-nav a[aria-current='page'] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* 종합 페이지 */
+.flow {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 12px 0 0;
+}
+
+.flow li {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.85rem;
+}
+
+.flow li + li::before {
+  content: '→ ';
+  color: var(--muted);
+}
+
+.integrated {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .integrated {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.backlog-app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.backlog-app .toolbar {
+  margin-top: 0;
+}
+
+.backlog-app .toolbar button {
+  font-size: 0.85rem;
+  padding: 4px 10px;
+}
+
+.key-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.add-form {
+  display: flex;
+  gap: 8px;
+}
+
+.add-form input,
+.title-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+}
+
+.add-form input:focus,
+.title-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.backlog {
+  margin: 0;
+  padding: 0 0 0 28px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.backlog li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 7px 10px 7px 4px;
+  border-top: 1px solid var(--line);
+}
+
+.backlog li:first-child {
+  border-top: 0;
+}
+
+.backlog li::marker {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.backlog .title {
+  flex: 1;
+  min-width: 8em;
+  overflow-wrap: anywhere;
+}
+
+.backlog li.priority .title {
+  font-weight: 700;
+}
+
+.backlog li.priority {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.backlog .points {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.row-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.row-actions button {
+  padding: 2px 7px;
+  font-size: 0.85rem;
+}
+
+.summary {
+  margin: 0;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pipeline-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+
+.pipeline-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.commit-title {
+  color: var(--accent);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pipeline-head button {
+  margin-left: auto;
+  font-size: 0.8rem;
+  padding: 2px 10px;
+}
+
+.stage {
+  border-top: 1px dashed var(--line);
+  padding: 10px 0 4px;
+}
+
+.stage h3 {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+}
+
+.stage h3 small {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.step {
+  color: var(--accent);
+}
+
+.stage p {
+  margin: 0 0 6px;
+  font-size: 0.88rem;
+}
+
+.stage .hook-list,
+.stage .patch-list {
+  margin: 0 0 6px;
+  padding-left: 22px;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.stage .patch-list {
+  max-height: 200px;
+  overflow: auto;
+}
+
+.hook-list li.changed {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-radius: 4px;
+}
+
+.hook-list li.recomputed {
+  outline: 1px dashed var(--line);
+  border-radius: 4px;
+}
+
+.hook-tag {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.patch-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.stage .note {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.vdom {
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.timeline-wrap h3 {
+  margin: 10px 0 4px;
+  font-size: 0.92rem;
+}
+
+.timeline small {
+  opacity: 0.7;
 }
 
 /* 첫 화면 */

@@ -1,5 +1,5 @@
 import { createElement as h, mountComponent, render, useState, useEffect, useMemo } from '../../src/index.js';
-import { describePatch } from '../phase1/describe.js';
+import { describePatch } from '../shared/describe.js';
 
 export const STORAGE_KEY = 'mini-react:study-tracker';
 
