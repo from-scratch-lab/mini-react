@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "serve": "node scripts/serve.js",
-    "bench": "node scripts/bench/run.js"
+    "bench": "node scripts/bench/run.js",
+    "fuzz": "node scripts/fuzz.js"
   },
   "devDependencies": {
     "jsdom": "26.1.0",
