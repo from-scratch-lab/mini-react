@@ -29,6 +29,8 @@ const ATTRIBUTE_NAMESPACES = {
  */
 export function patch(container, patches) {
   for (const p of patches) applyPatch(container, p);
+  // 핸들러 교체는 DOM 패치가 모두 성공한 뒤에 한다. 중간에 실패하면 화면과 함께 핸들러도 직전 렌더 것으로 남는다.
+  for (const { vnode, name, value } of patches.handlers ?? []) setEventHandler(vnode.dom, toEventName(name), value);
   return patches;
 }
 

@@ -452,7 +452,7 @@ function PatchSummary({ commit }) {
 const isHandlerProp = (p, name) =>
   name.startsWith('on') && (typeof p.set[name] === 'function' || typeof p.prev[name] === 'function');
 
-// 이 PROPS 패치에서 바뀐 이벤트 핸들러 수. 인라인 함수가 렌더마다 새로 만들어져 생기며, 실제 DOM은 바뀌지 않는다.
+// 이 PROPS 패치에서 달거나 뗀 이벤트 핸들러 수 (실제 DOM은 바뀌지 않는다). 함수 → 함수 교체는 patches.handlers에 따로 온다.
 function handlerChanges(p) {
   if (p.type !== 'PROPS') return 0;
   return [...Object.keys(p.set), ...p.remove].filter((name) => isHandlerProp(p, name)).length;
@@ -585,7 +585,8 @@ export function startIntegrated({ root, inspector }) {
       vdom: vnodeToHTML(component.vnode),
       nodeCount: countNodes(component.vnode),
       patches: domPatches.map((p) => ({ type: p.type, text: describePatch(withoutHandlers(p)) })),
-      handlerCount: patches.reduce((sum, p) => sum + handlerChanges(p), 0),
+      // 함수 → 다른 함수 교체는 diff가 패치 대신 patches.handlers에 담는다. 핸들러를 새로 달거나 뗀 것은 PROPS에 남는다.
+      handlerCount: (patches.handlers?.length ?? 0) + patches.reduce((sum, p) => sum + handlerChanges(p), 0),
       mutations: records.length,
     });
     if (commits.length > MAX_COMMITS) commits.shift();

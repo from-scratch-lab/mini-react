@@ -191,4 +191,11 @@ describe('Phase 2 데모: 학습 트래커', () => {
     expect(log.querySelector('[data-role="hooks"]').textContent).toContain('useState');
     expect(log.querySelector('[data-role="hooks"]').textContent).toContain('"a"');
   });
+
+  it('렌더마다 새로 만든 인라인 핸들러의 교체 수를 "DOM 변경 없음"으로 따로 알려 준다', async () => {
+    await type('a');
+    const note = log.querySelector('.note');
+    expect(note).not.toBeNull();
+    expect(Number(note.textContent.match(/(\d+)건/)[1])).toBeGreaterThan(0);
+  });
 });
