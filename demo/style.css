@@ -282,6 +282,50 @@ button.primary {
   color: var(--accent-text);
 }
 
+.bench-page {
+  display: grid;
+  gap: 16px;
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+
+.bench .toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bench .toolbar input {
+  width: 4.5em;
+}
+
+.bench .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.bench-table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bench-table th,
+.bench-table td {
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bench-table th[scope='row'],
+.bench-table thead th {
+  text-align: left;
+  background: var(--card);
+  color: var(--heading);
+}
+
 .presets {
   margin: 14px 0 0;
 }

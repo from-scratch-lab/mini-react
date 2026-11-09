@@ -118,9 +118,11 @@ function allNodes(root) {
  * 시나리오 한 번을 실행해 지표를 돌려준다.
  * @param {object} scenario SCENARIOS의 원소
  * @param {number} rowCount 행 수
- * @param {Document} doc 측정할 문서 (jsdom 창의 document)
+ * @param {Document} doc 측정할 문서 (jsdom 창의 document, 또는 브라우저 벤치 페이지의 document)
+ * @param {{ layout?: boolean }} [options] layout: patch 뒤 레이아웃을 강제로 계산해 그 시간(layoutMs)도 잰다.
+ *   브라우저는 레이아웃을 읽을 때까지 미뤄 두므로, 이것까지 재야 "DOM을 바꾼 비용"이 다 들어간다. jsdom은 레이아웃이 없다.
  */
-export function measureScenario(scenario, rowCount, doc) {
+export function measureScenario(scenario, rowCount, doc, { layout = false } = {}) {
   const MO = doc.defaultView.MutationObserver;
   const container = doc.createElement('div');
   doc.body.appendChild(container);
@@ -137,6 +139,7 @@ export function measureScenario(scenario, rowCount, doc) {
   const nextRows = scenario.after(beforeRows ?? [], rowCount);
   const nextTree = view(nextRows, scenario.selected ? scenario.selected(nextRows) : 0);
 
+  if (layout) void container.offsetHeight; // 준비 단계의 레이아웃은 미리 끝내 둔다 (측정에 섞이지 않게)
   const observer = new MO(() => {});
   observer.observe(container, { childList: true, subtree: true, attributes: true, characterData: true });
   const existing = allNodes(container);
@@ -147,12 +150,17 @@ export function measureScenario(scenario, rowCount, doc) {
   let t0;
   let t1;
   let t2;
+  let t3;
   try {
     t0 = performance.now();
     patches = diff(prevTree, nextTree);
     t1 = performance.now();
     patch(container, patches);
     t2 = performance.now();
+    if (layout) {
+      void container.offsetHeight; // 레이아웃 강제 계산
+      t3 = performance.now();
+    }
     records = observer.takeRecords();
     for (const node of allNodes(container)) if (!existing.has(node)) created += 1;
   } finally {
@@ -181,5 +189,6 @@ export function measureScenario(scenario, rowCount, doc) {
     moves: { engine: kinds.MOVE ?? 0, lisMin: lisMovesByKeys(oldKeys, newKeys), react: reactMovesByKeys(oldKeys, newKeys) },
     diffMs: t1 - t0,
     patchMs: t2 - t1,
+    ...(layout ? { layoutMs: t3 - t2 } : {}),
   };
 }

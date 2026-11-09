@@ -1,13 +1,13 @@
 // 데모 페이지용 정적 파일 서버 (의존성 없음).
 // ES 모듈은 file:// 로 열 수 없어서 HTTP로 띄워야 한다.
-// 이 컴퓨터(127.0.0.1)에서만 열리고, demo/와 src/ 아래 파일만 내보낸다.
+// 이 컴퓨터(127.0.0.1)에서만 열리고, demo/와 src/, 그리고 브라우저 벤치마크 페이지가 쓰는 scripts/bench/ 아래 파일만 내보낸다.
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const PUBLIC_DIRS = ['demo', 'src'].map((dir) => resolve(ROOT, dir));
+const PUBLIC_DIRS = ['demo', 'src', 'scripts/bench'].map((dir) => resolve(ROOT, dir));
 const HOST = '127.0.0.1';
 // PORT=0이면 운영체제가 빈 포트를 고른다 (테스트용)
 const PORT = process.env.PORT === undefined || process.env.PORT === '' ? 5173 : Number(process.env.PORT);
