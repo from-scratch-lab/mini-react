@@ -1,5 +1,5 @@
 import { TEXT_NODE } from '../vdom/vnode.js';
-import { PatchType } from './diff.js';
+import { PatchType, EARLY_PROPS } from './diff.js';
 import { toAttributeName, toKebabCase, styleValue } from '../vdom/serialize.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -88,12 +88,18 @@ function createDom(vnode, parentDom) {
   const dom = inSvg ? doc.createElementNS(SVG_NS, vnode.type) : doc.createElement(vnode.type);
   vnode.dom = dom;
 
+  // type·multiple은 자식보다 먼저 넣는다. multiple이 없는 select에 option을 붙이면 "하나만 선택" 규칙이 먼저 적용된다.
+  const entries = Object.entries(vnode.props);
+  const isEarly = ([name]) => EARLY_PROPS.includes(name);
+  for (const [name, value] of entries.filter(isEarly)) setProp(dom, name, value, undefined);
+
   const target = childContainer(dom);
   for (const child of vnode.children) target.appendChild(createDom(child, dom));
 
-  // 속성은 자식을 만든 뒤에 넣고, value·checked는 그중에서도 마지막에 넣는다.
+  // 나머지 속성은 자식을 만든 뒤에 넣고, value·checked는 그중에서도 마지막에 넣는다.
   // <select value>는 option이 있어야 선택되고, range input의 value는 max를 알아야 잘리지 않는다.
-  for (const [name, value] of deferLast(Object.entries(vnode.props))) setProp(dom, name, value, undefined);
+  const rest = entries.filter((e) => !isEarly(e));
+  for (const [name, value] of deferLast(rest)) setProp(dom, name, value, undefined);
   return dom;
 }
 
@@ -126,8 +132,14 @@ function setProp(dom, name, value, prevValue) {
   if (BOOLEAN_PROPERTIES.has(name) && name in dom) {
     // HTML에서 읽은 값은 문자열('')이다. boolean 속성은 "있으면 참"이므로 문자열도 참으로 본다.
     const on = value != null && value !== false;
+    const changed = dom[name] !== on;
     dom[name] = on;
     setAttribute(dom, name, typeof value === 'string' ? value : on || null);
+    // multiple을 켜고 끄면 브라우저는 이전 선택(하나만 고르는 select의 자동 선택 포함)을 그대로 둔다.
+    // 처음부터 그린 것과 같아지도록 option 선택을 selected 속성(defaultSelected)대로 다시 맞춘다.
+    if (name === 'multiple' && changed && dom.localName === 'select') {
+      for (const option of dom.options) option.selected = option.defaultSelected;
+    }
     return;
   }
   setAttribute(dom, toAttributeName(name), value);

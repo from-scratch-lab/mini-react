@@ -7,7 +7,7 @@ import { longestIncreasingSubsequence } from './lis.js';
  *   CREATE  { parent, vnode, before }    새 노드를 만들어 parent.dom 안, before.dom 앞에 넣는다 (before가 null이면 맨 뒤)
  *   REMOVE  { vnode }                    vnode.dom을 떼어 낸다
  *   REPLACE { oldVNode, vnode }          태그·key가 다르면 하위 트리째 새로 만들어 바꾼다
- *   PROPS   { vnode, set, remove, prev } 바뀐 속성만 고친다
+ *   PROPS   { vnode, set, remove, prev } 바뀐 속성만 고친다. type·multiple이 바뀌면 한 노드에 둘 나온다(자식 패치 앞·뒤)
  *   TEXT    { vnode, value, oldValue }   텍스트 노드의 내용만 바꾼다
  *   MOVE    { parent, vnode, before }    key로 찾은 기존 노드를 before 앞으로 옮긴다
  */
@@ -93,11 +93,42 @@ function diffNode(oldVNode, newVNode, ctx) {
     return;
   }
 
-  diffChildren(oldVNode, newVNode, ctx);
-
-  // 경우 4: 속성 변경. 자식 패치 뒤에 둔다. <select value>는 새 option이 생긴 뒤에 넣어야 선택된다.
+  // 경우 4: 속성 변경. 보통은 자식 패치 뒤에 둔다. <select value>는 새 option이 생긴 뒤에 넣어야 선택된다.
+  // 단 type·multiple은 자식과 다른 속성의 뜻을 바꾸므로 따로 떼어 자식 패치 앞에 둔다(EARLY_PROPS).
   const propsPatch = diffProps(oldVNode.props, newVNode.props);
-  if (propsPatch) patches.push({ type: PatchType.PROPS, vnode: newVNode, ...propsPatch });
+  let [early, late] = propsPatch ? splitEarlyProps(propsPatch) : [null, null];
+  if (early) patches.push({ type: PatchType.PROPS, vnode: newVNode, ...early });
+  // multiple을 바꾸면 patch가 option 선택을 기본값으로 되돌린다. value가 있으면 바뀌지 않았어도 다시 넣는다.
+  const value = newVNode.props.value;
+  if (early && ('multiple' in early.set || early.remove.includes('multiple')) && value != null) {
+    late ??= { set: {}, remove: [], prev: {} };
+    if (!('value' in late.set)) {
+      late.set.value = value;
+      late.prev.value = oldVNode.props.value;
+    }
+  }
+  diffChildren(oldVNode, newVNode, ctx);
+  if (late) patches.push({ type: PatchType.PROPS, vnode: newVNode, ...late });
+}
+
+/**
+ * 다른 속성·자식보다 먼저 넣어야 하는 속성.
+ * - multiple: 없는 동안 select는 "하나만 선택" 규칙을 쓴다. option의 selected를 먼저 넣으면 마지막 하나만 남는다.
+ * - type: input의 value 처리 방식이 type마다 다르다. range의 value를 지운 뒤 radio로 바꾸면
+ *   HTML 표준대로 그때의 value("50")가 속성으로 복사된다. React도 type을 가장 먼저 넣는다.
+ */
+export const EARLY_PROPS = ['type', 'multiple'];
+
+/** PROPS 변경을 [먼저 넣을 것, 나중에 넣을 것]으로 나눈다. 빈 쪽은 null. */
+function splitEarlyProps({ set, remove, prev }) {
+  const early = { set: {}, remove: [], prev: {} };
+  const late = { set: {}, remove: [], prev: {} };
+  const part = (name) => (EARLY_PROPS.includes(name) ? early : late);
+  for (const [name, value] of Object.entries(set)) part(name).set[name] = value;
+  for (const name of remove) part(name).remove.push(name);
+  for (const [name, value] of Object.entries(prev)) part(name).prev[name] = value;
+  const isEmpty = (p) => p.remove.length === 0 && Object.keys(p.set).length === 0;
+  return [isEmpty(early) ? null : early, isEmpty(late) ? null : late];
 }
 
 function diffProps(oldProps, newProps) {
