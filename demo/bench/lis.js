@@ -20,19 +20,24 @@ export function startLisExperiment({ root }) {
     state.running = true;
     const results = { env: await environment(), timer: timerInfo(), protocol: PROTOCOL, conditions: [] };
     draw();
-    for (const c of conditions()) {
-      if (only && !only.includes(c.axis)) continue;
-      const engines = c.axis === 'size' || c.axis === 'pattern' ? ['A', 'B', 'C'] : ['A', 'B'];
-      state.current = `${c.id} (N=${c.N}${c.k != null ? ` k=${c.k}%` : ''}${c.pattern ? ` ${c.pattern}` : ''}${c.aux ? ` ${c.aux}` : ''}, L${c.level})`;
+    try {
+      for (const c of conditions()) {
+        if (only && !only.includes(c.axis)) continue;
+        const engines = c.axis === 'size' || c.axis === 'pattern' ? ['A', 'B', 'C'] : ['A', 'B'];
+        state.current = `${c.id} (N=${c.N}${c.k != null ? ` k=${c.k}%` : ''}${c.pattern ? ` ${c.pattern}` : ''}${c.aux ? ` ${c.aux}` : ''}, L${c.level})`;
+        draw();
+        await pause();
+        results.conditions.push(await runCondition(c, engines));
+        if (c.batchCheck) results.conditions.push({ ...(await runCondition(c, ['A', 'B'], { batch: true })), id: `${c.id}-batch` });
+      }
+    } catch (error) {
+      results.error = String(error); // 도중에 실패해도 그때까지의 결과는 남긴다
+    } finally {
+      state.results = results;
+      state.running = false;
+      state.current = '';
       draw();
-      await pause();
-      results.conditions.push(await runCondition(c, engines));
-      if (c.batchCheck) results.conditions.push({ ...(await runCondition(c, ['A', 'B'], { batch: true })), id: `${c.id}-batch` });
     }
-    state.results = results;
-    state.running = false;
-    state.current = '';
-    draw();
     return results;
   }
 
@@ -75,6 +80,7 @@ export function startLisExperiment({ root }) {
         h('button', { type: 'button', class: 'primary', 'data-action': 'run', disabled: state.running, onClick: () => runAll() }, state.running ? `실행 중… ${state.current}` : '전체 실행'),
         h('button', { type: 'button', 'data-action': 'download', disabled: !results, onClick: download }, '결과 JSON 내보내기'),
       ),
+      results?.error ? h('p', { class: 'warnings', role: 'alert' }, `실행 중 오류: ${results.error}`) : null,
       results
         ? h(
             'div',
