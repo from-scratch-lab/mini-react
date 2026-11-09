@@ -65,12 +65,15 @@ button, input, textarea { color: inherit; font: inherit; }
   position: absolute;
   clip-path: inset(50%);
 }
-.phase-tabs {
-  gap: .25rem;
+#phase-navigation {
+  position: relative;
   margin-top: var(--space-3);
 }
-.phase-tabs:not([hidden]) { display: grid; }
-.phase-tabs button {
+.phase-tabs {
+  display: grid;
+  gap: .25rem;
+}
+.phase-tabs button:not([hidden]) {
   display: grid;
   gap: .125rem;
   padding: .625rem .75rem;
@@ -83,6 +86,21 @@ button, input, textarea { color: inherit; font: inherit; }
 }
 .phase-tabs button:hover { background: var(--color-tab-hover); }
 .phase-tabs button[aria-selected="true"] { background: var(--color-tab-selected); }
+#phase-2-1:not([hidden]) {
+  min-height: 2.75rem;
+  padding-inline-end: 2.75rem;
+}
+#world-cup-close {
+  position: absolute;
+  inset-inline-end: .25rem;
+  bottom: .25rem;
+  width: 2.25rem;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  font-size: 1.25rem;
+}
+#world-cup-close:hover { background: var(--color-tab-hover); }
 .tab-detail {
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
@@ -220,7 +238,7 @@ button:disabled { opacity: .45; cursor: default; }
   scrollbar-gutter: stable;
 }
 
-#hooks-lab {
+#hooks-lab, #world-cup-lab {
   height: 100%;
   overflow: auto;
 }
@@ -263,3 +281,279 @@ button:disabled { opacity: .45; cursor: default; }
   overflow-wrap: anywhere;
 }
 .hook-card > button, .hook-actions + p { margin-top: var(--space-1); }
+
+#render-inspector { padding: var(--space-3); }
+#render-inspector > p {
+  margin: .25rem 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+.render-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2);
+  border-radius: .375rem;
+  background: var(--color-surface);
+}
+.render-steps dt { color: var(--color-text-muted); font-size: var(--font-size-small); }
+.render-steps dd {
+  margin: .25rem 0 0;
+  color: var(--color-accent);
+  font-family: var(--font-code);
+  overflow-wrap: anywhere;
+}
+#render-cycle {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
+}
+#render-inspector details {
+  padding: var(--space-1) 0;
+  border-top: 1px solid var(--color-line);
+  font-size: var(--font-size-small);
+}
+#render-inspector summary { cursor: pointer; }
+#render-inspector details p {
+  max-width: 75ch;
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+}
+#render-inspector :is(ul, ol) {
+  margin: var(--space-1) 0 0;
+  padding-inline-start: var(--space-3);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+.render-props code { color: var(--color-accent); }
+#render-inspector #render-operations {
+  display: grid;
+  justify-items: start;
+  gap: .25rem;
+  padding-inline-start: 0;
+  list-style: none;
+}
+#render-operations li { max-width: 100%; }
+#render-operations button { text-align: start; overflow-wrap: anywhere; }
+#render-dom-diagram-title, #render-dom-tree-title { margin: var(--space-2) 0 0; font-size: var(--font-size-body); }
+.dom-diagram-scroll {
+  margin-block-start: var(--space-1);
+  padding: var(--space-1);
+  overflow-x: auto;
+  background: var(--color-editor);
+  border-radius: .375rem;
+}
+#render-inspector #render-dom-diagram, #render-inspector #render-dom-diagram ul {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#render-dom-diagram { --branch-length: .625rem; inline-size: max-content; min-inline-size: 100%; }
+#render-inspector #render-dom-diagram ul { position: relative; padding-block-start: var(--branch-length); }
+#render-dom-diagram li { position: relative; padding-inline: .35rem; text-align: center; }
+#render-dom-diagram ul > li:not(:only-child) { padding-block-start: var(--branch-length); }
+#render-dom-diagram ul::before,
+#render-dom-diagram ul > li:not(:only-child)::before,
+#render-dom-diagram ul > li:not(:only-child)::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  block-size: var(--branch-length);
+  pointer-events: none;
+}
+#render-dom-diagram ul::before { inset-inline-start: 50%; border-inline-start: 1px solid var(--color-control-line); }
+#render-dom-diagram ul > li:not(:only-child)::before,
+#render-dom-diagram ul > li:not(:only-child)::after {
+  inline-size: 50%;
+  border-block-start: 1px solid var(--color-control-line);
+}
+#render-dom-diagram ul > li::before { inset-inline-end: 50%; }
+#render-dom-diagram ul > li::after { inset-inline-start: 50%; border-inline-start: 1px solid var(--color-control-line); }
+#render-dom-diagram ul > li:first-child::before, #render-dom-diagram ul > li:last-child::after { display: none; }
+#render-dom-diagram ul > li:last-child::before { border-inline-end: 1px solid var(--color-control-line); }
+.dom-diagram-node {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  max-inline-size: 13rem;
+  padding: .25rem .5rem;
+  border: 1px solid var(--color-control-line);
+  border-radius: .25rem;
+  background: var(--color-surface);
+  vertical-align: top;
+}
+.dom-diagram-node code { word-break: keep-all; }
+.dom-diagram-node:has(.dom-tree-change) { border-color: var(--color-accent); color: var(--color-text); }
+.dom-diagram-node .dom-tree-change { flex: none; margin: 0; }
+.dom-diagram-node[aria-current] { background: var(--color-tab-selected); outline: 1px solid var(--color-accent); }
+#render-inspector #render-dom-tree { padding-inline-start: 0; list-style: none; }
+#render-inspector #render-dom-tree ul {
+  margin: 0 0 0 .25rem;
+  padding-inline-start: var(--space-2);
+  border-inline-start: 1px solid var(--color-line);
+  list-style: none;
+}
+#render-inspector #render-dom-tree details { padding: 0; border: 0; }
+#render-dom-tree code[aria-current] {
+  color: var(--color-text);
+  background: var(--color-tab-selected);
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.dom-tree-change { margin-inline-start: var(--space-1); color: var(--color-accent); }
+
+.world-cup {
+  padding: var(--space-3);
+}
+.world-cup-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.world-cup-heading p {
+  margin: .25rem 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+.world-cup-heading .world-cup-status {
+  margin: 0;
+  color: var(--color-accent);
+  font-family: var(--font-code);
+  white-space: nowrap;
+}
+.world-cup-match {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 44rem;
+  margin: var(--space-3) auto 0;
+}
+.world-cup-choice {
+  position: relative;
+  min-width: 0;
+  padding: 0;
+  border-radius: .5rem;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 220ms ease,
+    opacity 220ms ease, filter 220ms ease, box-shadow 220ms ease;
+}
+.world-cup-choice:hover, .world-cup-choice[data-state="selected"] {
+  background: var(--color-tab-hover);
+}
+.world-cup-choice[aria-disabled="true"] { cursor: default; }
+.world-cup-choice[data-state="selected"] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent);
+  transform: translateY(-.25rem) scale(1.015);
+}
+.world-cup-choice[data-state="passed"] {
+  opacity: .5;
+  filter: grayscale(.85);
+  transform: scale(.975);
+}
+.world-cup-selected {
+  position: absolute;
+  inset: .75rem auto auto .75rem;
+  padding: .25rem .625rem;
+  border-radius: .25rem;
+  background: var(--color-accent);
+  color: var(--color-editor);
+  font-weight: var(--font-weight-heading);
+}
+.world-cup-portrait {
+  display: block;
+  overflow: hidden;
+  border-radius: .4375rem .4375rem 0 0;
+}
+.world-cup img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: #fff;
+}
+.world-cup-choice img { transition: transform 160ms ease; }
+.world-cup-choice:not([aria-disabled="true"]):hover img { transform: scale(1.025); }
+.world-cup-name {
+  display: block;
+  padding: .75rem var(--space-1);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-heading);
+}
+.world-cup-versus {
+  color: var(--color-accent);
+  font: var(--font-weight-heading) var(--font-size-small)/1 var(--font-code);
+}
+.world-cup-result {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.world-cup-winner-photo {
+  position: relative;
+  width: min(100%, 20rem);
+}
+.world-cup-winner-photo img {
+  border: 2px solid var(--color-accent);
+  border-radius: .5rem;
+  box-shadow: 0 0 2rem color-mix(in srgb, var(--color-accent) 30%, transparent);
+  animation: world-cup-winner-reveal 480ms cubic-bezier(.2, .75, .25, 1) both;
+}
+.world-cup-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.world-cup-confetti span {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: .4rem;
+  height: .8rem;
+  border-radius: .1rem;
+  background: var(--color-accent);
+  animation: world-cup-burst 900ms var(--delay) cubic-bezier(.12, .65, .3, 1) both;
+}
+.world-cup-confetti span:nth-child(3n + 1) {
+  width: .55rem;
+  height: .55rem;
+  border-radius: 50%;
+  background: var(--color-accent-hover);
+}
+.world-cup-confetti span:nth-child(3n + 2) {
+  background: var(--color-text);
+}
+.world-cup-result h3 { font-size: var(--font-size-heading); }
+.world-cup-restart {
+  background: var(--color-accent);
+  color: var(--color-editor);
+  font-weight: var(--font-weight-heading);
+}
+.world-cup-restart:hover { background: var(--color-accent-hover); }
+
+@keyframes world-cup-winner-reveal {
+  from { opacity: 0; transform: translateY(.75rem) scale(.88); }
+  72% { opacity: 1; transform: translateY(-.125rem) scale(1.025); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes world-cup-burst {
+  0% { opacity: 0; transform: scale(.25); }
+  16% { opacity: 1; }
+  65% { opacity: 1; transform: translate(var(--x), var(--y)) rotate(var(--rotation)); }
+  100% { opacity: 0; transform: translate(var(--x), calc(var(--y) + 2rem)) rotate(var(--rotation)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .world-cup .world-cup-choice, .world-cup .world-cup-choice img {
+    transition: none;
+    transform: none;
+  }
+  .world-cup-choice:not([aria-disabled="true"]):hover img { transform: none; }
+  .world-cup-winner-photo img { animation: none; }
+  .world-cup-confetti { display: none; }
+}

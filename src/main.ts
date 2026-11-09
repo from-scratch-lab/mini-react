@@ -6,6 +6,8 @@ import { History } from './history';
 import { parseEditorHTML, serializeTree } from './editor';
 import { initialHTML, previewStyles } from './sample';
 import { mountComponentsDemo } from './components-demo';
+import { createRenderInspector } from './render-inspector';
+import { mountWorldCup } from './world-cup';
 import { bindPhaseTabs } from './phase-tabs';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
@@ -19,15 +21,21 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         </svg>
       </button>
     </div>
-    <div id="phase-navigation" class="phase-tabs" role="tablist" aria-label="실험 단계" aria-orientation="vertical">
-      <button id="phase-1" type="button" role="tab" aria-selected="true" aria-controls="dom-lab">
-        <span>Phase 1</span>
-        <span class="tab-detail">DOM · Diff · Patch</span>
-      </button>
-      <button id="phase-2" type="button" role="tab" aria-selected="false" aria-controls="hooks-lab" tabindex="-1">
-        <span>Phase 2</span>
-        <span class="tab-detail">Component · Hooks</span>
-      </button>
+    <div id="phase-navigation">
+      <div class="phase-tabs" role="tablist" aria-label="실험 단계" aria-orientation="vertical">
+        <button id="phase-1" type="button" role="tab" aria-selected="true" aria-controls="dom-lab">
+          <span>Phase 1</span>
+          <span class="tab-detail">DOM · Diff · Patch</span>
+        </button>
+        <button id="phase-2" type="button" role="tab" aria-selected="false" aria-controls="hooks-lab" tabindex="-1">
+          <span>Phase 2</span>
+          <span class="tab-detail">Component · Hooks</span>
+        </button>
+        <button id="phase-2-1" type="button" role="tab" aria-selected="false" aria-controls="world-cup-lab" tabindex="-1" hidden>
+          <span>Phase2.1<wbr>(이상형 월드컵)</span>
+        </button>
+      </div>
+      <button id="world-cup-close" type="button" aria-label="이상형 월드컵 닫기" title="이상형 월드컵 닫기" hidden>×</button>
     </div>
   </aside>
   <main class="workspace">
@@ -67,12 +75,20 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         </div>
       </div>
     </section>
-    <section id="hooks-lab" role="tabpanel" aria-labelledby="phase-2" hidden></section>
+    <section id="hooks-lab" role="tabpanel" aria-labelledby="phase-2" hidden>
+      <div id="hooks-demo"></div>
+      <section id="render-inspector" aria-labelledby="render-inspector-title"></section>
+    </section>
+    <section id="world-cup-lab" role="tabpanel" aria-labelledby="phase-2-1" hidden></section>
   </main>`;
 
 const phaseNavigation = document.querySelector<HTMLElement>('#phase-navigation')!;
 const sidebarToggle = document.querySelector<HTMLButtonElement>('#sidebar-toggle')!;
-bindPhaseTabs(phaseNavigation);
+bindPhaseTabs(
+  phaseNavigation.querySelector<HTMLElement>('[role="tablist"]')!,
+  phaseNavigation.querySelector<HTMLButtonElement>('#phase-2-1')!,
+  phaseNavigation.querySelector<HTMLButtonElement>('#world-cup-close')!,
+);
 sidebarToggle.addEventListener('click', () => {
   phaseNavigation.hidden = !phaseNavigation.hidden;
   sidebarToggle.setAttribute('aria-expanded', String(!phaseNavigation.hidden));
@@ -155,5 +171,11 @@ patchButton.addEventListener('click', applyDraft);
 back.addEventListener('click', () => { if (history.canBack) navigateHistory(history.index - 1); });
 forward.addEventListener('click', () => { if (history.canForward) navigateHistory(history.index + 1); });
 updateControls();
-const componentsDemo = mountComponentsDemo(document.querySelector('#hooks-lab')!);
-if (import.meta.hot) import.meta.hot.dispose(() => componentsDemo.unmount());
+const demo = document.querySelector('#hooks-demo')!;
+const inspectRender = createRenderInspector(demo, document.querySelector('#render-inspector')!);
+const componentsDemo = mountComponentsDemo(demo, inspectRender);
+const worldCup = mountWorldCup(document.querySelector('#world-cup-lab')!);
+if (import.meta.hot) import.meta.hot.dispose(() => {
+  componentsDemo.unmount();
+  worldCup.unmount();
+});

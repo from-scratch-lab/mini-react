@@ -6,11 +6,16 @@ Vanilla TypeScript + Vite로 구현한 Mini React 실험 페이지입니다. Pha
 
 왼쪽의 Phase 2 탭에서 카운터 증가·감소·초기화, 자동 증가 시작·중지, 이름 입력을 실행할 수 있습니다. Phase 1 탭에서는 왼쪽 HTML 편집기와 오른쪽 미리보기·실제 DOM을 나란히 확인할 수 있습니다. 탭을 이동해도 편집 내용과 이력, 카운터 상태는 유지됩니다.
 
+Phase 2 카드 아래의 **렌더링 관찰**에서 `mount()`와 `update()`를 구분하고, 최근 상태 변경과 실행된 컴포넌트를 확인할 수 있습니다. `컴포넌트와 props`는 App이 자식에게 전달하는 값을, `Hook 상세`는 호출 순서에 따라 값이 저장되는 `hooks` 슬롯을 보여줍니다. `DOM 변경 목록`에서는 Phase 1의 Diff가 찾아낸 이전 VDOM 값과 Patch로 반영된 값을 비교할 수 있습니다. DOM 구조도는 상위 노드와 최근 Patch 대상까지 이어지는 경로를 그립니다. 변경 항목을 선택하면 구조도, 전체 DOM 트리, 데모의 해당 위치를 함께 강조합니다. 카운터가 0일 때 `초기화`를 눌러 렌더링이 생략되고 슬롯이 유지되는 경우도 확인해 보세요.
+
+Phase 1에서 시작해 3초 안에 `Phase 1 → Phase 2 → Phase 1 → Phase 2 → Phase 1` 순서로 전환하면 숨겨진 `Phase2.1(이상형 월드컵)` 탭이 열립니다. 클릭과 키보드 탭 이동 모두 가능합니다. 왼쪽 탭 옆의 `×`를 누르면 탭이 다시 숨겨지고, 같은 순서로 전환하면 다시 열립니다. 탭의 열림 여부는 같은 브라우저 탭에서 새로고침해도 유지됩니다. 사진 4장으로 월드컵을 진행하고, 우승 화면의 `다시 시작`을 누르면 첫 대진으로 돌아갑니다.
+
 | 파일 | 역할 |
 | --- | --- |
 | `src/core/element.ts` | `h()`로 요소/함수 컴포넌트 표현 생성, stateless 자식 실행, Phase 1 VTree 및 이벤트 바인딩 생성 |
 | `src/core/component.ts` | `FunctionComponent`의 `hooks`, `mount()`, `update()`, `unmount()`와 `useState`, `useEffect`, `useMemo` |
 | `src/components-demo.ts` | 루트 App과 props만 사용하는 Counter/Summary 데모 |
+| `src/world-cup.ts` | 루트 상태와 props로 구성한 4강 이상형 월드컵 |
 | `src/main.ts`, `src/phase-tabs.ts`, `src/style.css` | Phase 탭, 키보드 탐색, 데스크톱 작업공간 |
 | `tests/components.test.ts` | 상태 보존, Hook 의존성·cleanup·제약, 이벤트, DOM 동일성 테스트 |
 | `tests/browser/components.spec.ts`, `tests/browser/workspace.spec.ts` | 실제 클릭·입력·포커스 보존, 타이머 정리, 탭 전환과 데스크톱 배치 |

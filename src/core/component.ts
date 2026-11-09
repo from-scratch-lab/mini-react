@@ -1,7 +1,7 @@
-import { diff } from './diff';
+import { diff, type Operation } from './diff';
 import { patch } from './patch';
 import { resolve, type Binding, type Component } from './element';
-import type { VTree } from './vdom';
+import type { VNode, VTree } from './vdom';
 
 type Dependencies = readonly unknown[] | undefined;
 type Cleanup = void | (() => void);
@@ -10,6 +10,16 @@ type StateHook = { kind: 'state'; value: unknown; set: (action: any) => void };
 type MemoHook = { kind: 'memo'; value: unknown; deps: Dependencies };
 type EffectHook = { kind: 'effect'; effect: () => Cleanup; deps: Dependencies; cleanup: Cleanup; pending: boolean };
 type Hook = StateHook | MemoHook | EffectHook;
+type ObservedHook =
+  | { kind: 'state'; value: unknown }
+  | { kind: 'memo'; value: unknown; reused: boolean }
+  | { kind: 'effect'; ran: boolean; cleaned: boolean };
+export type RenderObservation =
+  | {
+    type: 'commit'; components: readonly string[]; hooks: readonly ObservedHook[];
+    operations: readonly Operation[]; previousTree: readonly VNode[];
+  }
+  | { type: 'unchanged'; index: number; value: unknown };
 let current: FunctionComponent<any> | null = null;
 let rendering = false;
 const owners = new WeakMap<Element, FunctionComponent<any>>();
@@ -29,7 +39,8 @@ export class FunctionComponent<P> {
   private pending = false;
   private rendered = false;
 
-  constructor(private component: Component<P>, private container: Element, private props: P) {}
+  constructor(private component: Component<P>, private container: Element, private props: P,
+    private observe?: (event: RenderObservation) => void) {}
 
   mount(): void {
     if (rendering) throw new Error('렌더링 중 다른 루트를 mount할 수 없습니다.');
@@ -49,16 +60,27 @@ export class FunctionComponent<P> {
       do {
         if (++passes > 100) throw new Error('상태 업데이트가 반복됩니다. Effect 의존성을 확인하세요.');
         this.pending = false; this.cursor = 0; this.draft = this.hooks.slice();
+        const components = this.observe ? [this.component.displayName || this.component.name || '(익명)'] : undefined;
         current = this; rendering = true;
         let result: ReturnType<typeof resolve>;
         try {
           let output;
           try { output = this.component(this.props); } finally { current = null; }
           if (this.rendered && this.cursor !== this.hooks.length) throw new Error('Hook 호출 개수와 순서는 매 렌더링마다 같아야 합니다.');
-          result = resolve(output);
+          result = resolve(output, components);
         } finally { rendering = false; }
         const { tree, bindings } = result;
-        patch(this.container, diff(this.tree, tree));
+        const previousTree = this.tree;
+        const operations = diff(previousTree, tree);
+        patch(this.container, operations);
+        // Capture the decisions before Effect execution clears the pending flags.
+        const observed = components && this.draft.map((hook, index): ObservedHook => {
+          switch (hook.kind) {
+            case 'state': return { kind: 'state', value: hook.value };
+            case 'memo': return { kind: 'memo', value: hook.value, reused: this.hooks[index] === hook };
+            case 'effect': return { kind: 'effect', ran: hook.pending, cleaned: hook.pending && !!hook.cleanup };
+          }
+        });
         this.tree = tree; this.hooks = this.draft; this.rendered = true;
         this.bindEvents(bindings);
         // Effects run after the DOM and handlers have committed. State writes queue a new pass.
@@ -69,6 +91,9 @@ export class FunctionComponent<P> {
           if (cleanup) cleanup();
           hook.cleanup = hook.effect();
         }
+        if (components && observed) this.observe?.({
+          type: 'commit', components, hooks: observed, operations, previousTree: structuredClone(previousTree),
+        });
       } while (this.pending);
     } finally { this.busy = false; }
   }
@@ -122,7 +147,10 @@ export class FunctionComponent<P> {
           if (rendering) throw new Error('렌더링 중 상태를 변경할 수 없습니다.');
           if (!this.mounted || this.hooks[index] !== state) return;
           const value = typeof action === 'function' ? (action as (previous: T) => T)(state.value as T) : action;
-          if (Object.is(state.value, value)) return;
+          if (Object.is(state.value, value)) {
+            this.observe?.({ type: 'unchanged', index, value });
+            return;
+          }
           state.value = value; this.update();
         } };
       hook = state; this.draft[index] = hook;

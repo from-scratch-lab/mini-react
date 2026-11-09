@@ -1,17 +1,54 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { FunctionComponent, useEffect, useMemo, useState } from '../src/core/component';
+import { FunctionComponent, useEffect, useMemo, useState, type RenderObservation } from '../src/core/component';
 import { h, type Child } from '../src/core/element';
 
 const roots: FunctionComponent<{}>[] = [];
-function mount(component: () => Child) {
+function mount(component: () => Child, observe?: (event: RenderObservation) => void) {
   const container = document.createElement('div');
-  const root = new FunctionComponent(component, container, {});
+  const root = new FunctionComponent(component, container, {}, observe);
   roots.push(root); root.mount();
   return { root, container };
 }
 afterEach(() => { roots.splice(0).forEach(root => root.unmount()); vi.useRealTimers(); });
 
 describe('root state and Phase 1 reconciliation', () => {
+  it('observes applied patches, executed components, Hook decisions and skipped updates', () => {
+    const observe = vi.fn<(event: RenderObservation) => void>();
+    let set!: (value: number) => void;
+    const Child = ({ value }: { value: number }) => h('p', null, value);
+    function App() {
+      const [value, update] = useState(0);
+      set = update;
+      const doubled = useMemo(() => value * 2, [value]);
+      useEffect(() => () => {}, [value]);
+      return h(Child, { value: doubled });
+    }
+    const { root, container } = mount(App, observe);
+    expect(observe).toHaveBeenLastCalledWith(expect.objectContaining({ previousTree: [] }));
+    set(1);
+    expect(container.textContent).toBe('2');
+    expect(observe).toHaveBeenLastCalledWith({
+      type: 'commit', components: ['App', 'Child'], operations: [{ type: 'text', path: [0, 0], text: '2' }],
+      previousTree: [{ type: 'element', tag: 'p', attrs: {}, children: [{ type: 'text', text: '0' }] }],
+      hooks: [
+        { kind: 'state', value: 1 }, { kind: 'memo', value: 2, reused: false },
+        { kind: 'effect', ran: true, cleaned: true },
+      ],
+    });
+    root.update();
+    expect(observe).toHaveBeenLastCalledWith({
+      type: 'commit', components: ['App', 'Child'], operations: [],
+      previousTree: [{ type: 'element', tag: 'p', attrs: {}, children: [{ type: 'text', text: '2' }] }],
+      hooks: [
+        { kind: 'state', value: 1 }, { kind: 'memo', value: 2, reused: true },
+        { kind: 'effect', ran: false, cleaned: false },
+      ],
+    });
+    set(1);
+    expect(observe).toHaveBeenLastCalledWith({ type: 'unchanged', index: 0, value: 1 });
+    expect(observe).toHaveBeenCalledTimes(4);
+  });
+
   it('retains independent slots, stable setters and lazy initialization', () => {
     const initialize = vi.fn(() => 2); let set!: (value: number | ((n: number) => number)) => void;
     const { root, container } = mount(() => {

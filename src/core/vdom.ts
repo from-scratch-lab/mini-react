@@ -21,7 +21,7 @@ export function domToVNode(node: Node): VNode {
 
 export function readDOM(container: Node): VTree {
   return Array.from(container.childNodes, domToVNode);
-}
+} 
 
 /** Initialize from attributes, or restore the intended live state after an attribute patch. */
 export function syncControl(element: Element, state?: { value: string; checked: boolean }): void {

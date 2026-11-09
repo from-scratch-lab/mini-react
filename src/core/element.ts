@@ -1,7 +1,7 @@
 import type { VNode, VTree } from './vdom';
 
 export type Child = Description | string | number | boolean | null | undefined | Child[];
-export type Component<P> = (props: P) => Child;
+export type Component<P> = ((props: P) => Child) & { displayName?: string };
 type Props = Record<string, unknown>;
 export interface Description {
   type: string | Component<any>;
@@ -17,7 +17,7 @@ export function h(type: string | Component<any>, props: object | null, ...childr
 }
 
 export interface Binding { path: number[]; events: Map<string, EventListener> }
-export function resolve(output: Child): { tree: VTree; bindings: Binding[] } {
+export function resolve(output: Child, components?: string[]): { tree: VTree; bindings: Binding[] } {
   const bindings: Binding[] = [];
   function children(items: Child[], parent: number[]): VTree {
     const result: VTree = [];
@@ -28,6 +28,7 @@ export function resolve(output: Child): { tree: VTree; bindings: Binding[] } {
         result.push({ type: 'text', text: String(item) }); return;
       }
       if (typeof item.type === 'function') {
+        components?.push(item.type.displayName || item.type.name || '(익명)');
         append(item.type({ ...item.props, children: item.children })); return;
       }
       const path = [...parent, result.length];
