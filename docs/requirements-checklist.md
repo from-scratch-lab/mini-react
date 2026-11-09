@@ -1,6 +1,6 @@
 # 과제 요구사항 체크리스트
 
-기준: `dev` feat/dx-concepts 병합 후 (테스트 23파일 279개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
+기준: `dev` feat/dx-concepts 병합 후 (테스트 24파일 290개 통과, feat/perf-handler-box 병합 후, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
 상태: ✅ 충족 · 🟨 부분 · ❌ 미충족. 증거는 `파일:줄`, 테스트 이름(따옴표), 데모 위치.
 
 ## Phase 1. Virtual DOM + Diff + Patch
@@ -56,7 +56,7 @@
 | 5.2 | 화면 동작 기능 테스트 | ✅ | tests/demo/ 5파일 |
 | 5.3 | 엣지 케이스 | ✅ | 고도화 중 고친 것: B1 다중 select 선택·B2 type 변경 시 value 잔존(`fix/dx-form-prop-order`), B3 주석으로 갈린 텍스트(`fix/dx-adjacent-text`) · 중복 key, vnode 재사용, select/option 순서, 폼 상태, SVG, patch 실패 복구, effect 실패, 무한 렌더 감지, fuzz("어떤 이전 트리에서 patch해도 결과 DOM은 새로 그린 다음 트리와 같다") |
 | 5.4 | 포트폴리오 수준 완성도 | 🟨 | README에 특화 방향·구조도·로드맵·벤치마크 하이라이트 있음(9d9ea8c). 실제 React와의 차이 표와 최종 정리는 아직 |
-| 5.5 | 다른 팀과의 차별점 | 🟨 | `npm run bench`(14 시나리오), tests/bench/budget.test.js(CI 성능 예산), React lastPlacedIndex와 이동 수 비교(swap 2 vs 997), docs/benchmarks.md. 최적화(핸들러 상자·일괄 삽입·자식 빠른 경로)와 차등 fuzz는 진행 중 |
+| 5.5 | 다른 팀과의 차별점 | 🟨 | `npm run bench`(14 시나리오), tests/bench/budget.test.js(CI 성능 예산), React lastPlacedIndex와 이동 수 비교(swap 2 vs 997), docs/benchmarks.md. 핸들러 상자로 같은 데이터 다시 렌더 패치 2000 → 0(docs/perf/handler-box.md). 일괄 삽입·자식 빠른 경로와 차등 fuzz는 진행 중 |
 
 ## 중점 포인트 (문서·데모로 설명되어 있는가)
 
@@ -79,7 +79,7 @@
 | 우선순위 | 항목 | 담당 |
 |---|---|---|
 | ✅ | 5.5 벤치마크·성능 예산 (`feat/perf-bench`) | mr-perf |
-| P1 | 5.5 최적화: 핸들러 상자 → 일괄 삽입 → 자식 빠른 경로 (ADR 0001 순서) | mr-perf |
+| P1 | 5.5 최적화: 핸들러 상자 ✅ → 일괄 삽입 → 자식 빠른 경로 (ADR 0001 순서) | mr-perf |
 | P1 | 5.3 브라우저 파서 대조 차등 fuzz | mr-dx |
 | ✅ | 6.1·6.2·6.7·6.8 설명 보강 (`feat/dx-concepts`) | mr-dx |
 | P2 | 1.11 phase1 프리셋 시나리오(table·form·select·중첩 목록·key 재정렬) | mr-dx |
