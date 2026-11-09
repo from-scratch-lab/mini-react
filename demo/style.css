@@ -1,0 +1,1369 @@
+/*
+ * 디자인 토큰: react.dev 학습 페이지(본문 #404756, 제목 #23272f, 링크 #087ea4, 카드 #f6f7f9·16px,
+ * Note #f4fbf9/#2b6e62, Pitfall #fef5e7/#c76a15)를 바탕으로, 한글은 Pretendard로 읽기 좋게 맞췄다.
+ */
+:root {
+  --page-width: 1440px;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --card: #f6f7f9;
+  --text: #404756;
+  --heading: #23272f;
+  --muted: #6b7385;
+  --line: #e5e7eb;
+  --accent: #087ea4;
+  --accent-text: #ffffff;
+  --accent-soft: #e6f7ff;
+  --code-bg: #16181d;
+  --code-text: #e4e6eb;
+  --inline-code: rgba(153, 161, 179, 0.14);
+  --note-bg: #f4fbf9;
+  --note-text: #2b6e62;
+  --warn-bg: #fef5e7;
+  --warn-text: #c76a15;
+  --deep-bg: #f5f3ff;
+  --deep-text: #5b46b8;
+  --bezel: #23272f;
+  --key-shadow: #d4d8e0;
+  --op-create: #1f9d55;
+  --op-remove: #d64545;
+  --op-replace: #9b5bd0;
+  --op-props: #087ea4;
+  --op-text: #c76a15;
+  --op-move: #0e9aa7;
+  --radius: 16px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1e24;
+    --panel: #23272f;
+    --card: #2b303a;
+    --text: #c9cdd6;
+    --heading: #f3f4f6;
+    --muted: #99a1b3;
+    --line: #343a46;
+    --accent: #58c4dc;
+    --accent-text: #16181d;
+    --accent-soft: #10303a;
+    --code-bg: #16181d;
+    --code-text: #e4e6eb;
+    --inline-code: rgba(153, 161, 179, 0.18);
+    --note-bg: #13302b;
+    --note-text: #7fd6c2;
+    --warn-bg: #3a2a12;
+    --warn-text: #f2b56b;
+    --deep-bg: #2a2440;
+    --deep-text: #c2b5ff;
+    --bezel: #0f1115;
+    --key-shadow: #12151a;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.75 'Pretendard Variable', Pretendard, -apple-system, ui-sans-serif, system-ui, 'Segoe UI',
+    'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--heading);
+  letter-spacing: -0.01em;
+}
+
+code {
+  background: var(--inline-code);
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-size: 0.9em;
+}
+
+pre code,
+.vdom code {
+  background: none;
+  padding: 0;
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+textarea {
+  font-family: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Consolas, 'D2Coding', monospace;
+}
+
+.page-head {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 16px 16px 8px;
+}
+
+.page-head h1 {
+  margin: 4px 0 6px;
+  font-size: 1.5rem;
+}
+
+.page-head p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.phase1 {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .phase1 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.badge {
+  font-size: 0.78rem;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.badge-warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-color: transparent;
+}
+
+/* 실제 영역 샘플 */
+.actual-area {
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+
+.card-title {
+  margin-top: 0;
+  font-size: 1.3rem;
+}
+
+.todo li.done {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.tips {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* 테스트 영역 */
+.code {
+  width: 100%;
+  min-height: 300px;
+  resize: vertical;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-size: 13px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.code:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+button {
+  font: inherit;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.history-status {
+  margin-left: auto;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.timeline {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 12px 0 0;
+}
+
+.timeline button {
+  padding: 2px 10px;
+  font-size: 0.82rem;
+}
+
+.timeline button.current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.bench-page {
+  display: grid;
+  gap: 16px;
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+
+.bench .toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bench .toolbar input {
+  width: 4.5em;
+}
+
+.bench .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.bench-table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bench-table th,
+.bench-table td {
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bench-table th[scope='row'],
+.bench-table thead th {
+  text-align: left;
+  background: var(--card);
+  color: var(--heading);
+}
+
+.presets {
+  margin: 14px 0 0;
+}
+
+.presets h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.presets h3 small,
+.presets button small {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.presets ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.presets li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.presets .preset-name {
+  min-width: 7.5em;
+  font-weight: 600;
+  color: var(--heading);
+}
+
+.presets button {
+  min-height: 24px;
+  padding: 2px 10px;
+  font-size: 0.82rem;
+}
+
+.score-table td,
+.score-table th {
+  padding: 2px 10px;
+}
+
+.score-table .top {
+  background: var(--accent-soft);
+}
+
+.warnings {
+  margin: 14px 0 0;
+  padding: 8px 12px 8px 28px;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.log h3 {
+  margin: 16px 0 6px;
+  font-size: 0.95rem;
+}
+
+.log h3 small {
+  color: var(--muted);
+  font-weight: normal;
+  margin-left: 6px;
+}
+
+.log ol {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.88rem;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.log li {
+  margin: 2px 0;
+  overflow-wrap: anywhere;
+}
+
+.log li.empty {
+  list-style: none;
+  margin-left: -20px;
+  color: var(--muted);
+}
+
+.op {
+  display: inline-block;
+  min-width: 64px;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border-radius: 4px;
+  padding: 0 6px;
+  color: #fff;
+}
+
+.op-create { background: var(--op-create); }
+.op-remove { background: var(--op-remove); }
+.op-replace { background: var(--op-replace); }
+.op-props { background: var(--op-props); }
+.op-text { background: var(--op-text); }
+.op-move { background: var(--op-move); }
+
+/* Phase 2: 학습 트래커 */
+.phase2 {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .phase2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tracker-head h2 {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats strong {
+  color: var(--text);
+}
+
+.progress {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+.todo-form {
+  display: flex;
+  gap: 8px;
+}
+
+.todo-form input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+}
+
+.todo-form input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filters button {
+  padding: 3px 12px;
+  font-size: 0.88rem;
+}
+
+.filters button.current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+button.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.filters .ghost {
+  margin-left: auto;
+}
+
+.todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.todo-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+}
+
+.todo-list li:first-child {
+  border-top: 0;
+}
+
+.todo-list label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.todo-list li.done .todo-text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.empty {
+  color: var(--muted);
+  margin: 0;
+}
+
+.timer {
+  border-top: 1px dashed var(--line);
+  padding-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.timer h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.timer-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-buttons {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.inspector h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.inspector ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.inspector .patch-list {
+  max-height: 260px;
+  overflow: auto;
+}
+
+.inspector li.empty {
+  list-style: none;
+  margin-left: -22px;
+}
+
+.inspector .note {
+  margin: -8px 0 16px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.hook-list code {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+/* 페이지 사이 내비게이션 */
+.site-nav {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 14px 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.9rem;
+}
+
+.site-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 2px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.site-nav a:hover {
+  color: var(--text);
+}
+
+.site-nav a[aria-current='page'] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* 종합 페이지 */
+.flow {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 12px 0 0;
+}
+
+.flow li {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.85rem;
+}
+
+.flow li + li::before {
+  content: '→ ';
+  color: var(--muted);
+}
+
+.integrated {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.backlog-app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.backlog-app .toolbar {
+  margin-top: 0;
+}
+
+.backlog-app .toolbar button {
+  font-size: 0.85rem;
+  padding: 4px 10px;
+}
+
+.key-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.add-form {
+  display: flex;
+  gap: 8px;
+}
+
+.add-form input,
+.title-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+}
+
+.add-form input:focus,
+.title-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.backlog {
+  margin: 0;
+  padding: 0 0 0 28px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.backlog li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 7px 10px 7px 4px;
+  border-top: 1px solid var(--line);
+}
+
+.backlog li:first-child {
+  border-top: 0;
+}
+
+.backlog li::marker {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.backlog .title {
+  flex: 1;
+  min-width: 8em;
+  overflow-wrap: anywhere;
+}
+
+.backlog li.priority .title {
+  font-weight: 700;
+}
+
+.backlog li.priority {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.backlog .points {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.row-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.row-actions button {
+  padding: 2px 7px;
+  font-size: 0.85rem;
+}
+
+.summary {
+  margin: 0;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pipeline-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+
+.pipeline-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.commit-title {
+  color: var(--accent);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pipeline-head button {
+  margin-left: auto;
+  font-size: 0.8rem;
+  padding: 2px 10px;
+}
+
+.stage {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px 18px 12px;
+  min-width: 0;
+}
+
+.stage h3 {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+}
+
+.stage h3 small {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.step {
+  color: var(--accent);
+}
+
+.stage p {
+  margin: 0 0 6px;
+  font-size: 0.88rem;
+}
+
+.stage .hook-list,
+.stage .patch-list {
+  margin: 0 0 6px;
+  padding-left: 22px;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.stage .patch-list {
+  max-height: 200px;
+  overflow: auto;
+}
+
+.hook-list li.changed {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-radius: 4px;
+}
+
+.hook-list li.recomputed {
+  outline: 1px dashed var(--line);
+  border-radius: 4px;
+}
+
+.hook-tag {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.patch-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.stage .note {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.vdom {
+  margin: 0;
+  height: 420px;
+  min-height: 160px;
+  max-height: 80vh;
+  overflow: auto;
+  resize: vertical;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+/* 방금 일어난 일 */
+.concept {
+  background: var(--deep-bg);
+  border-radius: var(--radius);
+  padding: 18px 22px 14px;
+  margin: 0;
+  min-width: 0;
+}
+
+.concept-kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--deep-text);
+}
+
+.concept h3 {
+  margin: 2px 0 6px;
+  font-size: 1rem;
+}
+
+.concept-body {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.88rem;
+}
+
+.concept-body li {
+  margin: 3px 0;
+}
+
+.react-note {
+  margin: 12px 0 6px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--note-bg);
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.react-note b {
+  color: var(--note-text);
+}
+
+.concept-link {
+  font-size: 0.82rem;
+  color: var(--accent);
+}
+
+.lis {
+  margin: 8px 0 4px;
+  font-size: 0.86rem;
+}
+
+.lis p {
+  margin: 4px 0;
+}
+
+.lis-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 0;
+}
+
+.lis-chips li {
+  display: flex;
+  flex-direction: column;
+  min-width: 84px;
+  max-width: 140px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 0.78rem;
+}
+
+.lis-chips li.keep {
+  border-color: var(--op-create);
+}
+
+.lis-chips li.move {
+  border-color: var(--op-move);
+  background: color-mix(in srgb, var(--op-move) 14%, var(--panel));
+}
+
+.lis-old {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lis-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lis-tag {
+  font-weight: 700;
+}
+
+.lis-chips li.keep .lis-tag {
+  color: var(--op-create);
+}
+
+.lis-chips li.move .lis-tag {
+  color: var(--op-move);
+}
+
+.lis-compare {
+  font-weight: 600;
+}
+
+/* React의 본질: 기본 개념 */
+.basics {
+  max-width: var(--page-width);
+  margin: 8px auto 40px;
+  padding: 0 16px;
+}
+
+.basics h2 {
+  font-size: 1.2rem;
+  margin: 8px 0 4px;
+}
+
+.basics-lead {
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.basics > section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 8px 0;
+  scroll-margin-top: 12px;
+}
+
+.basics > section:target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.basics > section h3 {
+  margin: 4px 0 6px;
+  font-size: 1rem;
+}
+
+.basics > section p,
+.basics > section ul {
+  font-size: 0.92rem;
+  max-width: 78ch;
+}
+
+/* 9절: 변화 감지 방법 비교표. 좁은 화면에서는 감싼 div만 가로로 스크롤한다(표는 기본 display라 스크린리더가 표로 읽는다). */
+.basics .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.basics table.compare {
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin: 6px 0 10px;
+}
+
+.basics table.compare th,
+.basics table.compare td {
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.basics table.compare th {
+  background: var(--card);
+  color: var(--heading);
+  font-weight: 600;
+}
+
+.timeline-wrap h3 {
+  margin: 10px 0 4px;
+  font-size: 0.92rem;
+}
+
+.timeline small {
+  opacity: 0.7;
+}
+
+/* ───────── 종합 페이지: 위 모니터(렌더 파이프라인) · 아래 키보드(앱) ───────── */
+.monitor {
+  background: var(--bezel);
+  border-radius: 22px;
+  padding: 10px 10px 14px;
+  box-shadow: 0 18px 40px -24px rgba(15, 17, 21, 0.55);
+}
+
+.monitor-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 8px 10px;
+  color: #9aa1b3;
+  font-size: 0.8rem;
+}
+
+.monitor-dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.monitor-dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ff5f57;
+}
+
+.monitor-dots i:nth-child(2) {
+  background: #febc2e;
+}
+
+.monitor-dots i:nth-child(3) {
+  background: #28c840;
+}
+
+.monitor-title {
+  font-family: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monitor-screen {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 20px;
+  min-height: 420px;
+}
+
+/* 받침대 */
+.monitor-stand {
+  display: flex;
+  justify-content: center;
+  height: 34px;
+}
+
+.monitor-stand span {
+  width: 160px;
+  height: 100%;
+  background: linear-gradient(var(--bezel), color-mix(in srgb, var(--bezel) 70%, var(--bg)));
+  clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%);
+}
+
+/* 모니터 화면 안 배치: 머리 / 설명·hooks / 가상 트리·패치 / 타임라인·DOM */
+.pipeline {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  grid-template-areas:
+    'head head'
+    'concept hooks'
+    'vdom patches'
+    'timeline dom';
+  gap: 16px;
+  align-items: start;
+}
+
+.pipeline-head { grid-area: head; margin-bottom: 0; }
+.pipeline > .concept { grid-area: concept; align-self: stretch; }
+.stage-hooks { grid-area: hooks; align-self: stretch; }
+.stage-vdom { grid-area: vdom; }
+.stage-patches { grid-area: patches; align-self: stretch; }
+.stage-dom { grid-area: dom; }
+.pipeline > .timeline-wrap { grid-area: timeline; }
+
+.pipeline-head h2 {
+  font-size: 1.25rem;
+}
+
+.commit-title {
+  font-size: 1.05rem;
+}
+
+.stage h3 {
+  font-size: 0.98rem;
+  margin-bottom: 10px;
+}
+
+.step {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.8em;
+  margin-right: 2px;
+}
+
+.stage-vdom .vdom {
+  height: 460px;
+  font-size: 13.5px;
+}
+
+.stage .patch-list {
+  max-height: 360px;
+}
+
+.timeline-wrap {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+}
+
+.timeline-wrap h3 {
+  margin-top: 0;
+}
+
+@media (max-width: 1100px) {
+  .pipeline {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'head' 'concept' 'hooks' 'vdom' 'patches' 'dom' 'timeline';
+  }
+
+  .stage-vdom .vdom {
+    height: 340px;
+  }
+}
+
+/* 키보드: 조작하는 앱 */
+.keyboard {
+  background: linear-gradient(var(--card), color-mix(in srgb, var(--card) 85%, var(--line)));
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 18px 22px 22px;
+  box-shadow: inset 0 -4px 0 var(--key-shadow);
+}
+
+.keyboard-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-bottom: 14px;
+}
+
+.keyboard-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.keyboard-hint {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* 뒤로가기·앞으로가기·초기화 묶음 */
+.history-keys {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-right: 12px;
+  margin-right: 4px;
+  border-right: 1px solid var(--line);
+}
+
+.keyboard .toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 툴바 버튼을 키캡처럼 */
+.keyboard .toolbar button,
+.keyboard .add-form button {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom-width: 4px;
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-weight: 600;
+  color: var(--heading);
+  transition: transform 0.06s ease, border-bottom-width 0.06s ease;
+}
+
+.keyboard .toolbar button:active,
+.keyboard .add-form button:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+.keyboard .add-form button.primary {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, #000);
+  color: var(--accent-text);
+}
+
+.keyboard .backlog {
+  background: var(--panel);
+}
+
+.keyboard .backlog {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: row;
+}
+
+.keyboard .backlog li {
+  padding: 9px 12px;
+  counter-increment: row;
+}
+
+/* 행이 flex라 ol 번호가 사라지므로 직접 그린다 (위치 비교·MOVE를 볼 때 순번이 필요하다) */
+.keyboard .backlog li::before {
+  content: counter(row);
+  min-width: 1.6em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* 첫 화면 */
+.index {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.index-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.index-card:hover {
+  border-color: var(--accent);
+}
+
+.index-card span {
+  color: var(--muted);
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>벤치마크 · mini-react</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+    <link rel="stylesheet" href="../style.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="데모 페이지">
+      <a href="../">mini-react</a>
+      <a href="../phase1/">Phase 1 · Diff</a>
+      <a href="../phase2/">Phase 2 · Hooks</a>
+      <a href="../integrated/">종합</a>
+      <a href="./" aria-current="page">벤치마크</a>
+    </nav>
+    <header class="page-head">
+      <h1>브라우저 벤치마크</h1>
+      <p>
+        <code>npm run bench</code>(Node + jsdom)와 같은 시나리오를 <b>이 브라우저</b>에서 돌립니다. 행 하나는
+        <code>&lt;tr key&gt;&lt;td&gt;id&lt;/td&gt;&lt;td&gt;&lt;a&gt;label&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a&gt;x&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;</code>입니다.
+      </p>
+    </header>
+    <main class="bench-page">
+      <section class="panel">
+        <h2>읽는 법</h2>
+        <ul>
+          <li><b>패치 · DOM 변경 기록 · 붙임+뗌 · 새 노드</b>는 매번 같은 값이 나오는 지표입니다. jsdom 결과(<code>docs/benchmarks.md</code>)와 같아야 하며, CI 성능 예산이 이 값을 지킵니다.</li>
+          <li><b>diff · patch · layout ms</b>는 이 브라우저의 시간입니다. layout은 patch 뒤 레이아웃을 강제로 계산한 시간이라 Reflow 비용이 들어갑니다. 기계·브라우저마다 다르니 같은 기계에서 비교하세요.</li>
+          <li><b>이동</b>: 엔진이 실제로 만든 MOVE 수 / LIS로 구한 이론 최소 / 같은 key 순서를 React식(lastPlacedIndex)으로 처리했을 때의 수. React 열은 알고리즘을 따라 센 값이며 실제 React를 돌린 결과가 아닙니다.</li>
+        </ul>
+      </section>
+      <section id="app" class="panel"></section>
+    </main>
+  </body>
+</html>

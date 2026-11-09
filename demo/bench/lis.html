@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LIS 실험 · mini-react</title>
+    <link rel="stylesheet" href="../style.css" />
+    <!-- React 기준선(C): 설치된 18.3.1 프로덕션 UMD를 로컬에서 읽는다 (CDN 없음) -->
+    <script src="/node_modules/react/umd/react.production.min.js"></script>
+    <script src="/node_modules/react-dom/umd/react-dom.production.min.js"></script>
+    <script type="module">
+      import { startLisExperiment } from './lis.js';
+      startLisExperiment({ root: document.getElementById('app') });
+    </script>
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="데모 페이지">
+      <a href="../">mini-react</a>
+      <a href="./">벤치마크</a>
+      <a href="./lis.html" aria-current="page">LIS 실험</a>
+    </nav>
+    <header class="page-head">
+      <h1>LIS 기반 keyed 재조정 실험</h1>
+      <p>
+        A = mini-react + LIS, B = mini-react + 단방향 스캔(React의 접근을 참고한 자체 구현), C = React 18.3.1 (참고 기준선).
+        A와 B는 이동 판단 알고리즘만 다릅니다. 결과와 방법은 <code>docs/perf/lis-experiment.md</code>.
+        <br><b>이 페이지는 과제 구현물이 아니라 비교 실험용입니다.</b> React는 측정 기준선으로만 불러오며, mini-react 구현(<code>src/</code>)과 과제 데모는 React를 쓰지 않습니다.
+      </p>
+    </header>
+    <main class="bench-page">
+      <section id="app" class="panel"></section>
+    </main>
+  </body>
+</html>
