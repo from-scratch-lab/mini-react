@@ -194,8 +194,8 @@ function FocusTimer({ seconds, running, onToggle, onReset }) {
 
 /* ───────────── 옆 패널: 렌더마다 패치 목록과 hooks 배열 ───────────── */
 
-// 이벤트 핸들러(함수)만 바뀐 PROPS 패치. 인라인 함수는 렌더마다 새로 만들어지므로 매번 생기지만,
-// patch는 요소에 달린 핸들러 표만 바꿀 뿐 실제 DOM(속성·트리)은 건드리지 않는다.
+// 이벤트 핸들러만 달거나 뗀 PROPS 패치. 실제 DOM(속성·트리)은 건드리지 않는다.
+// 인라인 함수가 렌더마다 새로 만들어져 생기는 함수 → 함수 교체는 diff가 패치 대신 patches.handlers에 따로 담는다.
 function isHandlerOnly(p) {
   if (p.type !== 'PROPS') return false;
   const names = [...Object.keys(p.set), ...p.remove];
@@ -204,7 +204,7 @@ function isHandlerOnly(p) {
 
 function InspectorView({ commit, patches, hooks }) {
   const domPatches = patches.filter((p) => !isHandlerOnly(p));
-  const handlerCount = patches.length - domPatches.length;
+  const handlerCount = (patches.handlers?.length ?? 0) + patches.length - domPatches.length;
   return h(
     'div',
     { class: 'inspector' },

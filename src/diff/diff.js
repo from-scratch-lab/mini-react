@@ -30,9 +30,16 @@ export const PatchType = Object.freeze({
  *   - 짝이 된 이전 노드와 같은 객체면(old === new) 하위 트리를 비교하지 않고 건너뛴다. (상수로 빼 둔 하위 트리)
  *   - 이전 트리의 객체가 다른 자리에 오거나, 다음 트리에 같은 객체가 두 번 나오면 복제본으로 바꿔 끼운다.
  *     이때 다음 트리의 children 배열이 바뀐다.
+ *
+ * 핸들러 교체: on* 속성이 함수에서 다른 함수로만 바뀌면 PROPS 패치를 만들지 않는다.
+ *   렌더마다 새로 만든 화살표 함수 때문에 생기는 변경이라 실제 DOM은 바뀌지 않기 때문이다(리스너는 요소마다 한 번만 달려 있다).
+ *   대신 { vnode, name, value } 를 결과 배열의 handlers(열거되지 않는 속성)에 담는다.
+ *   patch가 모든 DOM 패치를 마친 뒤 이 목록대로 요소의 핸들러 표만 갈아 끼운다.
+ *   (Vue 3의 invoker, React의 "이벤트 때 props에서 핸들러를 읽기"와 같은 생각. 패치 수 = DOM을 바꾸는 일의 수로 맞춘다)
  */
 export function diff(oldVNode, newVNode) {
-  const ctx = { patches: [], oldNodes: collectNodes(oldVNode), seen: new Set() };
+  const ctx = { patches: [], handlers: [], oldNodes: collectNodes(oldVNode), seen: new Set() };
+  Object.defineProperty(ctx.patches, 'handlers', { value: ctx.handlers, enumerable: false });
   if (oldVNode === newVNode) return ctx.patches;
 
   if (oldVNode == null) {
@@ -95,7 +102,7 @@ function diffNode(oldVNode, newVNode, ctx) {
 
   // 경우 4: 속성 변경. 보통은 자식 패치 뒤에 둔다. <select value>는 새 option이 생긴 뒤에 넣어야 선택된다.
   // 단 type·multiple은 자식과 다른 속성의 뜻을 바꾸므로 따로 떼어 자식 패치 앞에 둔다(EARLY_PROPS).
-  const propsPatch = diffProps(oldVNode.props, newVNode.props);
+  const propsPatch = diffProps(oldVNode.props, newVNode.props, newVNode, ctx.handlers);
   let [early, late] = propsPatch ? splitEarlyProps(propsPatch) : [null, null];
   if (early) patches.push({ type: PatchType.PROPS, vnode: newVNode, ...early });
   // multiple을 바꾸면 patch가 option 선택을 기본값으로 되돌린다. value가 있으면 바뀌지 않았어도 다시 넣는다.
@@ -131,7 +138,7 @@ function splitEarlyProps({ set, remove, prev }) {
   return [isEmpty(early) ? null : early, isEmpty(late) ? null : late];
 }
 
-function diffProps(oldProps, newProps) {
+function diffProps(oldProps, newProps, vnode, handlers) {
   const set = {};
   const prev = {};
   const remove = [];
@@ -139,6 +146,10 @@ function diffProps(oldProps, newProps) {
 
   for (const [name, value] of Object.entries(newProps)) {
     if (value == null) continue; // null·undefined는 "없음"과 같다. 아래에서 remove로 처리된다.
+    if (isHandlerSwap(name, oldProps[name], value)) {
+      if (oldProps[name] !== value) handlers.push({ vnode, name, value });
+      continue;
+    }
     if (!samePropValue(oldProps[name], value)) {
       set[name] = value;
       prev[name] = oldProps[name];
@@ -153,6 +164,11 @@ function diffProps(oldProps, newProps) {
     }
   }
   return changed ? { set, remove, prev } : null;
+}
+
+/** 함수 → 함수인 이벤트 핸들러. 이 변경은 DOM을 바꾸지 않으므로 PROPS가 아니라 교체 목록으로 보낸다. */
+function isHandlerSwap(name, oldValue, newValue) {
+  return name.startsWith('on') && typeof oldValue === 'function' && typeof newValue === 'function';
 }
 
 function samePropValue(a, b) {

@@ -173,7 +173,7 @@ describe('종합 데모: 렌더 파이프라인', () => {
     expect(document.activeElement).toBe($('.title-input', rows()[1]));
   });
 
-  it('핸들러 교체 수는 핸들러만 바뀐 패치뿐 아니라 다른 속성과 함께 바뀐 핸들러도 센다', async () => {
+  it('핸들러 교체 수는 패치 밖 교체 목록(patches.handlers)과 PROPS에서 달거나 뗀 핸들러를 모두 센다', async () => {
     await click(rowAction(0, 'priority'));
     const note = $('.stage .note', inspector).textContent;
     const count = Number(note.match(/(\d+)건/)[1]);
