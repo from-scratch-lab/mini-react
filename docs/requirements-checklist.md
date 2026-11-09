@@ -1,6 +1,6 @@
 # 과제 요구사항 체크리스트
 
-기준: `dev` feat/phase1-presets 병합 후 (테스트 351개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
+기준: `dev` feat/bench-page 병합 후 (테스트 355개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
 상태: ✅ 충족 · 🟨 부분 · ❌ 미충족. 증거는 `파일:줄`, 테스트 이름(따옴표), 데모 위치.
 
 ## Phase 1. Virtual DOM + Diff + Patch
@@ -64,7 +64,7 @@
 |---|---|---|---|
 | 6.1 | DOM을 다루는 방법 (Document, Window) | ✅ | `demo/integrated/index.html` 기본 개념 8절 · tests/demo/concepts.test.js |
 | 6.2 | 실제 DOM 변화를 감지하는 브라우저 API | ✅ | `demo/integrated/index.html` 기본 개념 9절 · tests/demo/concepts.test.js |
-| 6.3 | 실제 DOM이 느린 이유 (Reflow/Repaint) | ✅ | `demo/integrated/index.html:84` 2절. 수치는 docs/benchmarks.md(jsdom 기준; 브라우저 수치는 벤치 페이지 예정) |
+| 6.3 | 실제 DOM이 느린 이유 (Reflow/Repaint) | ✅ | `demo/integrated/index.html:84` 2절. 수치: `demo/bench/`(브라우저, 레이아웃 시간 포함), docs/benchmarks.md "브라우저 벤치마크 페이지" |
 | 6.4 | Virtual DOM의 구조와 필요한 이유 | ✅ | 같은 2절, `src/vdom/vnode.js` |
 | 6.5 | Diff 동작 방식·5가지 케이스·실제 DOM 반영 | ✅ | `demo/integrated/index.html:97` 3절, phase1 "이렇게 바꿔 보세요"(`demo/phase1/index.html:44`) |
 | 6.6 | React에서 VDOM·Diff가 DOM을 바꾸는 방식 | ✅ | 3·4·5절(재조정, lastPlacedIndex, 렌더/커밋, Fiber) |
