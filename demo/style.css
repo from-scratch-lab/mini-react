@@ -282,6 +282,57 @@ button.primary {
   color: var(--accent-text);
 }
 
+.presets {
+  margin: 14px 0 0;
+}
+
+.presets h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.presets h3 small,
+.presets button small {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.presets ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.presets li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.presets .preset-name {
+  min-width: 7.5em;
+  font-weight: 600;
+  color: var(--heading);
+}
+
+.presets button {
+  min-height: 24px;
+  padding: 2px 10px;
+  font-size: 0.82rem;
+}
+
+.score-table td,
+.score-table th {
+  padding: 2px 10px;
+}
+
+.score-table .top {
+  background: var(--accent-soft);
+}
+
 .warnings {
   margin: 14px 0 0;
   padding: 8px 12px 8px 28px;

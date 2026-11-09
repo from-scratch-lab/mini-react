@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { startPhase1 } from '../../demo/phase1/app.js';
+import { PRESETS } from '../../demo/phase1/presets.js';
 
 // Phase 1 검증 페이지의 기능 테스트: 사용자가 하는 일(코드 수정, 버튼 클릭)을 그대로 흉내 낸다.
 let actual;
@@ -174,5 +175,77 @@ describe('실제 영역에 주석이 있을 때', () => {
     expect(actual.querySelector('p').textContent).toBe('z');
     button('back').click();
     expect(actual.querySelector('p').textContent).toBe('abc');
+  });
+});
+
+describe('Phase 1 프리셋 시나리오 (다양한 태그로 여러 변화 확인)', () => {
+  const presetButtons = () => [...root.querySelectorAll('button[data-preset]')];
+  const click = (id, step) => root.querySelector(`button[data-preset="${id}"][data-step="${step}"]`).click();
+  const patchTypes = () =>
+    [...root.querySelectorAll('[data-role="patch-log"] .op')].map((el) => el.textContent);
+
+  it('table·form·select·중첩 목록·key 재정렬 프리셋이 있다', () => {
+    const ids = new Set(presetButtons().map((b) => b.dataset.preset));
+    expect([...ids].sort()).toEqual(['form', 'nested', 'reorder', 'select', 'table']);
+  });
+
+  it('프리셋 단계를 누르면 테스트 영역 코드만 바뀌고, Patch를 눌러야 실제 영역에 반영된다', () => {
+    const before = actual.innerHTML;
+    click('table', 1);
+    expect(textarea().value).toContain('<table');
+    expect(actual.innerHTML).toBe(before);
+    button('patch').click();
+    expect(actual.querySelector('table')).not.toBeNull();
+  });
+
+  it('프리셋에는 <form>이 없다 (실제 영역에서 Enter로 제출되면 페이지가 새로 고쳐진다)', () => {
+    for (const b of presetButtons()) {
+      b.click();
+      expect(textarea().value).not.toContain('<form');
+    }
+  });
+
+  it('table 2단계(정렬)는 행을 다시 만들지 않고 MOVE만 한다', () => {
+    click('table', 1);
+    button('patch').click();
+    const rows = [...actual.querySelectorAll('tbody tr')];
+    click('table', 2);
+    button('patch').click();
+    expect(new Set(patchTypes())).toEqual(new Set(['MOVE']));
+    const after = [...actual.querySelectorAll('tbody tr')];
+    expect(after.every((tr) => rows.includes(tr))).toBe(true); // 같은 tr 노드를 옮겼을 뿐이다
+    expect(after.map((tr) => tr.getAttribute('key'))).toEqual(['lee', 'park', 'kim', 'choi']);
+  });
+
+  it('reorder: key가 있으면 순서를 바꿀 때 MOVE만, key가 없으면 같은 변화를 TEXT로 고친다', () => {
+    click('reorder', 1);
+    button('patch').click();
+    click('reorder', 2);
+    button('patch').click();
+    expect(new Set(patchTypes())).toEqual(new Set(['MOVE']));
+    click('reorder', 3);
+    button('patch').click();
+    click('reorder', 4);
+    button('patch').click();
+    expect(new Set(patchTypes())).toEqual(new Set(['TEXT']));
+  });
+
+  it('각 단계 버튼에 적힌 예상 패치 종류가 실제로 나온 패치 종류와 같다', () => {
+    for (const preset of PRESETS) {
+      preset.steps.forEach((step, i) => {
+        click(preset.id, i + 1);
+        button('patch').click();
+        if (step.expect) expect([...new Set(patchTypes())].sort(), `${preset.id} ${i + 1}`).toEqual(step.expect.split('·').sort());
+      });
+    }
+  });
+
+  it('모든 프리셋의 모든 단계를 차례로 Patch해도 오류 없이 실제 영역이 코드와 같아진다', () => {
+    for (const b of presetButtons()) {
+      b.click();
+      button('patch').click();
+      expect(root.querySelector('[data-role="warnings"]')).toBeNull();
+      expect(root.querySelector('.badge').textContent).toBe('실제 영역과 같음');
+    }
   });
 });

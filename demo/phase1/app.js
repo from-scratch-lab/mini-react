@@ -12,6 +12,7 @@ import {
 import { VNodeHistory } from './history.js';
 import { describePatch } from '../shared/describe.js';
 import { flash } from '../shared/flash.js';
+import { PRESETS } from './presets.js';
 
 /**
  * Phase 1 검증 페이지.
@@ -144,6 +145,7 @@ export function startPhase1({ actual, root }) {
         h('span', { class: 'history-status', 'data-role': 'history-status' }, `${history.index + 1} / ${history.length}`),
       ),
       h('p', { class: 'hint' }, 'Ctrl+Enter로도 Patch할 수 있습니다.'),
+      presetsView(),
       h(
         'ol',
         { class: 'timeline', 'aria-label': 'State History' },
@@ -166,6 +168,48 @@ export function startPhase1({ actual, root }) {
         ),
       ),
       patchLogView(),
+    );
+  }
+
+  /**
+   * 프리셋: 표·폼·선택 상자·중첩 목록·key 재정렬을 단계별로 바꿔 보며 어떤 패치가 나오는지 확인한다.
+   * 단계 버튼은 테스트 영역 코드만 바꾼다. 실제 영역에 반영하는 것은 Patch 버튼이다.
+   */
+  const loadPreset = (html) => {
+    state.code = html;
+    draw();
+  };
+
+  function presetsView() {
+    return h(
+      'section',
+      { class: 'presets', 'aria-label': '프리셋 시나리오' },
+      h('h3', null, '프리셋 시나리오 ', h('small', null, '단계를 눌러 코드를 바꾼 뒤 Patch · 예상 패치는 바로 앞 단계를 Patch한 상태 기준')),
+      h(
+        'ul',
+        null,
+        PRESETS.map((preset) =>
+          h(
+            'li',
+            { key: preset.id },
+            h('span', { class: 'preset-name' }, preset.label),
+            preset.steps.map((step, i) =>
+              h(
+                'button',
+                {
+                  type: 'button',
+                  'data-preset': preset.id,
+                  'data-step': String(i + 1),
+                  title: step.expect ? `앞 단계에서 Patch하면 예상 패치: ${step.expect}` : '이 프리셋 불러오기',
+                  onClick: () => loadPreset(step.html),
+                },
+                `${i + 1}. ${step.label}`,
+                step.expect ? h('small', null, ` → ${step.expect}`) : null,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
