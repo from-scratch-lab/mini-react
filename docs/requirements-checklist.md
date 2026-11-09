@@ -72,7 +72,7 @@
 | 6.8 | State를 어디에 두는가 | ✅ | `demo/integrated/index.html` 기본 개념 11절 · tests/demo/concepts.test.js |
 | 6.9 | setState가 상태 변경 외에 하는 일 | ✅ | `src/hooks/hooks.js:46` 주석, 6·7절 |
 | 6.10 | Batching | ✅ | 7절, "여러 번 setState해도 한 번만 다시 렌더링한다 (배칭)" |
-| 6.11 | 구현한 React와 실제 React의 차이 | 🟨 | 설명 카드마다 흩어져 있음(`demo/integrated/concepts.js`). 한곳에 모은 표(README/문서)가 없음 |
+| 6.11 | 구현한 React와 실제 React의 차이 | ✅ | `docs/react-differences.md` (주제 19개 비교표, 주장할 수 있는 것과 없는 것) · 데모 설명 카드 `demo/integrated/concepts.js` |
 
 ## 남은 일과 담당
 
@@ -85,5 +85,5 @@
 | ✅ | 5.3 B7(단일 선택 select·같은 name radio 그룹) 수정 (`fix/form-groups`, fuzz 시드 1·3 불일치 0) | mr-dx → mr-lead |
 | ✅ | 6.1·6.2·6.7·6.8 설명 보강 (`feat/dx-concepts`) | mr-dx |
 | ✅ | 1.11 phase1 프리셋 시나리오 (`feat/phase1-presets`) | mr-dx → mr-lead |
-| P2 | 6.11 실제 React와의 차이 표 | mr-dx 초안 → mr-lead가 README에 반영 |
+| ✅ | 6.11 실제 React와의 차이 표 (`docs/react-differences.md`) | mr-lead |
 | P3 | 5.4 README 포트폴리오 정리 | mr-lead (마지막) |
