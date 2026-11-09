@@ -103,36 +103,11 @@ function diffNode(oldVNode, newVNode, ctx) {
   // 경우 4: 속성 변경. 보통은 자식 패치 뒤에 둔다. <select value>는 새 option이 생긴 뒤에 넣어야 선택된다.
   // 단 type·multiple은 자식과 다른 속성의 뜻을 바꾸므로 따로 떼어 자식 패치 앞에 둔다(EARLY_PROPS).
   const propsPatch = diffProps(oldVNode.props, newVNode.props, newVNode, ctx.handlers);
-  let [early, late] = propsPatch ? splitEarlyProps(propsPatch) : [null, null];
+  // multiple이 바뀐 뒤 option 선택을 맞추는 일은 patch가 모든 패치 뒤에 한다(선택 그룹 다시 맞추기).
+  const [early, late] = propsPatch ? splitEarlyProps(propsPatch) : [null, null];
   if (early) patches.push({ type: PatchType.PROPS, vnode: newVNode, ...early });
-  // multiple을 바꾸면 patch가 option 선택을 기본값으로 되돌린다. value가 있으면 바뀌지 않았어도 다시 넣는다.
-  const value = newVNode.props.value;
-  if (early && ('multiple' in early.set || early.remove.includes('multiple')) && value != null) {
-    late ??= { set: {}, remove: [], prev: {} };
-    if (!('value' in late.set)) {
-      late.set.value = value;
-      late.prev.value = oldVNode.props.value;
-    }
-  }
-  const childStart = patches.length;
   diffChildren(oldVNode, newVNode, ctx);
-  // option이 새로 생기거나 빠지거나 옮겨지면 브라우저가 select의 선택을 다시 정한다(빈 select면 첫 option).
-  // value prop이 그대로여도 다시 넣어야 처음부터 그린 것과 같아진다. 값이 같으면 patch가 DOM을 건드리지 않는다.
-  if (newVNode.type === 'select' && value != null && hasStructuralPatch(patches, childStart)) {
-    late ??= { set: {}, remove: [], prev: {} };
-    if (!('value' in late.set)) {
-      late.set.value = value;
-      late.prev.value = oldVNode.props.value;
-    }
-  }
   if (late) patches.push({ type: PatchType.PROPS, vnode: newVNode, ...late });
-}
-
-const STRUCTURAL = new Set([PatchType.CREATE, PatchType.REMOVE, PatchType.REPLACE, PatchType.MOVE]);
-
-function hasStructuralPatch(patches, start) {
-  for (let i = start; i < patches.length; i += 1) if (STRUCTURAL.has(patches[i].type)) return true;
-  return false;
 }
 
 /**

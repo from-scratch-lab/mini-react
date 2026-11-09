@@ -15,8 +15,8 @@ describe('차등 fuzz: 브라우저 파서가 정답지', () => {
   // - B6: 빈 select에 option을 뒤에서부터 넣어 마지막 option이 선택됨 (시드 99·2026) → perf 연속 CREATE 묶기에서 고침
   // - B7: 하나만 고르는 select의 option끼리, 같은 name의 radio끼리 서로의 선택을 바꾸는데 diff는 바뀐 속성만 다시 넣음
   //   (시드 1·3) → fix/dx-form-groups에서 고침
-  // 고쳐지면 그 시드를 여기에 더한다. (docs/decisions/0001-plan.md)
-  it.each([7, 20261109])('시드 %i: DOM 구조·폼 상태·직렬화 왕복·DOM 참조가 모두 맞다', (seed) => {
+  // 고쳐지면 그 시드를 여기에 더한다. (docs/decisions/0001-plan.md) 시드 1은 B7 수정 뒤 더했다. 시드 3은 CI 크기(480단계)에서 MOVE를 거치지 않아 긴 실행(npm run fuzz -- --seed 3)으로만 본다.
+  it.each([7, 20261109, 1])('시드 %i: DOM 구조·폼 상태·직렬화 왕복·DOM 참조가 모두 맞다', (seed) => {
     vi.spyOn(console, 'warn').mockImplementation(() => {}); // 중복 key 경고
     const report = runDifferential({ seed, rounds: 120, steps: 4 });
     expect(report.mismatches, report.mismatches.map(String).join('\n\n')).toEqual([]);

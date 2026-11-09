@@ -407,3 +407,188 @@ describe('patch: 폼 상태와 특수 속성', () => {
     expect(template.content.childNodes).toHaveLength(2);
   });
 });
+
+// 하나만 고르는 select의 option끼리, 같은 name의 radio끼리는 브라우저가 서로의 선택을 바꾼다.
+// diff는 바뀐 속성만 다시 넣으므로, 바뀌지 않은 형제의 선택이 다른 형제 때문에 풀린 채 남을 수 있다(B7, 차등 fuzz 시드 1·3).
+describe('patch: 선택 그룹(select의 option, 같은 name의 radio)은 속성대로 다시 맞춘다', () => {
+  const selected = (select) => [...select.options].map((o) => o.selected);
+
+  it('selected인 option이 둘이면 처음부터 그린 것처럼 뒤의 것이 선택된다 (앞 option에만 selected를 더해도)', () => {
+    const v1 = h('select', null, h('option', null, 'a'), h('option', { selected: '' }, 'b'));
+    const c = mount(v1);
+    update(c, v1, h('select', null, h('option', { selected: '' }, 'a'), h('option', { selected: '' }, 'b')));
+    expect(selected(c.firstChild)).toEqual([false, true]);
+  });
+
+  it('multiple을 끄면서 option을 지워도 selected인 option이 선택된다', () => {
+    const v1 = h(
+      'select',
+      { multiple: '' },
+      h('option', { selected: '' }, 'x'),
+      h('option', { selected: '' }, 'y'),
+      h('option', { selected: '' }, 'z'),
+    );
+    const c = mount(v1);
+    update(c, v1, h('select', null, h('option', null, 'a'), h('option', { selected: '' }, 'b')));
+    expect(c.firstChild.selectedIndex).toBe(1);
+  });
+
+  it('checked인 radio가 둘이면 뒤의 것만 남고, 앞의 것에서 checked를 빼면 앞의 것이 풀린다', () => {
+    const radio = (checked) => h('input', { type: 'radio', name: 'r', checked: checked ? '' : null });
+    const v1 = h('form', null, radio(true), radio(true));
+    const c = mount(v1);
+    const [r1, r2] = c.querySelectorAll('input');
+    expect([r1.checked, r2.checked]).toEqual([false, true]);
+    // 뒤의 것에서 checked를 빼면, 남은 앞의 것(속성은 그대로라 패치가 없음)이 선택되어야 한다.
+    update(c, v1, h('form', null, radio(true), radio(false)));
+    expect([r1.checked, r2.checked]).toEqual([true, false]);
+  });
+
+  it('radio를 checkbox로 바꾸는 동안 같은 name의 다른 radio가 선택되어도 checked가 남는다', () => {
+    const v1 = h(
+      'form',
+      null,
+      h('input', { value: 'w' }),
+      h('input', { type: 'radio', name: 'r', checked: '' }),
+    );
+    const c = mount(v1);
+    update(
+      c,
+      v1,
+      h(
+        'form',
+        null,
+        h('input', { type: 'radio', name: 'r', checked: '' }),
+        h('input', { type: 'checkbox', name: 'r', checked: '' }),
+      ),
+    );
+    const [first, second] = c.querySelectorAll('input');
+    expect([first.checked, second.checked]).toEqual([true, true]);
+  });
+
+  it('선택 속성이 바뀌지 않은 렌더는 사용자가 고른 것을 건드리지 않는다', () => {
+    const v1 = h('select', { class: 'a' }, h('option', null, 'a'), h('option', null, 'b'));
+    const c = mount(v1);
+    c.firstChild.selectedIndex = 1; // 사용자가 b를 고름
+    update(c, v1, h('select', { class: 'b' }, h('option', { title: 't' }, 'a'), h('option', null, 'b')));
+    expect(c.firstChild.selectedIndex).toBe(1);
+  });
+
+  it('value prop이 있는 select는 option 선택 속성이 바뀌어도 value대로 선택된다', () => {
+    const v1 = h('select', { value: 'b' }, h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B'));
+    const c = mount(v1);
+    update(
+      c,
+      v1,
+      h('select', { value: 'b' }, h('option', { value: 'a', selected: '' }, 'A'), h('option', { value: 'b' }, 'B')),
+    );
+    expect(c.firstChild.value).toBe('b');
+  });
+});
+
+describe('patch: 선택 그룹 — 그룹을 떠나는 경우와 구조 패치', () => {
+  const selected = (select) => [...select.options].map((o) => o.selected);
+  const radio = (name, checked, key) => h('input', { type: 'radio', name, checked: checked ? '' : null, key });
+
+  it('radio가 name을 바꿔 그룹을 떠나면 남은 그룹도 속성대로 다시 맞춘다', () => {
+    const v1 = h('form', null, radio('a', true), radio('a', true));
+    const c = mount(v1);
+    update(c, v1, h('form', null, radio('a', true), radio('b', true)));
+    const [r1, r2] = c.querySelectorAll('input');
+    expect([r1.checked, r2.checked]).toEqual([true, true]);
+  });
+
+  it('checked인 radio를 지우면 남은 radio 중 checked 속성인 것이 선택된다', () => {
+    const v1 = h('form', null, radio('a', true, 'x'), radio('a', true, 'y'));
+    const c = mount(v1);
+    update(c, v1, h('form', null, radio('a', true, 'x')));
+    expect(c.querySelector('input').checked).toBe(true);
+  });
+
+  it('selected인 option을 지우면 남은 option 중 selected 속성인 것이 선택된다', () => {
+    const opt = (key) => h('option', { key, selected: '' }, key);
+    const v1 = h('select', null, opt('o1'), opt('o2'), opt('o3'));
+    const c = mount(v1);
+    update(c, v1, h('select', null, opt('o1'), opt('o2')));
+    expect(selected(c.firstChild)).toEqual([false, true]);
+  });
+
+  it('checked인 radio 둘을 한 번에 만들면 처음부터 그린 것처럼 뒤의 것이 선택된다', () => {
+    const v1 = h('form', null);
+    const c = mount(v1);
+    update(c, v1, h('form', null, radio('a', true), radio('a', true)));
+    const [r1, r2] = c.querySelectorAll('input');
+    expect([r1.checked, r2.checked]).toEqual([false, true]);
+  });
+
+  it('selected인 option의 순서를 key로 바꾸면 문서 순서상 뒤의 것이 선택된다', () => {
+    const opt = (key) => h('option', { key, selected: '' }, key);
+    const v1 = h('select', null, opt('o1'), opt('o2'));
+    const c = mount(v1);
+    update(c, v1, h('select', null, opt('o2'), opt('o1')));
+    expect(c.firstChild.value).toBe('o1');
+  });
+
+  it('selected가 없는 option을 덧붙이면 사용자가 고른 것을 건드리지 않는다', () => {
+    const v1 = h('select', null, h('option', { key: 'a' }, 'a'), h('option', { key: 'b' }, 'b'));
+    const c = mount(v1);
+    c.firstChild.selectedIndex = 1;
+    update(c, v1, h('select', null, h('option', { key: 'a' }, 'a'), h('option', { key: 'b' }, 'b'), h('option', { key: 'c' }, 'c')));
+    expect(c.firstChild.selectedIndex).toBe(1);
+  });
+
+  it('value prop이 그대로인 select에 그 값의 option이 새로 생기면 그 option이 선택된다', () => {
+    const v1 = h('select', { value: 'b' }, h('option', { value: 'a' }, 'A'));
+    const c = mount(v1);
+    update(c, v1, h('select', { value: 'b' }, h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B')));
+    expect(c.firstChild.value).toBe('b');
+  });
+
+  it('select에서 value prop을 지우면 option의 selected 속성대로 선택된다', () => {
+    const options = () => [h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B')];
+    const v1 = h('select', { value: 'b' }, ...options());
+    const c = mount(v1);
+    update(c, v1, h('select', null, ...options()));
+    expect(c.firstChild.selectedIndex).toBe(0);
+  });
+});
+
+describe('patch: 선택 그룹 — 사용자가 고른 것을 지켜야 하는 경우', () => {
+  it('form 안의 radio 그룹을 지워도 form 밖의 같은 name 그룹은 그대로다', () => {
+    const r = (checked) => h('input', { type: 'radio', name: 'x', checked: checked ? '' : null });
+    const view = (show) => h('div', null, h('form', null, show ? h('fieldset', null, r(true), r(false)) : null), r(true), r(false));
+    const v1 = view(true);
+    const c = mount(v1);
+    const outside = () => [...c.firstChild.children].slice(1);
+    outside()[1].checked = true; // 사용자가 form 밖 두 번째를 고름
+    update(c, v1, view(false));
+    expect(outside().map((i) => i.checked)).toEqual([false, true]);
+  });
+
+  it('사용자가 체크한 checkbox의 name이 바뀌어도 체크가 남는다', () => {
+    const v = (name) => h('div', null, h('input', { type: 'checkbox', name }));
+    const v1 = v('item-1');
+    const c = mount(v1);
+    c.querySelector('input').checked = true;
+    update(c, v1, v('item-0'));
+    expect(c.querySelector('input').checked).toBe(true);
+  });
+
+  it('checked 속성 없는 radio 그룹의 name이 바뀌어도 사용자가 고른 답이 남는다', () => {
+    const v = (name) => h('form', null, h('input', { type: 'radio', name }), h('input', { type: 'radio', name }));
+    const v1 = v('q-1');
+    const c = mount(v1);
+    c.querySelectorAll('input')[1].checked = true;
+    update(c, v1, v('q-0'));
+    expect([...c.querySelectorAll('input')].map((i) => i.checked)).toEqual([false, true]);
+  });
+
+  it('multiple select에서 다른 option의 selected가 바뀌어도 사용자가 고른 option은 남는다', () => {
+    const v = (on) => h('select', { multiple: '' }, h('option', null, 'A'), h('option', null, 'B'), h('option', { selected: on ? '' : null }, 'C'));
+    const v1 = v(false);
+    const c = mount(v1);
+    c.firstChild.options[0].selected = true;
+    update(c, v1, v(true));
+    expect([...c.firstChild.options].map((o) => o.selected)).toEqual([true, false, true]);
+  });
+});
