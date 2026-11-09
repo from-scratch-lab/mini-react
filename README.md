@@ -29,7 +29,7 @@
 | **Phase 1** Virtual DOM · Diff · Patch | 실제 DOM ↔ 가상 노드 변환, 패치 6종(CREATE·REMOVE·REPLACE·PROPS·TEXT·MOVE), key 목록의 **LIS 기반 최소 이동**, patch 실패 시 이전 화면 복구 |
 | **Phase 2** Component · Hooks | `FunctionComponent`(hooks 배열 · `mount()` · `update()`), `useState`·`useEffect`·`useMemo`, 마이크로태스크 배칭, 무한 갱신 방지, effect 정리 순서 보장 |
 | **연결** | `setState` → 새 가상 트리 → Phase 1의 `diff` → `patch` 하나의 파이프라인 |
-| **검증** | 단위·기능 테스트 272개, 기준 렌더러와 대조하는 시드 고정 fuzz, CI 성능 예산 |
+| **검증** | 단위·기능 테스트 279개, 기준 렌더러와 대조하는 시드 고정 fuzz, CI 성능 예산 |
 
 ## 구조
 
@@ -87,7 +87,7 @@ npm run serve   # → http://127.0.0.1:5173/demo/
 | 1 | **B1** 다중 `select` 선택 오류(fuzz 6,000번 중 377번) · **B2** input `type` 변경 시 `value` 잔존 수정 | ✅ |
 | 1 | 벤치마크 하네스 `npm run bench` · CI 성능 예산 테스트 · React 방식과 이동 횟수 비교 | ✅ |
 | 2 | **B3** 주석으로 갈린 텍스트 때문에 "아무것도 안 고친 Patch"가 DOM을 바꾸던 문제 수정 | ✅ |
-| 2 | 개념 설명 추가 (Document·Window, DOM 변화 감지, 컴포넌트 나누기, State 위치) | 🔄 |
+| 2 | 개념 설명 추가 (Document·Window, DOM 변화 감지, 컴포넌트 나누기, State 위치) | ✅ |
 | 3 | 브라우저 파서를 정답으로 삼는 차등 fuzz (불일치 0, CI +3초 이내) | ⏳ |
 | 4 | **핸들러 상자**: 렌더마다 새 핸들러여도 패치를 만들지 않음 (같은 데이터 다시 렌더 패치 2,000 → 0) | 🔄 |
 | 5 | 연속 생성·전체 삭제를 한 번에 (DOM 연산 1,000 → 1) | ⏳ |
