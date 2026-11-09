@@ -72,7 +72,7 @@
 | 6.8 | State를 어디에 두는가 | ✅ | `demo/integrated/index.html` 기본 개념 11절 · tests/demo/concepts.test.js |
 | 6.9 | setState가 상태 변경 외에 하는 일 | ✅ | `src/hooks/hooks.js:46` 주석, 6·7절 |
 | 6.10 | Batching | ✅ | 7절, "여러 번 setState해도 한 번만 다시 렌더링한다 (배칭)" |
-| 6.11 | 구현한 React와 실제 React의 차이 | ✅ | `docs/react-differences.md` (주제 19개 비교표, 주장할 수 있는 것과 없는 것) · 데모 설명 카드 `demo/integrated/concepts.js` |
+| 6.11 | 구현한 React와 실제 React의 차이 | ✅ | `docs/react-differences.md` (주제 18개 비교표, 주장할 수 있는 것과 없는 것) · 데모 설명 카드 `demo/integrated/concepts.js` |
 
 ## 남은 일과 담당
 

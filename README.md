@@ -94,7 +94,8 @@ npm run serve   # → http://127.0.0.1:5173/demo/
 | 6 | 자식 비교 빠른 경로 (같은 데이터 diff 11.3 → 8.4ms, 패치 목록은 그대로) | ✅ |
 | 7 | Phase 1 프리셋(표·폼·선택 상자·중첩 목록·key 재정렬, 단계별 예상 패치) · 브라우저 벤치마크 페이지(레이아웃 시간 포함) | ✅ |
 | 8 | 실제 React와의 차이 문서 ([docs/react-differences.md](docs/react-differences.md)) | ✅ |
-| 9~10 | 조건부 최적화(memo 등, 측정 근거가 있을 때만) · 포트폴리오 정리 | ⏳ |
+| 9 | 조건부 최적화(memo·VNode 클래스·collectNodes 제거·drift 감지): 측정 결과 이득이 작아 **하지 않기로 결정** ([ADR 0002](docs/decisions/0002-conditional-items.md)) | ✅ |
+| 10 | 포트폴리오 정리 | 🔄 |
 
 ✅ 완료 · 🔄 진행 중 · ⏳ 예정
 
