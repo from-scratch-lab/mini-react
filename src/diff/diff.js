@@ -177,6 +177,9 @@ function samePropValue(a, b) {
 /**
  * 자식 목록 비교. key가 있으면 key로, 없으면 위치로 짝을 짓는다.
  *
+ * 0) 빠른 경로: 앞에서부터 같은 key(둘 다 없음 포함)인 자리, 뒤에서부터 같은 key인 자리는 짝과 위치가 정해져 있어
+ *    바로 재귀 비교하고, 아래 1)~3)은 그 사이 가운데 구간에만 쓴다. 가운데가 모두 짝이 있고 순서도 같으면 LIS를 건너뛴다.
+ *    결과 패치 목록은 1)~3)을 목록 전체에 쓸 때와 같다(같은 순서). 같은 key가 중복되면 목록 전체를 위치로 비교한다.
  * 1) 짝 찾기: 자식마다 비교용 이름을 붙인다. key가 있으면 "k:key", 없으면 key 없는 형제 중 몇 번째인지 "u:n".
  *    그래서 key 없는 목록은 위치끼리, key 있는 목록은 key끼리 비교된다.
  *    같은 key가 중복되면 짝을 확정할 수 없으므로 경고하고 전체를 위치로 비교한다.
@@ -186,42 +189,86 @@ function samePropValue(a, b) {
  *    뒤에서부터 처리하므로 "바로 뒤 형제(before)"는 항상 이미 제자리에 있다.
  */
 function diffChildren(oldParent, newParent, ctx) {
-  const { patches } = ctx;
   const oldChildren = oldParent.children;
   const newChildren = newParent.children;
 
-  let oldNames = matchNames(oldChildren);
-  let newNames = matchNames(newChildren);
-  if (hasDuplicate(oldNames) || hasDuplicate(newNames)) {
+  if (hasDuplicateKey(oldChildren) || hasDuplicateKey(newChildren)) {
     console.warn(
       `[mini-react] <${newParent.type}>의 자식에 같은 key가 있습니다. 이 목록은 key 대신 위치로 비교합니다.`,
     );
-    oldNames = oldChildren.map((_, i) => `p:${i}`);
-    newNames = newChildren.map((_, i) => `p:${i}`);
+    const middle = matchMiddle(oldChildren, newChildren, 0, oldChildren.length, newChildren.length, ctx, true);
+    placeMiddle(newParent, middle, ctx);
+    return;
   }
 
-  const oldIndexByName = new Map(oldNames.map((name, i) => [name, i]));
-  const matchedOldIndex = new Array(newChildren.length).fill(-1);
+  // 빠른 경로: 대부분의 다시 렌더는 목록의 앞뒤가 그대로다(같은 데이터, 몇 행 갱신, 한 행 선택).
+  // 앞에서부터 같은 key(또는 둘 다 key 없음)인 자리와, 뒤에서부터 같은 key인 자리는 짝이 정해져 있고
+  // 옮길 일도 없으므로 이름표·Map·LIS 없이 바로 비교한다. 나머지 가운데만 일반 알고리즘으로 짝짓는다.
+  // 결과 패치 목록은 일반 알고리즘만 쓸 때와 같다(같은 순서: 새 순서대로 자식 비교 → REMOVE → 뒤에서부터 CREATE·MOVE).
+  let head = 0;
+  const minLength = Math.min(oldChildren.length, newChildren.length);
+  while (head < minLength && oldChildren[head].key === newChildren[head].key) head += 1;
+  // 뒤쪽은 key가 있을 때만 맞춘다. key 없는 자식은 앞에서부터 센 순번으로 짝지으므로 뒤에서 맞추면 짝이 달라진다.
+  let oldEnd = oldChildren.length;
+  let newEnd = newChildren.length;
+  while (oldEnd > head && newEnd > head && oldChildren[oldEnd - 1].key != null && oldChildren[oldEnd - 1].key === newChildren[newEnd - 1].key) {
+    oldEnd -= 1;
+    newEnd -= 1;
+  }
+
+  for (let i = 0; i < head; i += 1) diffPair(oldChildren[i], newChildren, i, ctx);
+  const middle = matchMiddle(oldChildren, newChildren, head, oldEnd, newEnd, ctx, false);
+  for (let k = 0; k < newChildren.length - newEnd; k += 1) diffPair(oldChildren[oldEnd + k], newChildren, newEnd + k, ctx);
+  placeMiddle(newParent, middle, ctx);
+}
+
+/** 짝이 정해진 두 자식을 비교한다. 같은 객체를 같은 자리에 다시 썼으면 하위 트리 전체가 그대로다. */
+function diffPair(oldChild, newChildren, i, ctx) {
+  const child = newChildren[i];
+  if (oldChild === child && !ctx.seen.has(child)) {
+    ctx.seen.add(child);
+    return;
+  }
+  const owned = own(child, ctx, false);
+  newChildren[i] = owned;
+  diffNode(oldChild, owned, ctx);
+}
+
+/**
+ * 가운데 구간(이전 [from, oldEnd), 다음 [from, newEnd))을 key(없으면 순번, byPosition이면 위치)로 짝짓고
+ * 짝이 있는 자식을 비교한다. 지울 것·만들 것·옮길 것은 placeMiddle이 앞뒤 구간의 자식 비교가 끝난 뒤에 낸다.
+ */
+function matchMiddle(oldChildren, newChildren, from, oldEnd, newEnd, ctx, byPosition) {
+  const oldSlice = oldChildren.slice(from, oldEnd);
+  const newSlice = newChildren.slice(from, newEnd);
+  const oldNames = byPosition ? oldSlice.map((_, i) => `p:${i}`) : matchNames(oldSlice);
+  const newNames = byPosition ? newSlice.map((_, i) => `p:${i}`) : matchNames(newSlice);
+  const oldIndexByName = new Map(oldNames.map((name, j) => [name, j]));
+  const matchedOldIndex = new Array(newSlice.length).fill(-1);
   const used = new Set();
 
-  newChildren.forEach((child, i) => {
+  newSlice.forEach((child, i) => {
     const j = oldIndexByName.get(newNames[i]);
-    if (j !== undefined && oldChildren[j] === child && !ctx.seen.has(child)) {
-      // 같은 객체를 같은 자리에 다시 썼다: 하위 트리 전체가 그대로다.
+    if (j !== undefined && oldSlice[j] === child && !ctx.seen.has(child)) {
       ctx.seen.add(child);
       matchedOldIndex[i] = j;
       used.add(j);
       return;
     }
     const owned = own(child, ctx, j === undefined);
-    newChildren[i] = owned;
+    newChildren[from + i] = owned;
     if (j === undefined) return;
     matchedOldIndex[i] = j;
     used.add(j);
-    diffNode(oldChildren[j], owned, ctx);
+    diffNode(oldSlice[j], owned, ctx);
   });
+  return { oldSlice, newChildren, from, newEnd, matchedOldIndex, used };
+}
 
-  oldChildren.forEach((child, j) => {
+/** 가운데 구간의 REMOVE, 그리고 뒤에서부터 CREATE·MOVE. 앞뒤 구간은 제자리라 낼 것이 없다. */
+function placeMiddle(newParent, { oldSlice, newChildren, from, newEnd, matchedOldIndex, used }, ctx) {
+  const { patches } = ctx;
+  oldSlice.forEach((child, j) => {
     if (!used.has(j)) patches.push({ type: PatchType.REMOVE, vnode: child });
   });
 
@@ -233,14 +280,16 @@ function diffChildren(oldParent, newParent, ctx) {
       sequence.push(j);
     }
   });
+  // 바뀐 것이 없으면(모두 짝이 있고 순서 그대로) LIS를 돌릴 필요가 없다
+  if (sequence.length === matchedOldIndex.length && sequence.every((j, k) => j === k)) return;
   const stays = new Set(longestIncreasingSubsequence(sequence).map((k) => matchedNewIndexes[k]));
 
-  for (let i = newChildren.length - 1; i >= 0; i -= 1) {
-    const before = newChildren[i + 1] ?? null;
+  for (let i = newEnd - from - 1; i >= 0; i -= 1) {
+    const before = newChildren[from + i + 1] ?? null;
     if (matchedOldIndex[i] === -1) {
-      patches.push({ type: PatchType.CREATE, parent: newParent, vnode: newChildren[i], before });
+      patches.push({ type: PatchType.CREATE, parent: newParent, vnode: newChildren[from + i], before });
     } else if (!stays.has(i)) {
-      patches.push({ type: PatchType.MOVE, parent: newParent, vnode: newChildren[i], before });
+      patches.push({ type: PatchType.MOVE, parent: newParent, vnode: newChildren[from + i], before });
     }
   }
 }
@@ -250,6 +299,14 @@ function matchNames(children) {
   return children.map((child) => (child.key != null ? `k:${child.key}` : `u:${unkeyed++}`));
 }
 
-function hasDuplicate(names) {
-  return new Set(names).size !== names.length;
+/** key가 있는 자식끼리 같은 key가 있는가 (key 없는 자식은 순번으로 짝지으므로 겹치지 않는다) */
+function hasDuplicateKey(children) {
+  const seen = new Set();
+  for (const child of children) {
+    if (child.key == null) continue;
+    const key = String(child.key); // 이름표처럼 문자열로 본다: key 1과 '1'은 같은 key다
+    if (seen.has(key)) return true;
+    seen.add(key);
+  }
+  return false;
 }

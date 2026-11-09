@@ -152,3 +152,52 @@ describe('diff: 실제 DOM 참조 넘기기', () => {
     expect(next.children[0].dom).toBe('T');
   });
 });
+
+describe('diff: 자식 목록 빠른 경로 (앞뒤 공통 구간)', () => {
+  const ul = (...items) => h('ul', null, ...items);
+  const tagged = (patches) => patches.map((p) => [p.type, p.vnode.key ?? p.vnode.props.nodeValue ?? null]);
+
+  it('앞뒤가 같고 가운데 세 행이 뒤집히면 가운데만 비교해 두 번 옮긴다 (최소)', () => {
+    const before = ul(li('a'), li('b'), li('c'), li('d'), li('e'));
+    diff(null, before);
+    const moved = tagged(diff(before, ul(li('a'), li('d'), li('c'), li('b'), li('e'))));
+    expect(moved.map(([type]) => type)).toEqual(['MOVE', 'MOVE']);
+    expect(moved.every(([, key]) => ['b', 'c', 'd'].includes(key))).toBe(true);
+  });
+
+  it('key 없는 자식은 뒤에서부터 맞추지 않는다: 앞에서부터 센 순번으로 짝짓는다', () => {
+    const before = ul(h('li', null, 'x'), h('li', null, 'y'));
+    diff(null, before);
+    // 맨 앞에 key 없는 항목이 생기면 순번이 밀린다: 0↔0, 1↔1은 텍스트만 바뀌고 2번이 새로 생긴다
+    expect(types(diff(before, ul(h('li', null, 'new'), h('li', null, 'x'), h('li', null, 'y'))))).toEqual([
+      'TEXT',
+      'TEXT',
+      'CREATE',
+    ]);
+  });
+
+  it('가운데에 새 행이 생기면 뒤쪽 공통 구간의 첫 행 앞에 넣는다', () => {
+    const before = ul(li('a'), li('b'), li('c'));
+    diff(null, before);
+    const after = ul(li('a'), li('x'), li('b'), li('c'));
+    const patches = diff(before, after);
+    expect(patches.map((p) => p.type)).toEqual(['CREATE']);
+    expect(patches[0].before).toBe(after.children[2]); // 새 트리의 b (뒤쪽 구간의 첫 행)
+    expect(patches[0].before.key).toBe('b');
+  });
+
+  it("key 1과 '1'은 같은 key로 보고 중복을 경고한다", () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const before = ul(li(1), li('1'));
+    diff(null, before);
+    diff(before, ul(li(1), li('1')));
+    expect(warn).toHaveBeenCalledOnce();
+  });
+
+  it('같은 데이터로 다시 그리면 패치가 없다 (1,000행)', () => {
+    const rows = (n) => ul(...Array.from({ length: n }, (_, i) => li(`r${i}`, `row ${i}`)));
+    const before = rows(1000);
+    diff(null, before);
+    expect(diff(before, rows(1000))).toEqual([]);
+  });
+});
