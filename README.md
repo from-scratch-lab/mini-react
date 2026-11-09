@@ -93,7 +93,8 @@ npm run serve   # → http://127.0.0.1:5173/demo/
 | 5 | 연속 생성·전체 삭제를 한 번에 (DOM 변경 기록 1,000 → 1) · **B6** 빈 select 선택 수정 | ✅ |
 | 6 | 자식 비교 빠른 경로 (같은 데이터 diff 11.3 → 8.4ms, 패치 목록은 그대로) | ✅ |
 | 7 | Phase 1 프리셋(표·폼·선택 상자·중첩 목록·key 재정렬, 단계별 예상 패치) · 브라우저 벤치마크 페이지(레이아웃 시간 포함) | ✅ |
-| 8~10 | 실제 React와의 차이 문서 · 조건부 최적화(memo 등) · 포트폴리오 정리 | ⏳ |
+| 8 | 실제 React와의 차이 문서 ([docs/react-differences.md](docs/react-differences.md)) | ✅ |
+| 9~10 | 조건부 최적화(memo 등, 측정 근거가 있을 때만) · 포트폴리오 정리 | ⏳ |
 
 ✅ 완료 · 🔄 진행 중 · ⏳ 예정
 
@@ -136,4 +137,5 @@ npm run bench -- --only swap                        # 시나리오 하나
 - [요구사항 체크리스트](docs/requirements-checklist.md) — 과제 조건별 충족 여부와 증거(파일:줄, 테스트 이름)
 - [ADR 0001 고도화 계획](docs/decisions/0001-plan.md) — 특화 분야, 개선 목록, 성능 예산, 버린 안과 이유
 - [벤치마크](docs/benchmarks.md) — 지표 정의, 기준선 표, 읽은 것
+- [실제 React와의 차이](docs/react-differences.md) — 같은 점·다른 점·없는 것, 숫자로 말할 수 있는 것과 없는 것
 - [총괄 제안서](docs/proposals/mr-lead.md)
