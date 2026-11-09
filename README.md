@@ -102,14 +102,18 @@ React는 앞에서부터 훑으며 "제자리에 둔 마지막 위치(`lastPlace
 필수 요구사항을 채운 뒤, 세 역할(총괄 · 성능 · 정확성/학습)이 **각자 제안서를 내고 서로의 안을 측정값으로 반박**한 다음 계획을 정했습니다. "데이터 없는 주장은 받지 않는다"가 규칙이었습니다.
 
 ```mermaid
-flowchart LR
-  A["요구사항<br/>체크리스트"] --> B["제안서 3개<br/>(총괄·성능·정확성)"]
-  B --> C["측정값으로<br/>서로 반박"]
-  C --> D["ADR 0001<br/>계획·성능 예산"]
-  D --> E["기능 브랜치<br/>실패하는 테스트 먼저"]
-  E --> F{"병합 게이트"}
-  F -->|"check.sh · 성능 예산<br/>도메인 규칙 · fuzz"| G["dev"]
-  F -->|"실패: 이유와 재현"| E
+flowchart TB
+  subgraph plan["① 계획: 데이터로 합의"]
+    direction LR
+    A["요구사항<br/>체크리스트"] --> B["제안서 3개<br/>총괄·성능·정확성"] --> C["측정값으로<br/>서로 반박"] --> D["ADR 0001<br/>순서·성능 예산"]
+  end
+  subgraph build["② 구현: 브랜치마다 같은 게이트"]
+    direction LR
+    E["기능 브랜치<br/>실패하는 테스트 먼저"] --> F{"병합 게이트<br/>check.sh · 성능 예산<br/>도메인 규칙 · fuzz"}
+    F -->|"통과"| G["dev"]
+    F -->|"실패: 이유와 재현"| E
+  end
+  D --> E
 ```
 
 | 단계 | 한 일 | 결과 |
@@ -139,14 +143,16 @@ flowchart LR
 ## 4. 핵심 구현
 
 ```mermaid
-flowchart LR
-  A["setState()"] -->|"queueMicrotask 배칭"| B["component.update()"]
-  B --> C["컴포넌트 함수 실행<br/>hooks 배열에서 상태 꺼냄"]
-  C --> D["새 가상 트리"]
-  D --> E["diff(이전, 다음)<br/>key · LIS · 앞뒤 건너뛰기"]
-  E --> F["패치 목록"]
-  F --> G["patch()<br/>실제 DOM을 바꾸는 유일한 곳"]
-  G --> H["useEffect 실행"]
+flowchart TB
+  subgraph render["렌더 단계: DOM을 건드리지 않는다"]
+    direction LR
+    A["setState()"] -->|"queueMicrotask 배칭"| B["컴포넌트 함수 실행<br/>hooks 배열에서 상태"] --> C["새 가상 트리"] --> D["diff(이전, 다음)<br/>key · LIS · 앞뒤 건너뛰기"]
+  end
+  subgraph commit["커밋 단계"]
+    direction LR
+    E["패치 목록<br/>6종"] --> F["patch()<br/>실제 DOM을 바꾸는 유일한 곳"] --> G["useEffect 실행"]
+  end
+  D --> E
 ```
 
 <details>
@@ -187,7 +193,7 @@ flowchart LR
 최적화가 결과를 바꾸지 않았다는 것을 어떻게 믿을까요? **정답지를 브라우저 자신**으로 두었습니다.
 
 ```mermaid
-flowchart LR
+flowchart TB
   R["무작위 HTML A, B<br/>table · form · select · svg · key 목록"] --> P1["엔진: A를 그리고<br/>diff·patch로 B로"]
   R --> P2["브라우저 파서:<br/>B를 innerHTML로 새로 그림"]
   P1 --> C{"비교<br/>DOM 구조 · 폼 상태 · 노드 참조"}
