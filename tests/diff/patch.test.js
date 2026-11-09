@@ -18,6 +18,21 @@ afterEach(() => vi.restoreAllMocks());
 const keyedList = (keys) => h('ul', null, ...keys.map((k) => h('li', { key: k }, k)));
 
 describe('patch', () => {
+  it('빈 select에 option을 여러 개 만들면 처음부터 그린 것처럼 첫 option이 선택된다', () => {
+    const v1 = h('select', null);
+    const c = mount(v1);
+    update(c, v1, h('select', null, h('option', null, 'a'), h('option', null, 'b'), h('option', null, 'c')));
+    expect(c.firstChild.selectedIndex).toBe(0);
+  });
+
+  // 대조군(회귀 방지): CREATE가 하나라 묶이지 않는다. 순서를 바꾸는 최적화가 이 결과를 깨면 안 된다.
+  it('기존 option 앞에 option을 끼워 넣어도 selected가 있는 option만 선택된다', () => {
+    const v1 = h('select', null, h('option', { selected: '' }, 'b'));
+    const c = mount(v1);
+    update(c, v1, h('select', null, h('option', null, 'a'), h('option', { selected: '' }, 'b')));
+    expect(c.firstChild.selectedIndex).toBe(1);
+  });
+
   it('처음 렌더하면 가상 트리 전체를 만든다', () => {
     const c = mount(h('ul', { id: 'l' }, h('li', null, 'a')));
     expect(c.innerHTML).toBe('<ul id="l"><li>a</li></ul>');

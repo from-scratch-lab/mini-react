@@ -28,10 +28,85 @@ const ATTRIBUTE_NAMESPACES = {
  * @returns {Array} 반영한 패치 목록 (그대로 돌려준다)
  */
 export function patch(container, patches) {
-  for (const p of patches) applyPatch(container, p);
+  for (let i = 0; i < patches.length; ) i = applyFrom(container, patches, i);
   // 핸들러 교체는 DOM 패치가 모두 성공한 뒤에 한다. 중간에 실패하면 화면과 함께 핸들러도 직전 렌더 것으로 남는다.
   for (const { vnode, name, value } of patches.handlers ?? []) setEventHandler(vnode.dom, toEventName(name), value);
   return patches;
+}
+
+/**
+ * patches[i]부터 반영하고 다음에 볼 인덱스를 돌려준다.
+ * 패치 목록은 diff가 만든 그대로 두고, 이어지는 패치를 실제 DOM 연산 한 번으로 묶을 수 있으면 묶는다.
+ *   - 같은 부모에 이어서 만드는 CREATE들 → DocumentFragment에 모아 insertBefore 한 번 (createRunEnd)
+ *   - 한 부모의 자식을 전부 지우는 REMOVE들 → textContent = '' 한 번 (clearRunEnd)
+ * 브라우저는 DOM이 바뀔 때마다 변경 기록을 남기고 레이아웃을 다시 계산할 준비를 하므로, 1,000번을 1번으로 줄인다.
+ */
+function applyFrom(container, patches, i) {
+  const p = patches[i];
+  if (p.type === PatchType.CREATE && p.parent) {
+    const end = createRunEnd(patches, i);
+    if (end - i > 1) {
+      insertRun(patches, i, end);
+      return end;
+    }
+  } else if (p.type === PatchType.REMOVE) {
+    const end = clearRunEnd(patches, i);
+    if (end > i) {
+      p.vnode.dom.parentNode.textContent = '';
+      return end;
+    }
+  }
+  applyPatch(container, p);
+  return i + 1;
+}
+
+/**
+ * patches[i]에서 시작해 "같은 부모에 이어서 넣는" CREATE가 어디까지인지.
+ * diff는 자식을 뒤에서부터 처리하므로, 이어지는 CREATE는 before가 바로 앞 패치에서 만든 형제다.
+ */
+function createRunEnd(patches, i) {
+  let j = i + 1;
+  while (j < patches.length) {
+    const q = patches[j];
+    if (q.type !== PatchType.CREATE || q.parent !== patches[i].parent || q.before !== patches[j - 1].vnode) break;
+    j += 1;
+  }
+  return j;
+}
+
+/**
+ * 묶은 CREATE들을 앞에서부터 차례로 fragment에 만들어 붙이고, 맨 뒤 형제(첫 패치의 before) 앞에 한 번에 넣는다.
+ * - 노드는 진짜 부모를 기준으로 만든다(createDom이 부모의 네임스페이스로 SVG 여부를 정하므로). fragment에는 붙이기만 한다.
+ * - 앞에서부터 넣으므로 빈 <select>에 option들을 넣으면 처음부터 그린 것처럼 첫 option이 선택된다.
+ *   (하나씩 넣던 때는 뒤에서부터 들어가 마지막 option이 먼저 들어와 선택됐다)
+ * - 만들다 실패하면 fragment는 버려지고 실제 DOM은 그대로다.
+ */
+function insertRun(patches, start, end) {
+  const parentDom = childContainer(patches[start].parent.dom);
+  const fragment = (parentDom.ownerDocument ?? parentDom).createDocumentFragment();
+  for (let k = end - 1; k >= start; k -= 1) fragment.appendChild(createDom(patches[k].vnode, parentDom));
+  const before = patches[start].before;
+  parentDom.insertBefore(fragment, before ? before.dom : null);
+}
+
+/**
+ * patches[i]에서 시작하는 REMOVE들이 한 부모의 실제 자식을 "전부" 지우면 그 끝 인덱스, 아니면 i.
+ * 실제 자식 수(childNodes)와 지울 노드 수가 같을 때만 묶는다. attach로 읽은 트리처럼
+ * 가상 트리에 없는 공백 텍스트가 섞인 부모는 하나씩 지워 그 공백을 지금처럼 남긴다.
+ * textarea(텍스트가 기본값)와 template content(요소가 아님)는 묶지 않는다.
+ */
+function clearRunEnd(patches, i) {
+  const parentDom = patches[i].vnode.dom?.parentNode;
+  if (!parentDom || parentDom.nodeType !== 1 || parentDom.localName === 'textarea') return i;
+  const count = parentDom.childNodes.length;
+  if (count < 2) return i;
+  let j = i;
+  while (j < patches.length && j - i < count) {
+    const q = patches[j];
+    if (q.type !== PatchType.REMOVE || q.vnode.dom?.parentNode !== parentDom) break;
+    j += 1;
+  }
+  return j - i === count ? j : i;
 }
 
 function applyPatch(container, p) {

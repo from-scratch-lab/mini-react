@@ -10,26 +10,28 @@ import { SCENARIOS, measureScenario } from '../../scripts/bench/scenarios.js';
  *
  * 처음 값은 dev 5cbca8b의 측정값이고, 아래 최적화 브랜치마다 줄인 만큼 낮췄다.
  *   - feat/perf-handler-box: 함수 → 함수 핸들러 교체를 PROPS에서 뺌 → 행마다 패치 2개 감소 (같은 데이터 다시 렌더 2000 → 0)
+ *   - feat/perf-batch-insert: 연속 CREATE·전체 REMOVE를 DOM 연산 한 번으로 → 기록 생성·추가·지우기 1000 → 1, 교체 2000 → 2
+ *     (붙임+뗌·새 노드 수는 그대로: 붙이고 떼는 노드 수가 줄어든 것이 아니라 DOM에 알리는 횟수가 줄었다)
  * 최적화 브랜치는 자기가 줄인 만큼 상한을 같은 커밋에서 낮추고(그 값이 다음 기준), 상한을 올려야 하면 PR 본문에 이유를 적는다. 시간은 jsdom에서 흔들려 여기서 검사하지 않는다(`npm run bench`).
  *
  * 지금 값에서 눈여겨볼 것 (개선 대상)
- * - 빈 tbody 생성·덧붙이기·지우기는 행마다 DOM 연산 1번 (기록 1000)
+ * - attach 지우기는 가상 트리에 없는 공백 텍스트 때문에 빠른 경로를 쓰지 않는다 (기록 1000)
  * - attach 시나리오는 시작 HTML의 key 속성을 행마다 지운다 (PROPS·기록 1000). 텍스트 갱신 비용이 아니다
  */
 const ROWS = 1000;
 const BUDGET = {
   'create-null': { patches: 1, records: 1, addedRemoved: 1, created: 9002 },
-  'create-empty': { patches: 1000, records: 1000, addedRemoved: 1000, created: 9000 },
-  'replace-all': { patches: 2000, records: 2000, addedRemoved: 2000, created: 9000 },
+  'create-empty': { patches: 1000, records: 1, addedRemoved: 1000, created: 9000 },
+  'replace-all': { patches: 2000, records: 2, addedRemoved: 2000, created: 9000 },
   'update-10th': { patches: 100, records: 100, addedRemoved: 0, created: 0 },
   select: { patches: 1, records: 1, addedRemoved: 0, created: 0 },
   swap: { patches: 2, records: 4, addedRemoved: 4, created: 0 },
   'last-to-first': { patches: 1, records: 2, addedRemoved: 2, created: 0 },
   reverse: { patches: 999, records: 1998, addedRemoved: 1998, created: 0 },
   'remove-one': { patches: 1, records: 1, addedRemoved: 1, created: 0 },
-  append: { patches: 1000, records: 1000, addedRemoved: 1000, created: 9000 },
+  append: { patches: 1000, records: 1, addedRemoved: 1000, created: 9000 },
   noop: { patches: 0, records: 0, addedRemoved: 0, created: 0 },
-  clear: { patches: 1000, records: 1000, addedRemoved: 1000, created: 0 },
+  clear: { patches: 1000, records: 1, addedRemoved: 1000, created: 0 },
   'attach-update-10th': { patches: 3100, records: 1100, addedRemoved: 0, created: 0 },
   'attach-clear': { patches: 1000, records: 1000, addedRemoved: 1000, created: 0 },
 };
@@ -59,7 +61,7 @@ describe(`성능 예산: ${ROWS}행 목록 시나리오`, () => {
   it('created는 엔진이 만든 노드만 센다: 옮기기·지우기는 0', () => {
     const byId = Object.fromEntries(SCENARIOS.map((s) => [s.id, s]));
     expect(measureScenario(byId.reverse, 10, document)).toMatchObject({ created: 0, moves: { engine: 9, lisMin: 9, react: 9 } });
-    expect(measureScenario(byId.clear, 10, document)).toMatchObject({ created: 0, records: 10 });
+    expect(measureScenario(byId.clear, 10, document)).toMatchObject({ created: 0, records: 1, addedRemoved: 10 });
   });
 
   it('측정이 끝나면 컨테이너를 문서에서 뗀다', () => {
