@@ -14,6 +14,8 @@ const DEFERRED_PROPS = ['value', 'checked', 'selected'];
 // on + 이름을 소문자로 바꾼 것과 실제 이벤트 이름이 다른 경우
 const EVENT_NAME_ALIASES = { doubleclick: 'dblclick' };
 const HANDLERS = Symbol('miniReactHandlers');
+// value prop으로 선택을 정하는 select와 그 값 (선택 그룹을 다시 맞출 때 option 속성보다 우선한다)
+const SELECT_VALUES = new WeakMap();
 const ATTRIBUTE_NAMESPACES = {
   xlink: 'http://www.w3.org/1999/xlink',
   xml: 'http://www.w3.org/XML/1998/namespace',
@@ -28,7 +30,12 @@ const ATTRIBUTE_NAMESPACES = {
  * @returns {Array} 반영한 패치 목록 (그대로 돌려준다)
  */
 export function patch(container, patches) {
+  const groups = { selects: new Set(), inputs: new Set(), radios: null };
+  // 지우거나 바꾸기 전에 봐야 하는 것(지울 노드가 속한 그룹)은 반영 전에, 새로 생긴 노드는 반영 뒤에 모은다.
+  for (const p of patches) noteBeforePatch(p, groups, container);
   for (let i = 0; i < patches.length; ) i = applyFrom(container, patches, i);
+  for (const p of patches) noteAfterPatch(p, groups);
+  syncSelectionGroups(container, groups);
   // 핸들러 교체는 DOM 패치가 모두 성공한 뒤에 한다. 중간에 실패하면 화면과 함께 핸들러도 직전 렌더 것으로 남는다.
   for (const { vnode, name, value } of patches.handlers ?? []) setEventHandler(vnode.dom, toEventName(name), value);
   return patches;
@@ -107,6 +114,122 @@ function clearRunEnd(patches, i) {
     j += 1;
   }
   return j - i === count ? j : i;
+}
+
+/**
+ * 선택 그룹: 하나만 고르는 select의 option들, 같은 form·같은 name의 radio들.
+ * 브라우저는 그룹 안 한 요소의 선택을 바꾸면 형제의 선택도 바꾼다(앞 option을 고르면 뒤 option이 풀린다).
+ * diff는 바뀐 속성만 다시 넣으므로, 속성이 그대로인 형제는 다른 형제 때문에 풀린 채 남을 수 있다.
+ * 그래서 이번 렌더에서 선택에 영향을 준 그룹만 모아 두었다가, 모든 패치 뒤에 그룹 전체를 속성대로 다시 맞춘다.
+ * 선택과 상관없는 변경(속성 없는 option 덧붙이기, checked 속성 없는 radio의 name 바꾸기 등)은 모으지 않아
+ * 사용자가 고른 것을 건드리지 않는다. multiple select의 option은 서로 영향을 주지 않으므로 그룹이 아니다.
+ */
+function noteSelectionChange(p, groups) {
+  const dom = p.vnode.dom;
+  const changed = [...Object.keys(p.set), ...p.remove];
+  if (dom.localName === 'option') {
+    if (changed.includes('selected')) noteSelect(dom.closest('select'), groups);
+  } else if (dom.localName === 'select') {
+    // multiple을 켜고 끄면 브라우저는 이전 선택을 그대로 두므로, 이때는 multiple이어도 속성대로 다시 맞춘다
+    if (changed.includes('multiple') || changed.includes('value')) groups.selects.add(dom);
+  } else if (dom.localName === 'input') {
+    if (changed.includes('checked')) groups.inputs.add(dom);
+    // checked 속성이 있는 input이 그룹을 옮기거나 종류가 바뀌면(radio → checkbox 등) 바뀌는 동안 풀렸을 수 있다
+    else if (changesGroup(changed) && dom.defaultChecked) groups.inputs.add(dom);
+  }
+}
+
+/** 반영 전: 지우는 노드와 그룹을 떠나는 radio가 지금 속한 그룹을 모은다 (반영 뒤에는 이 관계가 사라진다). */
+function noteBeforePatch(p, groups, container) {
+  if (p.type === PatchType.REMOVE) noteSubtree(p.vnode.dom, groups, container, true);
+  else if (p.type === PatchType.REPLACE) noteSubtree(p.oldVNode.dom, groups, container, true);
+  else if (p.type === PatchType.PROPS && changesGroup([...Object.keys(p.set), ...p.remove])) {
+    const dom = p.vnode.dom;
+    if (isDefaultCheckedRadio(dom)) for (const radio of radiosOf(dom, container, groups)) if (radio !== dom) groups.inputs.add(radio);
+  }
+}
+
+/** 반영 뒤: 속성이 바뀐 요소, 새로 생기거나 옮겨진 노드가 속한 그룹을 모은다. */
+function noteAfterPatch(p, groups) {
+  if (p.type === PatchType.PROPS) noteSelectionChange(p, groups);
+  else if (p.type === PatchType.CREATE || p.type === PatchType.REPLACE || p.type === PatchType.MOVE) {
+    noteSubtree(p.vnode.dom, groups, null, false);
+  }
+}
+
+const changesGroup = (changed) => changed.includes('name') || changed.includes('type');
+const isDefaultCheckedRadio = (dom) => dom.localName === 'input' && dom.type === 'radio' && dom.defaultChecked;
+
+function noteSelect(select, groups) {
+  if (select && !select.multiple) groups.selects.add(select);
+}
+
+/**
+ * 구조 패치로 생기거나 빠지거나 옮겨진 option·radio 중 그룹의 선택을 바꿀 수 있는 것만 그룹으로 모은다.
+ * - selected·checked 속성이 있는 것, 지우는 쪽이면 지금 선택된 것
+ * - value prop으로 선택을 정하는 select 안의 option (option이 바뀌면 브라우저가 선택을 다시 정한다)
+ */
+function noteSubtree(dom, groups, container, removing) {
+  if (dom?.nodeType !== 1) return;
+  const nodes = dom.localName === 'option' || dom.localName === 'input' ? [dom] : [dom, ...dom.querySelectorAll('option, input')];
+  for (const node of nodes) {
+    if (node.localName === 'option') {
+      const select = node.closest('select');
+      if (select && (SELECT_VALUES.has(select) || node.defaultSelected || (removing && node.selected))) {
+        if (SELECT_VALUES.has(select)) groups.selects.add(select);
+        else noteSelect(select, groups);
+      }
+    } else if (node.localName === 'input' && node.type === 'radio' && (node.defaultChecked || (removing && node.checked))) {
+      // 지우는 radio는 곧 그룹을 떠나므로 남는 형제를 모은다
+      if (removing && node.name) {
+        for (const radio of radiosOf(node, container, groups)) if (radio !== node) groups.inputs.add(radio);
+      } else {
+        groups.inputs.add(node);
+      }
+    }
+  }
+}
+
+/** 처음부터 그린 것과 같게 맞춘다: 속성(defaultSelected·defaultChecked)을 문서 순서대로 넣으면 뒤의 것이 이긴다(파서와 같다). */
+function syncSelectionGroups(container, groups) {
+  // 같은 패치에서 함께 지워진 요소는 건너뛴다. 떨어져 나간 radio는 form이 없어져 엉뚱한 그룹을 가리킨다.
+  const live = (el) => container.contains(el);
+  for (const select of groups.selects) {
+    if (!live(select)) continue;
+    if (SELECT_VALUES.has(select)) select.value = SELECT_VALUES.get(select);
+    else for (const option of select.options) option.selected = option.defaultSelected;
+  }
+  groups.radios = null; // 반영 뒤의 그룹으로 다시 만든다
+  const done = new Set();
+  for (const input of groups.inputs) {
+    if (done.has(input) || !live(input)) continue;
+    if (input.type === 'radio' && input.name) {
+      for (const radio of radiosOf(input, container, groups)) {
+        radio.checked = radio.defaultChecked;
+        done.add(radio);
+      }
+    } else if (input.type === 'radio' || input.type === 'checkbox') {
+      input.checked = input.defaultChecked;
+    }
+  }
+}
+
+/**
+ * input과 같은 radio 그룹(같은 form 소유자, 같은 name)을 문서 순서대로. 이 컨테이너가 그린 것만 다룬다.
+ * 컨테이너의 radio를 patch 한 번에 한 번만 훑어 (form, name)별로 묶어 둔다 (그룹마다 전체를 훑지 않도록).
+ */
+function radiosOf(input, container, groups) {
+  if (!input.name) return [input];
+  if (!groups.radios) {
+    groups.radios = new Map();
+    for (const el of container.querySelectorAll('input')) {
+      if (el.type !== 'radio' || !el.name) continue;
+      const byName = groups.radios.get(el.form) ?? new Map();
+      groups.radios.set(el.form, byName);
+      byName.set(el.name, [...(byName.get(el.name) ?? []), el]);
+    }
+  }
+  return groups.radios.get(input.form)?.get(input.name) ?? [];
 }
 
 function applyPatch(container, p) {
@@ -204,19 +327,18 @@ function setProp(dom, name, value, prevValue) {
     const next = value == null ? '' : String(value);
     if (dom.value !== next) dom.value = next; // 같으면 건드리지 않는다: 입력 중인 커서 위치를 지키기 위해
     if (dom.localName === 'input') setAttribute(dom, 'value', value);
+    // value로 선택을 정하는 select는 기억해 두고, 선택 그룹을 다시 맞출 때 option 속성 대신 이 값을 쓴다.
+    if (dom.localName === 'select') {
+      if (value == null) SELECT_VALUES.delete(dom);
+      else SELECT_VALUES.set(dom, next);
+    }
     return;
   }
   if (BOOLEAN_PROPERTIES.has(name) && name in dom) {
     // HTML에서 읽은 값은 문자열('')이다. boolean 속성은 "있으면 참"이므로 문자열도 참으로 본다.
     const on = value != null && value !== false;
-    const changed = dom[name] !== on;
     dom[name] = on;
     setAttribute(dom, name, typeof value === 'string' ? value : on || null);
-    // multiple을 켜고 끄면 브라우저는 이전 선택(하나만 고르는 select의 자동 선택 포함)을 그대로 둔다.
-    // 처음부터 그린 것과 같아지도록 option 선택을 selected 속성(defaultSelected)대로 다시 맞춘다.
-    if (name === 'multiple' && changed && dom.localName === 'select') {
-      for (const option of dom.options) option.selected = option.defaultSelected;
-    }
     return;
   }
   setAttribute(dom, toAttributeName(name), value);
