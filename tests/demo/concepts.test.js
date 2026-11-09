@@ -50,6 +50,12 @@ describe('과제 중점 포인트 설명 (기본 개념 8~11절)', () => {
     expect(rows[0].cells[0].textContent).toBe('MutationObserver');
   });
 
+  it('2절(Reflow·가상 DOM)은 벤치마크 문서의 측정 수치로 근거를 든다', () => {
+    const text = section('virtual-dom').textContent;
+    expect(text).toContain('docs/benchmarks.md');
+    expect(text).toContain('MutationObserver');
+  });
+
   it('새 절은 기본 개념 안에 번호 순서대로 이어 붙는다', () => {
     const numbers = [...page.querySelectorAll('.basics > section > h3')].map((h) => parseInt(h.textContent, 10));
     expect(numbers).toEqual(numbers.map((_, i) => i + 1));
