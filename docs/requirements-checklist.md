@@ -1,6 +1,6 @@
 # 과제 요구사항 체크리스트
 
-기준: `dev` fix/form-groups 병합 후 (테스트 339개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
+기준: `dev` feat/children-fastpath 병합 후 (테스트 344개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
 상태: ✅ 충족 · 🟨 부분 · ❌ 미충족. 증거는 `파일:줄`, 테스트 이름(따옴표), 데모 위치.
 
 ## Phase 1. Virtual DOM + Diff + Patch
@@ -79,7 +79,7 @@
 | 우선순위 | 항목 | 담당 |
 |---|---|---|
 | ✅ | 5.5 벤치마크·성능 예산 (`feat/perf-bench`) | mr-perf |
-| P1 | 5.5 최적화: 핸들러 상자 ✅ → 일괄 삽입 ✅ → 자식 빠른 경로 (ADR 0001 순서) | mr-lead (인계) |
+| P1 | 5.5 최적화: 핸들러 상자 ✅ → 일괄 삽입 ✅ → 자식 빠른 경로 ✅ (docs/benchmarks.md 개선 기록 1~3) | mr-lead (인계) |
 | ✅ | 5.3 브라우저 파서 대조 차등 fuzz (`feat/dx-differential-fuzz`, tests/diff/differential.test.js) | mr-dx |
 | ✅ | 5.3 B6(빈 select에 option 생성 시 마지막 선택) 수정 (`feat/batch-insert`) | mr-perf → mr-lead |
 | ✅ | 5.3 B7(단일 선택 select·같은 name radio 그룹) 수정 (`fix/form-groups`, fuzz 시드 1·3 불일치 0) | mr-dx → mr-lead |
