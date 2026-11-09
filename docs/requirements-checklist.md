@@ -1,6 +1,6 @@
 # 과제 요구사항 체크리스트
 
-기준: `dev` feat/batch-insert 병합 후 (테스트 320개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
+기준: `dev` fix/form-groups 병합 후 (테스트 339개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
 상태: ✅ 충족 · 🟨 부분 · ❌ 미충족. 증거는 `파일:줄`, 테스트 이름(따옴표), 데모 위치.
 
 ## Phase 1. Virtual DOM + Diff + Patch
@@ -82,7 +82,7 @@
 | P1 | 5.5 최적화: 핸들러 상자 ✅ → 일괄 삽입 ✅ → 자식 빠른 경로 (ADR 0001 순서) | mr-lead (인계) |
 | ✅ | 5.3 브라우저 파서 대조 차등 fuzz (`feat/dx-differential-fuzz`, tests/diff/differential.test.js) | mr-dx |
 | ✅ | 5.3 B6(빈 select에 option 생성 시 마지막 선택) 수정 (`feat/batch-insert`) | mr-perf → mr-lead |
-| P1 | 5.3 B7(단일 선택 select·같은 name radio 그룹) 수정 (`fix/dx-form-groups`) | mr-dx → mr-lead |
+| ✅ | 5.3 B7(단일 선택 select·같은 name radio 그룹) 수정 (`fix/form-groups`, fuzz 시드 1·3 불일치 0) | mr-dx → mr-lead |
 | ✅ | 6.1·6.2·6.7·6.8 설명 보강 (`feat/dx-concepts`) | mr-dx |
 | P2 | 1.11 phase1 프리셋 시나리오(table·form·select·중첩 목록·key 재정렬) | mr-dx |
 | P2 | 6.11 실제 React와의 차이 표 | mr-dx 초안 → mr-lead가 README에 반영 |

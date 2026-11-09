@@ -29,7 +29,7 @@
 | **Phase 1** Virtual DOM · Diff · Patch | 실제 DOM ↔ 가상 노드 변환, 패치 6종(CREATE·REMOVE·REPLACE·PROPS·TEXT·MOVE), key 목록의 **LIS 기반 최소 이동**, patch 실패 시 이전 화면 복구 |
 | **Phase 2** Component · Hooks | `FunctionComponent`(hooks 배열 · `mount()` · `update()`), `useState`·`useEffect`·`useMemo`, 마이크로태스크 배칭, 무한 갱신 방지, effect 정리 순서 보장 |
 | **연결** | `setState` → 새 가상 트리 → Phase 1의 `diff` → `patch` 하나의 파이프라인 |
-| **검증** | 단위·기능 테스트 320개, 브라우저 파서를 정답으로 삼는 차등 fuzz(`npm run fuzz`), CI 성능 예산 |
+| **검증** | 단위·기능 테스트 339개, 브라우저 파서를 정답으로 삼는 차등 fuzz(`npm run fuzz`), CI 성능 예산 |
 
 ## 구조
 
@@ -88,7 +88,7 @@ npm run serve   # → http://127.0.0.1:5173/demo/
 | 1 | 벤치마크 하네스 `npm run bench` · CI 성능 예산 테스트 · React 방식과 이동 횟수 비교 | ✅ |
 | 2 | **B3** 주석으로 갈린 텍스트 때문에 "아무것도 안 고친 Patch"가 DOM을 바꾸던 문제 수정 | ✅ |
 | 2 | 개념 설명 추가 (Document·Window, DOM 변화 감지, 컴포넌트 나누기, State 위치) | ✅ |
-| 3 | 브라우저 파서를 정답으로 삼는 차등 fuzz (CI 시드 불일치 0, CI +1.5초) · 긴 실행으로 **B6** 빈 select·**B7** 단일 선택 그룹 버그 발견 → 수정 중 | ✅ |
+| 3 | 브라우저 파서를 정답으로 삼는 차등 fuzz (CI 시드 불일치 0, CI +1.5초) · 긴 실행으로 **B6** 빈 select·**B7** 단일 선택 그룹 버그 발견 → 둘 다 수정 | ✅ |
 | 4 | **핸들러 상자**: 렌더마다 새 핸들러여도 패치를 만들지 않음 (같은 데이터 다시 렌더 패치 2,000 → 0) | ✅ |
 | 5 | 연속 생성·전체 삭제를 한 번에 (DOM 변경 기록 1,000 → 1) · **B6** 빈 select 선택 수정 | ✅ |
 | 6 | 자식 비교 빠른 경로 (같은 데이터 diff 19ms → 10ms 이하) | ⏳ |
