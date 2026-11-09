@@ -26,7 +26,7 @@
 <text x="192.25" y="175.564" font-size="11.5" font-weight="800" text-anchor="middle" fill="#5b7fd6">997</text>
 <rect x="213.25" y="182.564" width="30" height="187.436" rx="6" fill="#0b2069"/>
 <text x="228.25" y="175.564" font-size="11.5" font-weight="800" text-anchor="middle" fill="#0b2069">997</text>
-<text x="195.25" y="392" font-size="13.5" font-weight="800" text-anchor="middle" fill="#111827">Swap</text><text x="195.25" y="410" font-size="11.5" text-anchor="middle" fill="#6b7280">두 행 교환</text>
+<text x="195.25" y="392" font-size="13.5" font-weight="800" text-anchor="middle" fill="#111827">Swap</text><text x="195.25" y="410" font-size="11.5" text-anchor="middle" fill="#6b7280">1번 ↔ N−2번 교환</text>
 <rect x="339.75" y="351.2" width="30" height="18.80000000000001" rx="6" fill="url(#gBar)"/>
 <text x="354.75" y="344.2" font-size="11.5" font-weight="800" text-anchor="middle" fill="#1d4ed8">100</text>
 <rect x="375.75" y="351.2" width="30" height="18.80000000000001" rx="6" fill="#8db0ff"/>

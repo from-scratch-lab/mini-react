@@ -57,5 +57,5 @@
 <rect x="715.5" y="324" width="170.5" height="68" rx="12" fill="#f1f2f6"/>
 <text x="800.75" y="361" font-size="23" font-weight="800" text-anchor="middle" fill="#6b7280">1.04×</text>
 <text x="800.75" y="380" font-size="11" text-anchor="middle" fill="#6b7280" fill-opacity="0.8">10.97 / 10.58 ms · 구간 겹침</text>
-<text x="72" y="418" font-size="12" fill="#6b7280">진할수록 LIS가 빠름 · 회색 = LIS가 느렸던 칸(중앙값) · "구간 겹침" = 두 방식의 Q1~Q3가 겹쳐 차이를 단정할 수 없는 칸</text>
+<text x="72" y="418" font-size="12" fill="#6b7280">진할수록 LIS가 빠름 · 회색 = 중앙값 1 초과(같은 조건 재측정은 0.996×) · "구간 겹침" = 차이를 단정할 수 없는 칸</text>
 </svg>
