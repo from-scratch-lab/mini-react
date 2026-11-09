@@ -286,6 +286,7 @@ docs/      체크리스트 · 제안서 · ADR · 벤치마크 · React 비교 �
 | [ADR 0002 조건부 항목](docs/decisions/0002-conditional-items.md) | 측정해 보고 하지 않기로 한 최적화 |
 | [벤치마크](docs/benchmarks.md) | 지표 정의, 기준선, 개선 기록, 브라우저 결과 |
 | [핸들러 상자](docs/perf/handler-box.md) · [일괄 삽입](docs/perf/batch-insert.md) | 설계와 측정 |
+| [LIS 실험](docs/perf/lis-experiment.md) | LIS와 단방향 스캔(React 방식 참고), React 18.3.1을 같은 조건으로 잰 결과: 언제 유리하고 언제 이득이 없는가 |
 | [실제 React와의 차이](docs/react-differences.md) | 18개 주제 비교, 주장할 수 있는 것과 없는 것 |
 | [최종 보고](docs/final-report.md) | 바꾼 것 · 검사 결과 · 남은 한계 |
 | [제안서](docs/proposals/mr-lead.md) | 총괄 제안서 |
