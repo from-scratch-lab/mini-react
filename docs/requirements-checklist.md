@@ -1,6 +1,6 @@
 # 과제 요구사항 체크리스트
 
-기준: `dev` 6853949 (테스트 20파일 237개 통과, 2026-11-09). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
+기준: `dev` 9d9ea8c (테스트 22파일 272개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
 상태: ✅ 충족 · 🟨 부분 · ❌ 미충족. 증거는 `파일:줄`, 테스트 이름(따옴표), 데모 위치.
 
 ## Phase 1. Virtual DOM + Diff + Patch
@@ -54,9 +54,9 @@
 |---|---|---|---|
 | 5.1 | 모듈별 단위 테스트 (VDOM 변환, Diff, Patch, useState, useEffect, useMemo) | ✅ | tests/vdom, tests/diff, tests/hooks |
 | 5.2 | 화면 동작 기능 테스트 | ✅ | tests/demo/ 5파일 |
-| 5.3 | 엣지 케이스 | ✅ | 중복 key, vnode 재사용, select/option 순서, 폼 상태, SVG, patch 실패 복구, effect 실패, 무한 렌더 감지, fuzz("어떤 이전 트리에서 patch해도 결과 DOM은 새로 그린 다음 트리와 같다") |
-| 5.4 | 포트폴리오 수준 완성도 | 🟨 | README가 실행법뿐: 아키텍처·특화 분야·벤치마크·실제 React와의 차이 없음. 성능 수치(벤치마크) 자체가 없음 |
-| 5.5 | 다른 팀과의 차별점 | 🟨 | 학습용 종합 페이지·LIS 시각화가 있음. 측정 가능한 특화 분야(성능 수치)는 아직 없음 → mr-perf |
+| 5.3 | 엣지 케이스 | ✅ | 고도화 중 고친 것: B1 다중 select 선택·B2 type 변경 시 value 잔존(`fix/dx-form-prop-order`), B3 주석으로 갈린 텍스트(`fix/dx-adjacent-text`) · 중복 key, vnode 재사용, select/option 순서, 폼 상태, SVG, patch 실패 복구, effect 실패, 무한 렌더 감지, fuzz("어떤 이전 트리에서 patch해도 결과 DOM은 새로 그린 다음 트리와 같다") |
+| 5.4 | 포트폴리오 수준 완성도 | 🟨 | README에 특화 방향·구조도·로드맵·벤치마크 하이라이트 있음(9d9ea8c). 실제 React와의 차이 표와 최종 정리는 아직 |
+| 5.5 | 다른 팀과의 차별점 | 🟨 | `npm run bench`(14 시나리오), tests/bench/budget.test.js(CI 성능 예산), React lastPlacedIndex와 이동 수 비교(swap 2 vs 997), docs/benchmarks.md. 최적화(핸들러 상자·일괄 삽입·자식 빠른 경로)와 차등 fuzz는 진행 중 |
 
 ## 중점 포인트 (문서·데모로 설명되어 있는가)
 
@@ -64,7 +64,7 @@
 |---|---|---|---|
 | 6.1 | DOM을 다루는 방법 (Document, Window) | ❌ | 설명 없음 |
 | 6.2 | 실제 DOM 변화를 감지하는 브라우저 API | 🟨 | MutationObserver를 쓰고 수를 보여 줌(`demo/integrated/app.js:555`, `demo/phase1/app.js:42`). API 자체 설명(무엇을·언제 알려 주는지, 다른 감지 방법과 비교)은 없음 |
-| 6.3 | 실제 DOM이 느린 이유 (Reflow/Repaint) | ✅ | `demo/integrated/index.html:84` 2절. 수치 근거는 없음(6.x 벤치마크로 보강하면 좋음) |
+| 6.3 | 실제 DOM이 느린 이유 (Reflow/Repaint) | ✅ | `demo/integrated/index.html:84` 2절. 수치는 docs/benchmarks.md(jsdom 기준; 브라우저 수치는 벤치 페이지 예정) |
 | 6.4 | Virtual DOM의 구조와 필요한 이유 | ✅ | 같은 2절, `src/vdom/vnode.js` |
 | 6.5 | Diff 동작 방식·5가지 케이스·실제 DOM 반영 | ✅ | `demo/integrated/index.html:97` 3절, phase1 "이렇게 바꿔 보세요"(`demo/phase1/index.html:44`) |
 | 6.6 | React에서 VDOM·Diff가 DOM을 바꾸는 방식 | ✅ | 3·4·5절(재조정, lastPlacedIndex, 렌더/커밋, Fiber) |
@@ -78,7 +78,9 @@
 
 | 우선순위 | 항목 | 담당 |
 |---|---|---|
-| P1 | 5.4·5.5 성능 특화 분야와 재현 가능한 벤치마크(대량 목록 생성·갱신·재정렬, DOM 변경 수·시간), 성능 예산 | mr-perf |
+| ✅ | 5.5 벤치마크·성능 예산 (`feat/perf-bench`) | mr-perf |
+| P1 | 5.5 최적화: 핸들러 상자 → 일괄 삽입 → 자식 빠른 경로 (ADR 0001 순서) | mr-perf |
+| P1 | 5.3 브라우저 파서 대조 차등 fuzz | mr-dx |
 | P1 | 6.1·6.2·6.7·6.8 설명 보강 (데모 기본 개념 절 또는 docs) | mr-dx |
 | P2 | 1.11 phase1 프리셋 시나리오(table·form·select·중첩 목록·key 재정렬) | mr-dx |
 | P2 | 6.11 실제 React와의 차이 표 | mr-dx 초안 → mr-lead가 README에 반영 |
