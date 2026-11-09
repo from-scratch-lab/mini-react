@@ -113,7 +113,7 @@ flowchart TB
     F -->|"통과"| G["dev"]
     F -->|"실패: 이유와 재현"| E
   end
-  D --> E
+  plan --> build
 ```
 
 | 단계 | 한 일 | 결과 |
@@ -152,7 +152,7 @@ flowchart TB
     direction LR
     E["패치 목록<br/>6종"] --> F["patch()<br/>실제 DOM을 바꾸는 유일한 곳"] --> G["useEffect 실행"]
   end
-  D --> E
+  render --> commit
 ```
 
 <details>
