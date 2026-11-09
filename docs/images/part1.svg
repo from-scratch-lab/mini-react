@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="470" viewBox="0 0 960 470" role="img" aria-label="Part 1 필수 기능 증명: Phase 1, Phase 2, 연결과 정확성, 테스트 237개에서 392개로" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif">
+<defs>
+<filter id="sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#1e2a55" flood-opacity="0.10"/></filter>
+<filter id="sh2" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#1e2a55" flood-opacity="0.08"/></filter>
+<linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d4ed8" stop-opacity="0.55"/><stop offset="1" stop-color="#1d4ed8" stop-opacity="0.04"/></linearGradient>
+<linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8db0ff" stop-opacity="0.45"/><stop offset="1" stop-color="#8db0ff" stop-opacity="0.05"/></linearGradient>
+<linearGradient id="gBar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b6ef5"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
+<linearGradient id="gNavy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1c3aa9"/><stop offset="1" stop-color="#0b2069"/></linearGradient>
+</defs>
+<rect x="14" y="10" width="932" height="436" rx="18" fill="#ffffff" stroke="#e5e9f2" filter="url(#sh)"/>
+<rect x="46" y="44" width="5" height="26" rx="2.5" fill="#1d4ed8"/>
+<text x="62" y="65" font-size="25" font-weight="800" fill="#111827" letter-spacing="-0.5">Part 1 · 필수 기능 증명</text>
+<text x="62" y="91" font-size="13.5" fill="#6b7280">과제 요구사항을 조건마다 증거(파일:줄, 테스트 이름)로 확인 — 체크리스트 전 항목 충족</text>
+<rect x="842.24" y="44" width="71.75999999999999" height="26" rx="13" fill="#0b2069"/>
+<text x="878.12" y="61.5" font-size="12" font-weight="700" text-anchor="middle" fill="#ffffff" letter-spacing="1">PART 1</text>
+<rect x="46" y="122" width="400" height="90" rx="14" fill="#ffffff" stroke="#e5e9f2" filter="url(#sh2)"/>
+<rect x="64" y="140" width="36" height="36" rx="8" fill="url(#gNavy)"/><text x="82" y="164" font-size="15" font-weight="800" text-anchor="middle" fill="#ffffff">01</text>
+<text x="116" y="155" font-size="15" font-weight="800" fill="#111827">Phase 1 · Virtual DOM · Diff · Patch</text>
+<text x="116" y="177" font-size="12.5" fill="#6b7280">패치 6종, key 목록, 실제 DOM ↔ 가상 노드</text>
+<text x="116" y="196" font-size="12.5" fill="#6b7280">검증 페이지: Patch · 뒤로 · 앞으로</text>
+<circle cx="420" cy="148" r="11" fill="#eef3ff"/><path d="M415,148 l4,4 l7,-8" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="46" y="226" width="400" height="90" rx="14" fill="#ffffff" stroke="#e5e9f2" filter="url(#sh2)"/>
+<rect x="64" y="244" width="36" height="36" rx="8" fill="url(#gNavy)"/><text x="82" y="268" font-size="15" font-weight="800" text-anchor="middle" fill="#ffffff">02</text>
+<text x="116" y="259" font-size="15" font-weight="800" fill="#111827">Phase 2 · Component · Hooks</text>
+<text x="116" y="281" font-size="12.5" fill="#6b7280">FunctionComponent, useState · useEffect · useMemo</text>
+<text x="116" y="300" font-size="12.5" fill="#6b7280">루트만 상태, 자식은 순수 함수</text>
+<circle cx="420" cy="252" r="11" fill="#eef3ff"/><path d="M415,252 l4,4 l7,-8" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="46" y="330" width="400" height="90" rx="14" fill="#ffffff" stroke="#e5e9f2" filter="url(#sh2)"/>
+<rect x="64" y="348" width="36" height="36" rx="8" fill="url(#gNavy)"/><text x="82" y="372" font-size="15" font-weight="800" text-anchor="middle" fill="#ffffff">03</text>
+<text x="116" y="363" font-size="15" font-weight="800" fill="#111827">연결 · 정확성</text>
+<text x="116" y="385" font-size="12.5" fill="#6b7280">setState → diff → patch 하나의 파이프라인</text>
+<text x="116" y="404" font-size="12.5" fill="#6b7280">브라우저 대조 fuzz로 폼 버그 4개 수정</text>
+<circle cx="420" cy="356" r="11" fill="#eef3ff"/><path d="M415,356 l4,4 l7,-8" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="474" y="122" width="440" height="298" rx="14" fill="#ffffff" stroke="#e5e9f2" filter="url(#sh2)"/>
+<text x="498" y="152" font-size="15" font-weight="800" fill="#111827">병합마다 늘어난 테스트</text>
+<text x="498" y="172" font-size="12" fill="#6b7280">모든 병합은 check.sh 통과가 조건</text>
+<line x1="514" y1="380" x2="874" y2="380" stroke="#e5e9f2" stroke-dasharray=""/><text x="506" y="384" font-size="10.5" text-anchor="end" fill="#6b7280">200</text>
+<line x1="514" y1="295" x2="874" y2="295" stroke="#e5e9f2" stroke-dasharray="3 4"/><text x="506" y="299" font-size="10.5" text-anchor="end" fill="#6b7280">300</text>
+<line x1="514" y1="210" x2="874" y2="210" stroke="#e5e9f2" stroke-dasharray="3 4"/><text x="506" y="214" font-size="10.5" text-anchor="end" fill="#6b7280">400</text>
+<path d="M514,348.55 L550,342.6 L586,322.2 L622,312.85 L658,303.5 L694,294.15 L730,278 L766,261.85 L802,251.65 L838,248.25 L874,216.8 L874,380 L514,380 Z" fill="url(#gA)"/>
+<path d="M514,348.55 L550,342.6 L586,322.2 L622,312.85 L658,303.5 L694,294.15 L730,278 L766,261.85 L802,251.65 L838,248.25 L874,216.8" fill="none" stroke="#1d4ed8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="514" cy="348.55" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<text x="514" y="402" font-size="10.5" text-anchor="middle" fill="#6b7280">시작</text>
+<circle cx="550" cy="342.6" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<circle cx="586" cy="322.2" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<text x="586" y="402" font-size="10.5" text-anchor="middle" fill="#6b7280">벤치</text>
+<circle cx="622" cy="312.85" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<circle cx="658" cy="303.5" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<text x="658" y="402" font-size="10.5" text-anchor="middle" fill="#6b7280">핸들러</text>
+<circle cx="694" cy="294.15" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<text x="694" y="402" font-size="10.5" text-anchor="middle" fill="#6b7280">fuzz</text>
+<circle cx="730" cy="278" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<circle cx="766" cy="261.85" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<text x="766" y="402" font-size="10.5" text-anchor="middle" fill="#6b7280">B7</text>
+<circle cx="802" cy="251.65" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<text x="802" y="402" font-size="10.5" text-anchor="middle" fill="#6b7280">프리셋</text>
+<circle cx="838" cy="248.25" r="3.5" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<circle cx="874" cy="216.8" r="6" fill="#ffffff" stroke="#1d4ed8" stroke-width="2.4"/>
+<text x="874" y="402" font-size="10.5" text-anchor="middle" fill="#6b7280">LIS</text>
+<rect x="812" y="176.8" width="62" height="26" rx="13" fill="#0b2069"/><text x="843" y="194.8" font-size="13" font-weight="800" text-anchor="middle" fill="#ffffff">392</text>
+<text x="514" y="336.55" font-size="12" font-weight="700" text-anchor="middle" fill="#6b7280">237</text>
+</svg>

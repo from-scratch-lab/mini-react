@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="468" viewBox="0 0 960 468" role="img" aria-label="N과 k에 따른 LIS 대 단방향 합계 시간 비율. N=5000, k=100%에서만 1.04로 LIS가 느림" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif">
+<defs>
+<filter id="sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#1e2a55" flood-opacity="0.10"/></filter>
+<filter id="sh2" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#1e2a55" flood-opacity="0.08"/></filter>
+<linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d4ed8" stop-opacity="0.55"/><stop offset="1" stop-color="#1d4ed8" stop-opacity="0.04"/></linearGradient>
+<linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8db0ff" stop-opacity="0.45"/><stop offset="1" stop-color="#8db0ff" stop-opacity="0.05"/></linearGradient>
+<linearGradient id="gBar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b6ef5"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
+<linearGradient id="gNavy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1c3aa9"/><stop offset="1" stop-color="#0b2069"/></linearGradient>
+</defs>
+<rect x="14" y="10" width="932" height="434" rx="18" fill="#ffffff" stroke="#e5e9f2" filter="url(#sh)"/>
+<rect x="46" y="44" width="5" height="26" rx="2.5" fill="#1d4ed8"/>
+<text x="62" y="65" font-size="25" font-weight="800" fill="#111827" letter-spacing="-0.5">언제 이득인가: 크기 N × 옮긴 비율 k</text>
+<text x="62" y="91" font-size="13.5" fill="#6b7280">LIS 합계 시간 ÷ 단방향 합계 시간 · Chrome 152 · 63회 중앙값 · 1보다 작으면 LIS가 빠름</text>
+<rect x="842.24" y="44" width="71.75999999999999" height="26" rx="13" fill="#0b2069"/>
+<text x="878.12" y="61.5" font-size="12" font-weight="700" text-anchor="middle" fill="#ffffff" letter-spacing="1">PART 2</text>
+<rect x="46" y="116" width="868" height="312" rx="14" fill="#ffffff" stroke="#e5e9f2" filter="url(#sh2)"/>
+<text x="265.25" y="154" font-size="13" font-weight="800" text-anchor="middle" fill="#6b7280">25% 이동</text>
+<text x="443.75" y="154" font-size="13" font-weight="800" text-anchor="middle" fill="#6b7280">50% 이동</text>
+<text x="622.25" y="154" font-size="13" font-weight="800" text-anchor="middle" fill="#6b7280">75% 이동</text>
+<text x="800.75" y="154" font-size="13" font-weight="800" text-anchor="middle" fill="#6b7280">100% 이동</text>
+<text x="72" y="211" font-size="14" font-weight="800" fill="#111827">N = 100</text>
+<rect x="180" y="172" width="170.5" height="68" rx="12" fill="#1d4ed8"/>
+<text x="265.25" y="209" font-size="23" font-weight="800" text-anchor="middle" fill="#ffffff">0.75×</text>
+<text x="265.25" y="228" font-size="11" text-anchor="middle" fill="#ffffff" fill-opacity="0.8">0.15 / 0.20 ms · 구간 겹침</text>
+<rect x="358.5" y="172" width="170.5" height="68" rx="12" fill="#3b6ef5"/>
+<text x="443.75" y="209" font-size="23" font-weight="800" text-anchor="middle" fill="#ffffff">0.80×</text>
+<text x="443.75" y="228" font-size="11" text-anchor="middle" fill="#ffffff" fill-opacity="0.8">0.20 / 0.24 ms · 구간 겹침</text>
+<rect x="537" y="172" width="170.5" height="68" rx="12" fill="#8db0ff"/>
+<text x="622.25" y="209" font-size="23" font-weight="800" text-anchor="middle" fill="#0b2069">0.92×</text>
+<text x="622.25" y="228" font-size="11" text-anchor="middle" fill="#0b2069" fill-opacity="0.8">0.17 / 0.18 ms · 구간 겹침</text>
+<rect x="715.5" y="172" width="170.5" height="68" rx="12" fill="#c9d7fb"/>
+<text x="800.75" y="209" font-size="23" font-weight="800" text-anchor="middle" fill="#0b2069">0.97×</text>
+<text x="800.75" y="228" font-size="11" text-anchor="middle" fill="#0b2069" fill-opacity="0.8">0.18 / 0.18 ms · 구간 겹침</text>
+<text x="72" y="287" font-size="14" font-weight="800" fill="#111827">N = 1,000</text>
+<rect x="180" y="248" width="170.5" height="68" rx="12" fill="#1d4ed8"/>
+<text x="265.25" y="285" font-size="23" font-weight="800" text-anchor="middle" fill="#ffffff">0.71×</text>
+<text x="265.25" y="304" font-size="11" text-anchor="middle" fill="#ffffff" fill-opacity="0.8">1.18 / 1.66 ms</text>
+<rect x="358.5" y="248" width="170.5" height="68" rx="12" fill="#1d4ed8"/>
+<text x="443.75" y="285" font-size="23" font-weight="800" text-anchor="middle" fill="#ffffff">0.74×</text>
+<text x="443.75" y="304" font-size="11" text-anchor="middle" fill="#ffffff" fill-opacity="0.8">1.54 / 2.08 ms · 구간 겹침</text>
+<rect x="537" y="248" width="170.5" height="68" rx="12" fill="#8db0ff"/>
+<text x="622.25" y="285" font-size="23" font-weight="800" text-anchor="middle" fill="#0b2069">0.91×</text>
+<text x="622.25" y="304" font-size="11" text-anchor="middle" fill="#0b2069" fill-opacity="0.8">1.71 / 1.88 ms · 구간 겹침</text>
+<rect x="715.5" y="248" width="170.5" height="68" rx="12" fill="#8db0ff"/>
+<text x="800.75" y="285" font-size="23" font-weight="800" text-anchor="middle" fill="#0b2069">0.93×</text>
+<text x="800.75" y="304" font-size="11" text-anchor="middle" fill="#0b2069" fill-opacity="0.8">1.99 / 2.14 ms · 구간 겹침</text>
+<text x="72" y="363" font-size="14" font-weight="800" fill="#111827">N = 5,000</text>
+<rect x="180" y="324" width="170.5" height="68" rx="12" fill="#1d4ed8"/>
+<text x="265.25" y="361" font-size="23" font-weight="800" text-anchor="middle" fill="#ffffff">0.67×</text>
+<text x="265.25" y="380" font-size="11" text-anchor="middle" fill="#ffffff" fill-opacity="0.8">6.50 / 9.72 ms</text>
+<rect x="358.5" y="324" width="170.5" height="68" rx="12" fill="#3b6ef5"/>
+<text x="443.75" y="361" font-size="23" font-weight="800" text-anchor="middle" fill="#ffffff">0.80×</text>
+<text x="443.75" y="380" font-size="11" text-anchor="middle" fill="#ffffff" fill-opacity="0.8">7.97 / 10.02 ms · 구간 겹침</text>
+<rect x="537" y="324" width="170.5" height="68" rx="12" fill="#8db0ff"/>
+<text x="622.25" y="361" font-size="23" font-weight="800" text-anchor="middle" fill="#0b2069">0.90×</text>
+<text x="622.25" y="380" font-size="11" text-anchor="middle" fill="#0b2069" fill-opacity="0.8">9.38 / 10.40 ms · 구간 겹침</text>
+<rect x="715.5" y="324" width="170.5" height="68" rx="12" fill="#f1f2f6"/>
+<text x="800.75" y="361" font-size="23" font-weight="800" text-anchor="middle" fill="#6b7280">1.04×</text>
+<text x="800.75" y="380" font-size="11" text-anchor="middle" fill="#6b7280" fill-opacity="0.8">10.97 / 10.58 ms · 구간 겹침</text>
+<text x="72" y="418" font-size="12" fill="#6b7280">진할수록 LIS가 빠름 · 회색 = LIS가 느렸던 칸(중앙값) · "구간 겹침" = 두 방식의 Q1~Q3가 겹쳐 차이를 단정할 수 없는 칸</text>
+</svg>
