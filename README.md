@@ -4,7 +4,7 @@
 
 ![Vanilla JS](https://img.shields.io/badge/Vanilla-JS-f7df1e?logo=javascript&logoColor=000)
 ![runtime deps](https://img.shields.io/badge/runtime%20dependencies-0-087ea4)
-![tests](https://img.shields.io/badge/tests-272%20passing-2b6e62)
+![tests](https://img.shields.io/badge/tests-355%20passing-2b6e62)
 ![Node](https://img.shields.io/badge/node-%5E20.19%20%7C%7C%20%3E%3D22.12-404756)
 
 **특화 방향: "하지 않아도 될 일을 하지 않는 미니 React — 그리고 그것이 맞다는 증명"**
@@ -15,12 +15,14 @@
 
 ## 목차
 1. [한눈에 보기](#한눈에-보기)
-2. [구조](#구조)
-3. [데모 실행](#데모-실행)
-4. [고도화 진행 상황](#고도화-진행-상황)
-5. [벤치마크 하이라이트](#벤치마크-하이라이트)
-6. [개발 환경](#개발-환경)
-7. [문서](#문서)
+2. [고도화 결과 요약](#고도화-결과-요약)
+3. [구조](#구조)
+4. [데모 실행](#데모-실행)
+5. [고도화 진행 상황](#고도화-진행-상황)
+6. [벤치마크 하이라이트](#벤치마크-하이라이트)
+7. [실제 React와의 차이 · 한계](#실제-react와의-차이--한계)
+8. [개발 환경](#개발-환경)
+9. [문서](#문서)
 
 ## 한눈에 보기
 
@@ -30,6 +32,21 @@
 | **Phase 2** Component · Hooks | `FunctionComponent`(hooks 배열 · `mount()` · `update()`), `useState`·`useEffect`·`useMemo`, 마이크로태스크 배칭, 무한 갱신 방지, effect 정리 순서 보장 |
 | **연결** | `setState` → 새 가상 트리 → Phase 1의 `diff` → `patch` 하나의 파이프라인 |
 | **검증** | 단위·기능 테스트 355개, 브라우저 파서를 정답으로 삼는 차등 fuzz(`npm run fuzz`), CI 성능 예산 |
+
+## 고도화 결과 요약
+
+1,000행 표, 매번 같은 값이 나오는 지표(Node 22 + jsdom). 시간은 참고값이며 [docs/benchmarks.md](docs/benchmarks.md)에 측정 방법과 함께 있다.
+
+| 시나리오 | 지표 | 시작(dev 5cbca8b) | 지금 | 바꾼 것 |
+|---|---|---:|---:|---|
+| 같은 데이터 다시 렌더 | 패치 수 | 2,000 | **0** | 핸들러 상자 |
+| 10행마다 텍스트 갱신 | 패치 수 / DOM 변경 | 2,100 / 100 | **100 / 100** | 핸들러 상자 |
+| 빈 표에 1,000행 생성 | DOM 변경 기록 | 1,000 | **1** | 일괄 삽입 |
+| 1,000행 전체 지우기 | DOM 변경 기록 | 1,000 | **1** | 일괄 삽입 |
+| 같은 데이터 다시 렌더 | diff 시간 (jsdom, 같은 기계) | 14.3ms | **8.4ms** | 핸들러 상자 + 자식 비교 빠른 경로 |
+| 두 행 swap | 옮긴 노드 수 | 2 | 2 (최소) | 처음부터 LIS. React식 규칙이면 997 |
+
+정확성: 브라우저 파서와 대조하는 차등 fuzz가 폼 상태 버그 넷(**B1·B2·B6·B7**)을 찾았고 모두 고쳤다. 고친 뒤 긴 실행 5개 시드(각 4,000 patch) 불일치 0.
 
 ## 구조
 
@@ -49,9 +66,9 @@ src/
 ├─ vdom/   createElement · vnode · domToVNode(실제 DOM → 가상 노드) · serialize · render
 ├─ diff/   diff(비교) · lis(최장 증가 부분 수열) · patch(실제 DOM 반영)
 └─ hooks/  component(FunctionComponent) · hooks(useState·useEffect·useMemo)
-demo/      phase1 · phase2 · integrated(종합) · shared
-scripts/   serve.js(정적 서버) · bench/(벤치마크)
-docs/      요구사항 체크리스트 · 제안서 · ADR · 벤치마크
+demo/      phase1 · phase2 · integrated(종합) · bench(브라우저 벤치마크) · shared
+scripts/   serve.js(정적 서버) · bench/(벤치마크 시나리오) · fuzz.js(차등 fuzz 긴 실행)
+docs/      요구사항 체크리스트 · 제안서 · ADR · 벤치마크 · 실제 React와의 차이
 ```
 
 ## 데모 실행
@@ -63,11 +80,12 @@ npm run serve   # → http://127.0.0.1:5173/demo/
 
 | 페이지 | 무엇을 볼 수 있나 |
 |---|---|
-| **Phase 1** `demo/phase1/` | 실제 영역과 테스트 영역. 테스트 영역 HTML을 고치고 **Patch**를 누르면 바뀐 곳만 실제 영역에 반영되고, **뒤로가기·앞으로가기**로 State History를 오간다 |
+| **Phase 1** `demo/phase1/` | 실제 영역과 테스트 영역. 테스트 영역 HTML을 고치고 **Patch**를 누르면 바뀐 곳만 실제 영역에 반영되고, **뒤로가기·앞으로가기**로 State History를 오간다. 프리셋 5종(표·폼·선택 상자·중첩 목록·key 재정렬)을 단계별로 눌러 패치 종류를 확인할 수 있다 |
 | **Phase 2** `demo/phase2/` | 훅으로 만든 학습 트래커. 렌더마다 패치 목록과 `hooks` 배열을 옆 패널에 보여 준다 |
 | **종합** `demo/integrated/` | 모니터(렌더 파이프라인) + 키보드(백로그 앱) 배치. 앱을 조작하면 ① setState → ② 새 가상 트리 → ③ diff 패치 → ④ 실제 DOM 변경(MutationObserver)을 단계별로 보여 주고, 동작마다 개념 카드(LIS·key·배칭 등)와 React 방식과의 이동 횟수 비교가 뜬다. 뒤로가기·앞으로가기·초기화 지원 |
+| **벤치마크** `demo/bench/` | `npm run bench`와 같은 14개 시나리오를 이 브라우저에서 실행. 패치·DOM 변경 수와 diff·patch·**레이아웃(Reflow)** 시간 |
 
-`npm run serve`는 이 컴퓨터(127.0.0.1)에서만 열리고 `demo/`·`src/`만 내보낸다.
+`npm run serve`는 이 컴퓨터(127.0.0.1)에서만 열리고 `demo/`·`src/`·`scripts/bench/`만 내보낸다.
 
 ## 고도화 진행 상황
 
@@ -95,7 +113,7 @@ npm run serve   # → http://127.0.0.1:5173/demo/
 | 7 | Phase 1 프리셋(표·폼·선택 상자·중첩 목록·key 재정렬, 단계별 예상 패치) · 브라우저 벤치마크 페이지(레이아웃 시간 포함) | ✅ |
 | 8 | 실제 React와의 차이 문서 ([docs/react-differences.md](docs/react-differences.md)) | ✅ |
 | 9 | 조건부 최적화(memo·VNode 클래스·collectNodes 제거·drift 감지): 측정 결과 이득이 작아 **하지 않기로 결정** ([ADR 0002](docs/decisions/0002-conditional-items.md)) | ✅ |
-| 10 | 포트폴리오 정리 | 🔄 |
+| 10 | 포트폴리오 정리 (README · 결과 요약 · 한계) | ✅ |
 
 ✅ 완료 · 🔄 진행 중 · ⏳ 예정
 
@@ -127,6 +145,16 @@ npm run bench -- --rows 10000 --runs 1 --warmup 0   # 10k
 npm run bench -- --only swap                        # 시나리오 하나
 ```
 
+## 실제 React와의 차이 · 한계
+
+자세한 비교표는 [docs/react-differences.md](docs/react-differences.md).
+
+- **같은 생각**: 렌더(새 가상 트리 + diff, DOM을 건드리지 않음)와 커밋(patch, DOM 반영)을 나눈다. key로 목록을 비교한다. 훅은 호출 순서로 자기 칸을 찾는다.
+- **다르게 한 것**: 목록 재정렬은 React의 `lastPlacedIndex` 대신 LIS(Vue 3 방식). 이벤트는 위임 대신 요소마다 리스너 + 핸들러 상자. `useEffect`는 patch 직후 동기 실행.
+- **없는 것**: Fiber·Concurrent 렌더링, 자식 컴포넌트 상태(과제 조건: 훅은 루트만), `memo`·Context·Ref·Error Boundary.
+- **주장하지 않는 것**: "React보다 빠르다". 실제 React를 같은 조건에서 잰 적이 없다. 이동 수 비교의 React 쪽은 규칙대로 센 값이다.
+- **알려진 한계**: 핸들러 상자·일괄 삽입의 시간 이득은 측정 흔들림 안이거나 브라우저에서 작다(이득은 DOM 변경 수). value·selected가 없는 단일 선택 select의 맨 앞에 option을 넣으면 이전 자동 선택이 남는다(React와 같다). 잘못 중첩된 HTML(`<p><div>`)은 Phase 1 왕복에서 원래대로 돌아오지 않는다(HTML 파서의 규칙).
+
 ## 개발 환경
 - Node `^20.19.0 || >=22.12.0` (CI는 Node 20)
 - 설치: `npm ci` / 테스트: `npm test` / 전체 검사: `bash .claude/check.sh`
@@ -137,6 +165,8 @@ npm run bench -- --only swap                        # 시나리오 하나
 ## 문서
 - [요구사항 체크리스트](docs/requirements-checklist.md) — 과제 조건별 충족 여부와 증거(파일:줄, 테스트 이름)
 - [ADR 0001 고도화 계획](docs/decisions/0001-plan.md) — 특화 분야, 개선 목록, 성능 예산, 버린 안과 이유
-- [벤치마크](docs/benchmarks.md) — 지표 정의, 기준선 표, 읽은 것
+- [ADR 0002 조건부 항목](docs/decisions/0002-conditional-items.md) — 측정해 보고 하지 않기로 한 최적화와 이유
+- [벤치마크](docs/benchmarks.md) — 지표 정의, 기준선 표, 개선 기록, 브라우저 결과
+- [핸들러 상자](docs/perf/handler-box.md) · [일괄 삽입](docs/perf/batch-insert.md) — 설계와 측정
 - [실제 React와의 차이](docs/react-differences.md) — 같은 점·다른 점·없는 것, 숫자로 말할 수 있는 것과 없는 것
 - [총괄 제안서](docs/proposals/mr-lead.md)

@@ -1,6 +1,6 @@
 # 과제 요구사항 체크리스트
 
-기준: `dev` feat/bench-page 병합 후 (테스트 355개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
+기준: `dev` 고도화 완료 후 (테스트 355개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
 상태: ✅ 충족 · 🟨 부분 · ❌ 미충족. 증거는 `파일:줄`, 테스트 이름(따옴표), 데모 위치.
 
 ## Phase 1. Virtual DOM + Diff + Patch
@@ -55,8 +55,8 @@
 | 5.1 | 모듈별 단위 테스트 (VDOM 변환, Diff, Patch, useState, useEffect, useMemo) | ✅ | tests/vdom, tests/diff, tests/hooks |
 | 5.2 | 화면 동작 기능 테스트 | ✅ | tests/demo/ 5파일 |
 | 5.3 | 엣지 케이스 | ✅ | 고도화 중 고친 것: B1 다중 select 선택·B2 type 변경 시 value 잔존(`fix/dx-form-prop-order`), B3 주석으로 갈린 텍스트(`fix/dx-adjacent-text`) · 중복 key, vnode 재사용, select/option 순서, 폼 상태, SVG, patch 실패 복구, effect 실패, 무한 렌더 감지, fuzz("어떤 이전 트리에서 patch해도 결과 DOM은 새로 그린 다음 트리와 같다") |
-| 5.4 | 포트폴리오 수준 완성도 | 🟨 | README에 특화 방향·구조도·로드맵·벤치마크 하이라이트 있음(9d9ea8c). 실제 React와의 차이 표와 최종 정리는 아직 |
-| 5.5 | 다른 팀과의 차별점 | 🟨 | `npm run bench`(14 시나리오), tests/bench/budget.test.js(CI 성능 예산), React lastPlacedIndex와 이동 수 비교(swap 2 vs 997), docs/benchmarks.md. 핸들러 상자로 같은 데이터 다시 렌더 패치 2000 → 0(docs/perf/handler-box.md). 일괄 삽입·자식 빠른 경로와 차등 fuzz는 진행 중 |
+| 5.4 | 포트폴리오 수준 완성도 | ✅ | README: 특화 방향, 결과 요약(전→후), 구조도, 데모 4종, 로드맵, 벤치마크, 실제 React와의 차이·한계, 문서 목록 · `docs/final-report.md` |
+| 5.5 | 다른 팀과의 차별점 | ✅ | `npm run bench`(14 시나리오), tests/bench/budget.test.js(CI 성능 예산), React lastPlacedIndex와 이동 수 비교(swap 2 vs 997), docs/benchmarks.md. 핸들러 상자로 같은 데이터 다시 렌더 패치 2000 → 0(docs/perf/handler-box.md). 일괄 삽입으로 DOM 변경 기록 1000 → 1, 자식 빠른 경로로 같은 데이터 diff 14.3 → 8.4ms(jsdom), 브라우저 벤치 페이지 `demo/bench/`, 차등 fuzz `tests/diff/differential.test.js` |
 
 ## 중점 포인트 (문서·데모로 설명되어 있는가)
 
@@ -86,4 +86,4 @@
 | ✅ | 6.1·6.2·6.7·6.8 설명 보강 (`feat/dx-concepts`) | mr-dx |
 | ✅ | 1.11 phase1 프리셋 시나리오 (`feat/phase1-presets`) | mr-dx → mr-lead |
 | ✅ | 6.11 실제 React와의 차이 표 (`docs/react-differences.md`) | mr-lead |
-| P3 | 5.4 README 포트폴리오 정리 | mr-lead (마지막) |
+| ✅ | 5.4 README 포트폴리오 정리 | mr-lead |
