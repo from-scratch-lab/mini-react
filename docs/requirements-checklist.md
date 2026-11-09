@@ -1,6 +1,6 @@
 # 과제 요구사항 체크리스트
 
-기준: `dev` feat/children-fastpath 병합 후 (테스트 344개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
+기준: `dev` feat/phase1-presets 병합 후 (테스트 351개 통과, 2026-11-09). 처음 작성은 6853949(237개). 총괄 세션(mr-lead)이 병합 때마다 갱신한다.
 상태: ✅ 충족 · 🟨 부분 · ❌ 미충족. 증거는 `파일:줄`, 테스트 이름(따옴표), 데모 위치.
 
 ## Phase 1. Virtual DOM + Diff + Patch
@@ -17,7 +17,7 @@
 | 1.8 | 테스트 영역 HTML을 자유롭게 수정 | ✅ | textarea 편집 · `demo/phase1/app.js:110` |
 | 1.9 | Patch: 테스트 영역 → 새 VDOM → diff → 바뀐 곳만 실제 영역 → History 저장 | ✅ | `demo/phase1/app.js:78-86` · "Patch를 누르면 바뀐 부분만 실제 영역에 반영하고 기록에 저장한다" |
 | 1.10 | 뒤로·앞으로 이동 시 실제·테스트 영역 함께 변경 | ✅ | `demo/phase1/app.js:89-98`, `history.js` · "뒤로가기·앞으로가기를 누르면 실제 영역과 테스트 영역이 함께 바뀐다", tests/demo/history.test.js |
-| 1.11 | 다양한 태그·요소로 여러 변화를 확인 | 🟨 | 샘플은 h1·p·b·i·ul/li(key)·checkbox·svg (`demo/phase1/index.html:29-41`). table·select/option·form·중첩 목록 등 프리셋 시나리오는 없음 |
+| 1.11 | 다양한 태그·요소로 여러 변화를 확인 | ✅ | 샘플 h1·p·b·i·ul/li(key)·checkbox·svg + 프리셋 시나리오 5종(표·폼·선택 상자·중첩 목록·key 재정렬, `demo/phase1/presets.js`) · tests/demo/phase1.test.js "각 단계 버튼에 적힌 예상 패치 종류가 실제로 나온 패치 종류와 같다" |
 
 ## Phase 2. Component · State · Hooks
 
@@ -84,6 +84,6 @@
 | ✅ | 5.3 B6(빈 select에 option 생성 시 마지막 선택) 수정 (`feat/batch-insert`) | mr-perf → mr-lead |
 | ✅ | 5.3 B7(단일 선택 select·같은 name radio 그룹) 수정 (`fix/form-groups`, fuzz 시드 1·3 불일치 0) | mr-dx → mr-lead |
 | ✅ | 6.1·6.2·6.7·6.8 설명 보강 (`feat/dx-concepts`) | mr-dx |
-| P2 | 1.11 phase1 프리셋 시나리오(table·form·select·중첩 목록·key 재정렬) | mr-dx |
+| ✅ | 1.11 phase1 프리셋 시나리오 (`feat/phase1-presets`) | mr-dx → mr-lead |
 | P2 | 6.11 실제 React와의 차이 표 | mr-dx 초안 → mr-lead가 README에 반영 |
 | P3 | 5.4 README 포트폴리오 정리 | mr-lead (마지막) |

@@ -29,7 +29,7 @@
 | **Phase 1** Virtual DOM · Diff · Patch | 실제 DOM ↔ 가상 노드 변환, 패치 6종(CREATE·REMOVE·REPLACE·PROPS·TEXT·MOVE), key 목록의 **LIS 기반 최소 이동**, patch 실패 시 이전 화면 복구 |
 | **Phase 2** Component · Hooks | `FunctionComponent`(hooks 배열 · `mount()` · `update()`), `useState`·`useEffect`·`useMemo`, 마이크로태스크 배칭, 무한 갱신 방지, effect 정리 순서 보장 |
 | **연결** | `setState` → 새 가상 트리 → Phase 1의 `diff` → `patch` 하나의 파이프라인 |
-| **검증** | 단위·기능 테스트 344개, 브라우저 파서를 정답으로 삼는 차등 fuzz(`npm run fuzz`), CI 성능 예산 |
+| **검증** | 단위·기능 테스트 351개, 브라우저 파서를 정답으로 삼는 차등 fuzz(`npm run fuzz`), CI 성능 예산 |
 
 ## 구조
 
@@ -92,7 +92,7 @@ npm run serve   # → http://127.0.0.1:5173/demo/
 | 4 | **핸들러 상자**: 렌더마다 새 핸들러여도 패치를 만들지 않음 (같은 데이터 다시 렌더 패치 2,000 → 0) | ✅ |
 | 5 | 연속 생성·전체 삭제를 한 번에 (DOM 변경 기록 1,000 → 1) · **B6** 빈 select 선택 수정 | ✅ |
 | 6 | 자식 비교 빠른 경로 (같은 데이터 diff 11.3 → 8.4ms, 패치 목록은 그대로) | ✅ |
-| 7 | Phase 1 프리셋(table·form·SVG 등) · 브라우저 벤치마크 페이지 | ⏳ |
+| 7 | Phase 1 프리셋(표·폼·선택 상자·중첩 목록·key 재정렬, 단계별 예상 패치) ✅ · 브라우저 벤치마크 페이지 🔄 | 🔄 |
 | 8~10 | 실제 React와의 차이 문서 · 조건부 최적화(memo 등) · 포트폴리오 정리 | ⏳ |
 
 ✅ 완료 · 🔄 진행 중 · ⏳ 예정
