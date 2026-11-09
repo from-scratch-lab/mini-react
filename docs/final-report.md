@@ -19,7 +19,7 @@
 | 7 | `feat/phase1-presets`, `feat/bench-page` | Phase 1 프리셋 5종, 브라우저 벤치마크 페이지(레이아웃 시간 포함) |
 | 8 | `docs/react-differences` | 실제 React와의 차이 비교표 |
 | 9 | `docs/adr-0002` | 조건부 최적화는 측정 근거가 약해 하지 않음 |
-| 10 | `docs/readme-portfolio` | README 포트폴리오 정리 |
+| 10 | `docs/readme-portfolio`, `docs/readme-visuals` | README 포트폴리오 정리, 그래프 6종(`scripts/readme-charts.js` → `docs/images/`) |
 
 ## 검사 결과
 
