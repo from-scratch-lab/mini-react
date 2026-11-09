@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { createElement as h, diff, patch, PatchType } from '../../src/index.js';
+import { createElement as h, diff, patch, PatchType, childrenToHTML } from '../../src/index.js';
 import { measureMutations } from '../../scripts/lib/mutations.js';
 import { runDifferential } from '../support/differential.js';
 
@@ -32,12 +32,65 @@ describe('차등 fuzz: 브라우저 파서가 정답지', () => {
     expect(report.reused).toBeGreaterThan(100); // 재사용이 실제로 일어났는지
   });
 
-  it('하네스가 진짜 버그를 잡는다: patch가 TEXT 패치를 빠뜨리면 dom 불일치로 보고한다', () => {
-    const broken = (container, patches) => patch(container, patches.filter((p) => p.type !== PatchType.TEXT));
+});
+
+// 항상 통과하는 검사가 아닌지: 검사 종류마다 버그를 일부러 넣고 그 종류로 보고하는지 본다.
+describe('차등 fuzz 하네스 자체 검사', () => {
+  const firstKind = (options) => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const report = runDifferential({ seed: 7, rounds: 20, steps: 4, patchImpl: broken });
-    expect(report.mismatches.some((m) => m.kind === 'dom')).toBe(true);
-    expect(String(report.mismatches[0])).toMatch(/seed 7 · round \d+ · step \d+ · dom/);
+    const report = runDifferential({ seed: 7, rounds: 40, steps: 4, maxMismatches: 1, ...options });
+    expect(report.mismatches, '버그를 넣었는데 불일치가 없다').toHaveLength(1);
+    return report.mismatches[0];
+  };
+
+  it('dom: TEXT 패치를 빠뜨리면 잡고, 최소 재현을 함께 보고한다', () => {
+    const m = firstKind({ patchImpl: (c, ps) => patch(c, ps.filter((p) => p.type !== PatchType.TEXT)) });
+    expect(m.kind).toBe('dom');
+    expect(String(m)).toMatch(/seed 7 · round \d+ · step \d+ · dom/);
+    expect(m.minimal, '두 단계로 다시 만들 수 있는 실패다').not.toBeNull();
+    expect(m.minimal.previous.length + m.minimal.html.length).toBeLessThanOrEqual(m.previous.length + m.html.length);
+    expect(String(m)).toContain('최소 재현');
+  });
+
+  it('dom: patch 결과에 남은 줄바꿈 공백 텍스트도 잡는다 (patch 쪽은 걷어 내지 않고 비교)', () => {
+    const m = firstKind({
+      patchImpl: (c, ps) => {
+        const result = patch(c, ps);
+        c.appendChild(c.ownerDocument.createTextNode('\n  '));
+        return result;
+      },
+    });
+    expect(m.kind).toBe('dom');
+  });
+
+  it('live: 속성은 그대로 두고 체크 상태(프로퍼티)만 틀리면 잡는다', () => {
+    const m = firstKind({
+      patchImpl: (c, ps) => {
+        const result = patch(c, ps);
+        const box = c.querySelector('input[type="checkbox"]');
+        if (box) box.checked = !box.checked;
+        return result;
+      },
+    });
+    expect(m.kind).toBe('live');
+  });
+
+  it('refs: 가상 노드의 dom 참조가 끊기면 잡는다', () => {
+    const m = firstKind({
+      patchImpl: (c, ps) => {
+        const result = patch(c, ps);
+        const text = ps.find((p) => p.type === PatchType.TEXT);
+        if (text) text.vnode.dom = null;
+        return result;
+      },
+    });
+    expect(m.kind).toBe('refs');
+    expect(m.got).toContain('dom이 없음');
+  });
+
+  it('idempotent: 테스트 영역에 보여 줄 코드가 그린 트리와 다르면 잡는다', () => {
+    const m = firstKind({ serialize: (children) => childrenToHTML(children.slice(0, -1)) });
+    expect(m.kind).toBe('idempotent');
   });
 });
 

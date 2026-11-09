@@ -6,16 +6,29 @@
  * 같은 컨테이너를 여러 단계 이어서 고치므로 "어떤 이전 상태에서 patch해도 맞는가"를 본다.
  *
  * 불일치 종류
- *   dom         속성·자식 구조 (domToVNode 규칙대로 주석·줄바꿈 공백은 걷어 내고 비교)
+ *   dom         속성·자식 구조. 정답지는 domToVNode 규칙대로 주석·줄바꿈 공백을 걷어 내고 붙은 텍스트를 합친다.
+ *               patch 결과는 걷어 내지 않고 그대로 비교한다(남은 공백 텍스트, 둘로 쪼개진 텍스트도 잡는다).
  *   live        폼 프로퍼티: input value/checked, select selectedIndex, option selected, textarea value, details open
- *   idempotent  테스트 영역에 보여 줄 코드(childrenToHTML)를 다시 읽어 diff하면 패치가 0이어야 한다
- *   refs        그린 트리의 모든 가상 노드가 서로 다른, 컨테이너 안의 실제 노드를 가리켜야 한다
+ *   refs        가상 노드와 실제 노드가 하나씩 맞물린다: 모든 가상 노드가 dom을 갖고, 그 dom의 종류·내용이 같고,
+ *               부모가 부모 가상 노드의 dom이고, 컨테이너 안 실제 노드 수가 가상 노드 수와 같다
  *               ("이전 트리 노드는 모두 dom을 가진다" — perf의 collectNodes 대체 조건)
+ *   idempotent  테스트 영역에 보여 줄 코드(childrenToHTML)를 다시 읽어 diff하면 패치가 0이어야 한다
  *   throw       diff·patch가 예외를 던짐
+ *
+ * 불일치가 나면 그 단계를 "빈 컨테이너 → 이전 단계 HTML → 이번 HTML" 두 번의 patch로 다시 만들어 보고,
+ * 같은 종류로 실패하는 동안 맨 위 단계 노드를 하나씩 빼서 최소 재현(minimal)을 함께 보고한다.
  *
  * 브라우저 환경(전역 document)이 필요하다: vitest(jsdom) 또는 scripts/fuzz.js.
  */
-import { htmlToVNodes, diff, patch as realPatch, createVNode, childrenToHTML, domToVNode } from '../../src/index.js';
+import {
+  htmlToVNodes,
+  diff,
+  patch as realPatch,
+  createVNode,
+  childrenToHTML,
+  domToVNode,
+  TEXT_NODE,
+} from '../../src/index.js';
 import { measureMutations } from '../../scripts/lib/mutations.js';
 
 /** 시드가 고정된 난수. 같은 시드면 같은 입력이 나와 실패를 그대로 재현할 수 있다. */
@@ -72,7 +85,10 @@ export function randomHTML(rand) {
       }
       case 'table':
         return `<table${attrs()}>${pick(['', '<caption>c</caption>'])}<tbody>${many(3, () =>
-          `<tr>${many(3, () => `<${pick(['td', 'th'])}${attrs()}>${node(depth - 1, false)}</td>`)}</tr>`)}</tbody></table>`;
+          `<tr>${many(3, () => {
+            const cell = pick(['td', 'th']);
+            return `<${cell}${attrs()}>${node(depth - 1, false)}</${cell}>`;
+          })}</tr>`)}</tbody></table>`;
       case 'form':
         return `<form>${many(4, () =>
           pick([
@@ -111,20 +127,27 @@ export function randomHTML(rand) {
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const WHITESPACE_SENSITIVE = new Set(['pre', 'textarea', 'listing']);
+// src/vdom/domToVNode.js와 같은 목록
+const WHITESPACE_SENSITIVE = new Set(['pre', 'textarea', 'listing', 'plaintext']);
 
 /**
- * 비교용 문자열. 속성은 정렬하고(순서는 의미 없음), domToVNode가 버리는 것(주석, 줄바꿈이 든 공백 텍스트)은 걷어 낸다.
- * 붙어 있는 텍스트 노드는 하나로 합친다(화면에 보이는 결과가 같다).
+ * 비교용 문자열. 속성은 정렬한다(순서는 의미 없음).
+ * 정답지(strict: false)는 domToVNode가 버리는 것(주석, 줄바꿈이 든 공백 텍스트)을 걷어 내고 붙은 텍스트를 합친다.
+ * patch 결과(strict: true)는 그대로 쓴다. patch가 만든 DOM에는 버릴 것이 없어야 하기 때문이다.
  */
-export function canonical(node, keepSpace = false) {
+export function canonical(node, { strict = false } = {}, keepSpace = false) {
   if (node.nodeType === 3) return JSON.stringify(node.nodeValue);
+  if (node.nodeType !== 1) return `#${node.nodeName}`;
   const attrs = [...node.attributes].map((a) => `${a.name}=${JSON.stringify(a.value)}`).sort().join(' ');
   const space = keepSpace || WHITESPACE_SENSITIVE.has(node.localName);
   const parts = [];
   let text = null;
   const source = node.localName === 'template' && node.content ? node.content : node;
   for (const child of source.childNodes) {
+    if (strict) {
+      parts.push(canonical(child, { strict }, space));
+      continue;
+    }
     if (child.nodeType === 3) {
       if (!space && child.nodeValue.includes('\n') && /^[ \t\n\f\r]*$/.test(child.nodeValue)) continue;
       text = (text ?? '') + child.nodeValue;
@@ -133,7 +156,7 @@ export function canonical(node, keepSpace = false) {
     if (child.nodeType !== 1) continue;
     if (text !== null) parts.push(JSON.stringify(text));
     text = null;
-    parts.push(canonical(child, space));
+    parts.push(canonical(child, { strict }, space));
   }
   if (text !== null) parts.push(JSON.stringify(text));
   const ns = node.namespaceURI === SVG_NS ? 'svg:' : '';
@@ -153,33 +176,46 @@ export function liveState(root) {
   return out.join('\n');
 }
 
-/** 그린 트리의 모든 가상 노드가 서로 다른, container 안의 실제 노드를 가리키는지. 문제가 있으면 설명, 없으면 null */
+/**
+ * 가상 노드와 실제 노드가 하나씩 맞물리는지. 문제가 있으면 설명, 없으면 null.
+ * - 루트 가상 노드는 컨테이너를 가리킨다.
+ * - 모든 가상 노드가 서로 다른 dom을 갖고, dom의 종류(태그 이름, 텍스트면 내용)가 같다.
+ * - dom의 부모가 부모 가상 노드의 dom이다(<template>이면 그 content).
+ * - 컨테이너 안 실제 노드 수(template content 포함)가 가상 노드 수와 같다. 그래서 가상 트리가 모르는 노드가 없다.
+ */
 export function checkDomRefs(root, container) {
-  const seen = new Map();
+  if (root.dom !== container) return '루트 가상 노드가 컨테이너를 가리키지 않음';
   const problems = [];
+  const seen = new Set();
+  let count = 0;
   (function walk(vnode, path) {
-    const dom = vnode.dom;
-    if (dom == null) problems.push(`${path}: dom이 없음`);
-    else if (!isInside(dom, container)) problems.push(`${path}: dom이 컨테이너 밖`);
-    else if (seen.has(dom)) problems.push(`${path}: ${seen.get(dom)}와 같은 dom을 가리킴`);
-    else seen.set(dom, path);
-    vnode.children.forEach((child, i) => walk(child, `${path}/${i}:${child.type}`));
+    const holder = vnode.dom.localName === 'template' && vnode.dom.content ? vnode.dom.content : vnode.dom;
+    vnode.children.forEach((child, i) => {
+      const at = `${path}/${i}:${child.type}`;
+      count += 1;
+      const dom = child.dom;
+      if (dom == null) return problems.push(`${at}: dom이 없음`);
+      if (seen.has(dom)) return problems.push(`${at}: 다른 가상 노드와 같은 dom을 가리킴`);
+      seen.add(dom);
+      if (dom.parentNode !== holder) problems.push(`${at}: dom의 부모가 부모 가상 노드의 dom이 아님`);
+      const sameKind =
+        child.type === TEXT_NODE
+          ? dom.nodeType === 3 && dom.nodeValue === child.props.nodeValue
+          : dom.nodeType === 1 && dom.localName === child.type;
+      if (!sameKind) problems.push(`${at}: dom의 종류·내용이 다름 (${dom.nodeName})`);
+      else if (dom.nodeType === 1) walk(child, at);
+    });
   })(root, root.type);
+  const actual = countNodes(container);
+  if (actual !== count) problems.push(`컨테이너 안 실제 노드 ${actual}개, 가상 노드 ${count}개`);
   return problems.length ? problems.join('\n') : null;
 }
 
-// <template> 안 노드는 content(DocumentFragment)에 있어 contains()로 찾을 수 없다. host를 따라 올라간다.
-function isInside(node, container) {
-  for (let n = node; n; n = n.parentNode ?? n.host) {
-    if (n === container) return true;
-    if (n.nodeType === 11 && !n.host) {
-      const owner = [...container.querySelectorAll('template')].find((t) => t.content === n);
-      if (!owner) return false;
-      n = owner;
-      if (n === container) return true;
-    }
-  }
-  return false;
+function countNodes(node) {
+  const holder = node.localName === 'template' && node.content ? node.content : node;
+  let n = 0;
+  for (const child of holder.childNodes) n += 1 + countNodes(child);
+  return n;
 }
 
 class Mismatch {
@@ -188,9 +224,103 @@ class Mismatch {
   }
 
   toString() {
-    const where = `seed ${this.seed} · round ${this.round} · step ${this.step} · ${this.kind}`;
-    return [where, `이전 단계 HTML: ${JSON.stringify(this.previous)}`, `HTML: ${JSON.stringify(this.html)}`, `기대: ${this.expected}`, `실제: ${this.got}`].join('\n');
+    const lines = [
+      `seed ${this.seed} · round ${this.round} · step ${this.step} · ${this.kind}`,
+      `이전 단계 HTML: ${JSON.stringify(this.previous)}`,
+      `HTML: ${JSON.stringify(this.html)}`,
+    ];
+    if (this.minimal) {
+      lines.push(`최소 재현: 빈 컨테이너 → ${JSON.stringify(this.minimal.previous)} → ${JSON.stringify(this.minimal.html)}`);
+    }
+    lines.push(`기대: ${this.expected}`, `실제: ${this.got}`);
+    return lines.join('\n');
   }
+}
+
+/**
+ * 한 단계: rendered(지금 그려진 트리)에서 children으로 patch하고 정답지(html을 브라우저가 파싱한 것)와 비교한다.
+ * @returns {{ rendered: object, measured?: object, mismatch?: { kind: string, expected: string, got: string } }}
+ */
+function runStep(container, rendered, children, html, { patchImpl, serialize }) {
+  const next = createVNode('div', {}, children, null);
+  const reference = document.createElement('div');
+  reference.innerHTML = html;
+
+  let measured;
+  try {
+    measured = measureMutations(container, () => patchImpl(container, diff(rendered, next)));
+  } catch (error) {
+    return { rendered, mismatch: { kind: 'throw', expected: '예외 없음', got: error.stack } };
+  }
+  const result = { rendered: next, measured };
+
+  const expectedDom = canonical(reference);
+  const gotDom = canonical(container, { strict: true });
+  if (gotDom !== expectedDom) return { ...result, mismatch: { kind: 'dom', expected: expectedDom, got: gotDom } };
+
+  const expectedLive = liveState(reference);
+  const gotLive = liveState(container);
+  if (gotLive !== expectedLive) return { ...result, mismatch: { kind: 'live', expected: expectedLive, got: gotLive } };
+
+  const refs = checkDomRefs(next, container);
+  if (refs) return { ...result, mismatch: { kind: 'refs', expected: '가상 노드와 실제 노드가 하나씩 맞물림', got: refs } };
+
+  // 테스트 영역에 보여 줄 코드를 고치지 않고 다시 Patch하면 아무것도 바뀌지 않아야 한다.
+  const shown = serialize(next.children);
+  const noop = diff(next, createVNode('div', {}, htmlToVNodes(shown, { sanitize: true }), null));
+  if (noop.length > 0) {
+    return {
+      ...result,
+      mismatch: { kind: 'idempotent', expected: '패치 0개', got: `${noop.map((p) => p.type).join(', ')}\n보여 준 코드: ${shown}` },
+    };
+  }
+  return result;
+}
+
+/** 빈 컨테이너에서 previous → html 두 번 patch했을 때 두 번째 단계의 불일치 종류 (첫 단계가 실패하거나 맞으면 null) */
+function reproduce(previous, html, options) {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  try {
+    const empty = domToVNode(container, { attach: true });
+    const first = runStep(container, empty, htmlToVNodes(previous, { sanitize: true }), previous, options);
+    if (first.mismatch) return null;
+    const second = runStep(container, first.rendered, htmlToVNodes(html, { sanitize: true }), html, options);
+    return second.mismatch?.kind ?? null;
+  } finally {
+    container.remove();
+  }
+}
+
+/** 맨 위 단계 노드들의 HTML 조각 (빼 보기 단위) */
+function topLevelParts(html) {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  const box = document.createElement('div');
+  return [...template.content.childNodes].map((node) => {
+    if (node.nodeType === 1) return node.outerHTML;
+    box.textContent = node.nodeType === 3 ? node.nodeValue : '';
+    return box.innerHTML;
+  });
+}
+
+/**
+ * 같은 종류로 실패하는 동안 이전 단계·이번 단계 HTML에서 맨 위 노드를 하나씩 뺀다.
+ * 두 단계만으로 다시 만들 수 없으면(앞의 여러 단계가 쌓인 상태가 필요하면) null.
+ */
+function shrink(previous, html, kind, options) {
+  if (reproduce(previous, html, options) !== kind) return null;
+  let parts = { previous: topLevelParts(previous), html: topLevelParts(html) };
+  const join = (p) => ({ previous: p.previous.join(''), html: p.html.join('') });
+  for (const side of ['previous', 'html']) {
+    for (let i = 0; i < parts[side].length; ) {
+      const candidate = { ...parts, [side]: parts[side].filter((_, j) => j !== i) };
+      const { previous: p, html: h } = join(candidate);
+      if (reproduce(p, h, options) === kind) parts = candidate;
+      else i += 1;
+    }
+  }
+  return join(parts);
 }
 
 /**
@@ -200,73 +330,53 @@ class Mismatch {
  * @param {number} [options.steps=4] 한 컨테이너에서 이어서 patch하는 횟수
  * @param {number} [options.reuse=0] 단계마다 이전 트리의 하위 트리 객체를 다음 트리 맨 위 단계에 다시 넣을 확률 (두 자리에 넣기도 한다)
  * @param {Function} [options.patchImpl] patch 대신 쓸 함수 (하네스 자체를 검사할 때)
+ * @param {Function} [options.serialize] 테스트 영역 코드를 만드는 함수 (기본 childrenToHTML, 하네스 검사용)
  * @param {number} [options.maxMismatches=5] 이만큼 모이면 멈춘다
  */
-export function runDifferential({ seed, rounds = 100, steps = 4, reuse = 0, patchImpl = realPatch, maxMismatches = 5 }) {
+export function runDifferential({
+  seed,
+  rounds = 100,
+  steps = 4,
+  reuse = 0,
+  patchImpl = realPatch,
+  serialize = childrenToHTML,
+  maxMismatches = 5,
+}) {
+  const options = { patchImpl, serialize };
   const rand = mulberry32(seed);
   const report = { seed, steps: 0, reused: 0, mismatches: [], patchesByType: {}, records: 0, nodesAdded: 0, nodesRemoved: 0, created: 0 };
-  const fail = (fields) => report.mismatches.push(new Mismatch({ seed, ...fields }));
 
   for (let round = 0; round < rounds && report.mismatches.length < maxMismatches; round += 1) {
     const container = document.createElement('div');
     document.body.appendChild(container);
     let rendered = domToVNode(container, { attach: true });
-    let previous = "";
+    let previous = '';
     try {
       for (let step = 0; step < steps; step += 1) {
         report.steps += 1;
-        const at = { round, step, previous };
         let html = randomHTML(rand);
         const children = htmlToVNodes(html, { sanitize: true });
         if (reuse > 0 && rand() < reuse) {
           report.reused += reuseSubtrees(rand, rendered, children);
-          html = childrenToHTML(children); // 정답지도 재사용한 트리 그대로
+          // 정답지도 재사용한 트리를 직렬화한 것. 이 단계에서는 htmlToVNodes·직렬화 버그가 정답지에도 들어가므로
+          // 그런 버그는 재사용하지 않는 단계가 잡는다.
+          html = childrenToHTML(children);
         }
-        const next = createVNode('div', {}, children, null);
-
-        const reference = document.createElement('div');
-        reference.innerHTML = html;
-
-        let measured;
-        try {
-          measured = measureMutations(container, () => patchImpl(container, diff(rendered, next)));
-        } catch (error) {
-          fail({ ...at, kind: 'throw', html, expected: '예외 없음', got: error.stack });
+        const result = runStep(container, rendered, children, html, options);
+        if (result.measured) {
+          for (const p of result.measured.result) report.patchesByType[p.type] = (report.patchesByType[p.type] ?? 0) + 1;
+          report.records += result.measured.records;
+          report.nodesAdded += result.measured.nodesAdded;
+          report.nodesRemoved += result.measured.nodesRemoved;
+          report.created += result.measured.created;
+        }
+        if (result.mismatch) {
+          const minimal = shrink(previous, html, result.mismatch.kind, options);
+          report.mismatches.push(new Mismatch({ seed, round, step, previous, html, minimal, ...result.mismatch }));
           break;
         }
-        rendered = next;
+        rendered = result.rendered;
         previous = html;
-        for (const p of measured.result) report.patchesByType[p.type] = (report.patchesByType[p.type] ?? 0) + 1;
-        report.records += measured.records;
-        report.nodesAdded += measured.nodesAdded;
-        report.nodesRemoved += measured.nodesRemoved;
-        report.created += measured.created;
-
-        const expectedDom = canonical(reference);
-        const gotDom = canonical(container);
-        if (gotDom !== expectedDom) {
-          fail({ ...at, kind: 'dom', html, expected: expectedDom, got: gotDom });
-          break;
-        }
-        const expectedLive = liveState(reference);
-        const gotLive = liveState(container);
-        if (gotLive !== expectedLive) {
-          fail({ ...at, kind: 'live', html, expected: expectedLive, got: gotLive });
-          break;
-        }
-        const refs = checkDomRefs(rendered, container);
-        if (refs) {
-          fail({ ...at, kind: 'refs', html, expected: '모든 가상 노드가 서로 다른 실제 노드를 가리킴', got: refs });
-          break;
-        }
-        // 테스트 영역에 보여 줄 코드를 고치지 않고 다시 Patch하면 아무것도 바뀌지 않아야 한다.
-        const shown = childrenToHTML(rendered.children);
-        const again = createVNode('div', {}, htmlToVNodes(shown, { sanitize: true }), null);
-        const noop = diff(rendered, again);
-        if (noop.length > 0) {
-          fail({ ...at, kind: 'idempotent', html, expected: '패치 0개', got: `${noop.map((p) => p.type).join(', ')}\n보여 준 코드: ${shown}` });
-          break;
-        }
       }
     } finally {
       container.remove();

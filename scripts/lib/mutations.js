@@ -1,6 +1,7 @@
 /**
  * fn을 실행하는 동안 container 아래 실제 DOM이 얼마나 바뀌었는지 동기로 잰다.
- * 차등 fuzz(tests/support/differential.js)와 성능 예산(scripts/bench)이 같은 정의를 쓰도록 한곳에 둔다.
+ * 차등 fuzz(tests/support/differential.js)가 쓴다. 성능 벤치(scripts/bench/scenarios.js)는 지금 같은 정의를 따로 갖고 있고
+ * (붙임+뗌은 합계 하나), 이 모듈로 옮기기로 perf와 합의했다.
  *
  *   records       MutationObserver 기록 수 (DOM이 변경을 알린 횟수)
  *   nodesAdded    기록 안 addedNodes 합 (붙인 하위 트리 뿌리 수. fragment로 한 번에 붙여도 노드 수만큼 센다)

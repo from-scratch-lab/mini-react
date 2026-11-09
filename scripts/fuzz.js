@@ -6,32 +6,40 @@
  *   npm run fuzz -- --seed 99 --rounds 1500       시드 하나 (테스트 실패 메시지의 시드로 재현)
  *   npm run fuzz -- --seeds 10 --reuse 0.5        vnode 재사용 비율을 높여서
  *
- * 불일치가 있으면 시드·라운드·단계·HTML·기대·실제를 출력하고 종료 코드 1로 끝난다.
+ * 불일치가 있으면 시드·라운드·단계·HTML·최소 재현·기대·실제를 출력하고 종료 코드 1로 끝난다.
+ * 알려진 버그(tests/diff/differential.test.js 위 주석의 B6 등)가 남아 있는 동안은 긴 실행에서 불일치가 나올 수 있다.
  */
 import { JSDOM } from 'jsdom';
 
+const NUMBER_OPTIONS = { seed: null, seeds: 5, rounds: 1000, steps: 4, reuse: 0 };
+const values = { ...NUMBER_OPTIONS };
 const args = process.argv.slice(2);
-const opt = (name, def) => {
-  const i = args.indexOf(`--${name}`);
-  return i === -1 ? def : Number(args[i + 1]);
-};
-const ROUNDS = opt('rounds', 1000);
-const STEPS = opt('steps', 4);
-const REUSE = opt('reuse', 0);
-const seeds = args.includes('--seed') ? [opt('seed')] : Array.from({ length: opt('seeds', 5) }, (_, i) => i + 1);
-
-// 하네스와 src는 브라우저 전역(document 등)을 쓴다. jsdom 창의 전역을 Node 전역에 연결한 뒤 불러온다.
-const { window } = new JSDOM('<!doctype html><html><body></body></html>');
-for (const name of ['window', 'document', 'Node', 'MutationObserver', 'DocumentFragment']) {
-  globalThis[name] = name === 'window' ? window : window[name];
+for (let i = 0; i < args.length; i += 1) {
+  const match = /^--([a-z]+)(?:=(.*))?$/.exec(args[i]);
+  if (!match || !(match[1] in NUMBER_OPTIONS)) usage(`알 수 없는 인자: ${args[i]}`);
+  const raw = match[2] ?? args[(i += 1)];
+  const value = Number(raw);
+  if (raw === undefined || raw === '' || !Number.isFinite(value)) usage(`--${match[1]}에는 숫자가 필요합니다 (받은 값: ${raw})`);
+  values[match[1]] = value;
 }
+const seeds = values.seed !== null ? [values.seed] : Array.from({ length: values.seeds }, (_, i) => i + 1);
+
+function usage(message) {
+  console.error(`${message}\n사용법: npm run fuzz -- [--seed N | --seeds N] [--rounds N] [--steps N] [--reuse 0~1]`);
+  process.exit(2);
+}
+
+// 하네스와 src는 브라우저 전역 document를 쓴다(htmlToVNodes). jsdom 창의 전역을 Node 전역에 연결한 뒤 불러온다.
+const { window } = new JSDOM('<!doctype html><html><body></body></html>');
+globalThis.window = window;
+globalThis.document = window.document;
 console.warn = () => {}; // 중복 key 경고는 fuzz 입력에서 일부러 만든다
 const { runDifferential } = await import('../tests/support/differential.js');
 
 let failed = 0;
 for (const seed of seeds) {
   const started = Date.now();
-  const report = runDifferential({ seed, rounds: ROUNDS, steps: STEPS, reuse: REUSE });
+  const report = runDifferential({ seed, rounds: values.rounds, steps: values.steps, reuse: values.reuse });
   const ms = Date.now() - started;
   const types = Object.entries(report.patchesByType).map(([t, n]) => `${t} ${n}`).join(', ');
   console.log(
