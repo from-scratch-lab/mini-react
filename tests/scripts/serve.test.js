@@ -38,8 +38,12 @@ describe('scripts/serve.js', () => {
     expect((await get('/src/index.js')).status).toBe(200);
   });
 
-  it('demo·src 밖의 파일과 경로 우회는 404', async () => {
-    for (const path of ['/package.json', '/.claude/settings.json', '/demo/%2e%2e/package.json', '/demo-x', '/srcx/a.js']) {
+  it('브라우저 벤치마크 페이지가 쓰는 scripts/bench 안의 파일은 내보낸다', async () => {
+    expect((await get('/scripts/bench/scenarios.js')).status).toBe(200);
+  });
+
+  it('demo·src·scripts/bench 밖의 파일과 경로 우회는 404', async () => {
+    for (const path of ['/package.json', '/.claude/settings.json', '/demo/%2e%2e/package.json', '/demo-x', '/srcx/a.js', '/scripts/serve.js', '/scripts/bench/%2e%2e/serve.js']) {
       expect((await get(path)).status, path).toBe(404);
     }
   });
