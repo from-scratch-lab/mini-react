@@ -242,6 +242,76 @@ describe('patch: 폼 상태와 특수 속성', () => {
     expect(c.firstChild.value).toBe('50');
   });
 
+  describe('type·multiple은 자식과 다른 속성보다 먼저 넣는다', () => {
+    const selected = (select) => [...select.options].map((o) => o.selected);
+
+    it('select multiple을 만들 때 selected인 option이 모두 선택된다', () => {
+      const c = mount(
+        h(
+          'select',
+          { multiple: '' },
+          h('option', { selected: '' }, 'a'),
+          h('option', null, 'b'),
+          h('option', { selected: '' }, 'c'),
+        ),
+      );
+      expect(selected(c.firstChild)).toEqual([true, false, true]);
+    });
+
+    it('selected가 없는 select multiple은 아무것도 선택하지 않는다', () => {
+      const c = mount(h('select', { multiple: true }, h('option', null, 'a'), h('option', null, 'b')));
+      expect(c.firstChild.selectedIndex).toBe(-1);
+    });
+
+    it('select를 multiple로 바꾸면서 option 여러 개를 선택해도 모두 남는다', () => {
+      const v1 = h('select', null, h('option', null, 'a'), h('option', null, 'b'));
+      const c = mount(v1);
+      update(
+        c,
+        v1,
+        h('select', { multiple: '' }, h('option', { selected: '' }, 'a'), h('option', { selected: '' }, 'b')),
+      );
+      expect(selected(c.firstChild)).toEqual([true, true]);
+    });
+
+    it('multiple을 켜거나 끄면 option 선택은 selected 속성대로 다시 맞춘다 (처음부터 그린 것과 같게)', () => {
+      // 하나만 고르는 select는 selected가 없어도 첫 option을 고른다. multiple로 바꾸면 그 자동 선택은 남지 않아야 한다.
+      const v1 = h('select', null, h('option', null, 'a'), h('option', null, 'b'));
+      const c = mount(v1);
+      const v2 = h('select', { multiple: '' }, h('option', null, 'a'), h('option', null, 'b'));
+      update(c, v1, v2);
+      expect(c.firstChild.selectedIndex).toBe(-1);
+      update(c, v2, h('select', null, h('option', null, 'a'), h('option', { selected: '' }, 'b')));
+      expect(selected(c.firstChild)).toEqual([false, true]);
+    });
+
+    it('value가 그대로인 select의 multiple만 켜고 꺼도 value대로 선택된다', () => {
+      const options = () => [h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B')];
+      const v1 = h('select', { value: 'b' }, ...options());
+      const c = mount(v1);
+      const v2 = h('select', { multiple: '', value: 'b' }, ...options());
+      update(c, v1, v2);
+      expect(selected(c.firstChild)).toEqual([false, true]);
+      update(c, v2, h('select', { value: 'b' }, ...options()));
+      expect(c.firstChild.value).toBe('b');
+    });
+
+    it('input type을 바꾸면서 value를 지우면 value 속성이 남지 않는다 (range → radio)', () => {
+      const v1 = h('input', { type: 'range', min: '0', max: '300', value: '250' });
+      const c = mount(v1);
+      update(c, v1, h('input', { type: 'radio', name: 'r' }));
+      expect(c.innerHTML).toBe('<input type="radio" name="r">');
+    });
+
+    it('type이 바뀌지 않으면 PROPS 패치는 지금처럼 자식 패치 뒤에 하나만 온다', () => {
+      const patches = diff(
+        h('select', { value: 'a', class: 'x' }, h('option', { value: 'a' }, 'A')),
+        h('select', { value: 'b', class: 'y' }, h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B')),
+      );
+      expect(patches.map((p) => p.type)).toEqual(['CREATE', 'PROPS']);
+    });
+  });
+
   it('on* 값이 문자열에서 함수로 바뀌면 문자열 속성을 지운다 (둘 다 실행되지 않게)', () => {
     window.__inline = vi.fn();
     const handler = vi.fn();
