@@ -29,6 +29,40 @@ describe('종합 페이지 설명 카드와 기본 개념', () => {
   });
 });
 
+describe('과제 중점 포인트 설명 (기본 개념 8~11절)', () => {
+  const section = (id) => page.getElementById(`basics-${id}`);
+
+  it.each([
+    ['dom-api', 'Document와 Window', ['queueMicrotask', 'createElementNS', 'defaultValue', 'offsetHeight', 'src/diff/patch.js']],
+    ['change-detection', 'DOM 변화 감지', ['takeRecords', 'characterData', 'ResizeObserver', 'DOMNodeInserted', '제어 컴포넌트']],
+    ['components', '컴포넌트', ['BacklogItem', '순수 함수', 'Fiber']],
+    ['state-location', 'State', ['Lifting State Up', 'useMemo', '공통 조상', 'past, present, future']],
+  ])('%s 절이 있고 제목과 핵심 용어를 설명한다', (id, title, terms) => {
+    const el = section(id);
+    expect(el, id).not.toBeNull();
+    expect(el.querySelector('h3').textContent).toContain(title);
+    for (const term of terms) expect(el.textContent, `${id}: ${term}`).toContain(term);
+  });
+
+  it('변화 감지 비교표는 다섯 가지 방법을 한 줄씩, 방법·알려 주는 것·한계 세 칸으로 비교한다', () => {
+    const rows = [...section('change-detection').querySelectorAll('table.compare tbody tr')];
+    expect(rows.map((tr) => tr.cells.length)).toEqual([3, 3, 3, 3, 3]);
+    expect(rows[0].cells[0].textContent).toBe('MutationObserver');
+  });
+
+  it('2절(Reflow·가상 DOM)은 벤치마크 문서의 측정 수치로 근거를 든다', () => {
+    const text = section('virtual-dom').textContent;
+    expect(text).toContain('docs/benchmarks.md');
+    expect(text).toContain('MutationObserver');
+  });
+
+  it('새 절은 기본 개념 안에 번호 순서대로 이어 붙는다', () => {
+    const numbers = [...page.querySelectorAll('.basics > section > h3')].map((h) => parseInt(h.textContent, 10));
+    expect(numbers).toEqual(numbers.map((_, i) => i + 1));
+    expect(numbers.length).toBeGreaterThanOrEqual(11);
+  });
+});
+
 describe('reactMoves: 실제 React(lastPlacedIndex) 방식의 이동 횟수', () => {
   it('맨 뒤를 맨 앞으로 올리면 나머지를 모두 옮긴다', () => {
     expect(reactMoves([4, 0, 1, 2, 3])).toBe(4);
