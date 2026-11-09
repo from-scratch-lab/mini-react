@@ -147,3 +147,32 @@ describe('Phase 1 검증 페이지', () => {
     expect(actual.querySelector('p').hasAttribute('onclick')).toBe(false);
   });
 });
+
+describe('실제 영역에 주석이 있을 때', () => {
+  beforeEach(() => {
+    app.destroy();
+    actual.innerHTML = '<p>a<!-- note -->b</p>';
+    app = startPhase1({ actual, root });
+  });
+
+  it('아무것도 고치지 않고 Patch하면 패치가 0개이고 기록도 늘지 않는다', () => {
+    // 로드할 때 붙어 있던 텍스트 두 개를 patch로 하나로 합쳐 둔다.
+    expect(actual.innerHTML).toBe('<p>ab<!-- note --></p>');
+    button('patch').click();
+    expect(actual.innerHTML).toBe('<p>ab<!-- note --></p>');
+    expect(root.querySelector('[data-role="patch-log"]').textContent).toContain('변경 없음');
+    expect(status()).toBe('1 / 1');
+  });
+
+  it('텍스트를 고쳐 Patch하면 실제 영역이 코드와 같아진다', () => {
+    expect(textarea().value).toBe('<p>ab</p>');
+    edit('<p>abc</p>');
+    button('patch').click();
+    expect(actual.querySelector('p').textContent).toBe('abc');
+    edit('<p>z</p>');
+    button('patch').click();
+    expect(actual.querySelector('p').textContent).toBe('z');
+    button('back').click();
+    expect(actual.querySelector('p').textContent).toBe('abc');
+  });
+});

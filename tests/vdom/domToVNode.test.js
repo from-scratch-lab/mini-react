@@ -117,3 +117,22 @@ describe('htmlToVNodes', () => {
     expect(document.body.innerHTML).toBe('<main>그대로</main>');
   });
 });
+
+describe('인접한 텍스트 노드 (주석을 버리면 텍스트가 둘로 갈려 남는다)', () => {
+  it('attach가 아니면 붙어 있는 텍스트를 하나로 합친다 (HTML로 다시 쓰고 읽어도 같은 트리)', () => {
+    const p = container('<p>a<!-- note -->b<b>x</b>c<!-- 1 --><!-- 2 -->d</p>').firstChild;
+    expect(domToVNode(p).children.map((c) => (c.type === TEXT_NODE ? c.props.nodeValue : c.type))).toEqual([
+      'ab',
+      'b',
+      'cd',
+    ]);
+    expect(htmlToVNodes('a<!-- x -->b')).toEqual([text('ab')]);
+  });
+
+  it('attach: true면 합치지 않는다 (가상 노드 하나가 실제 텍스트 노드 하나를 가리켜야 patch가 맞다)', () => {
+    const p = container('<p>a<!-- note -->b</p>').firstChild;
+    const v = domToVNode(p, { attach: true });
+    expect(v.children).toHaveLength(2);
+    expect(v.children[1].dom).toBe(p.lastChild);
+  });
+});

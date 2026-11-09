@@ -27,6 +27,11 @@ import { flash } from '../shared/flash.js';
 export function startPhase1({ actual, root }) {
   // 실제 영역에 지금 그려진 가상 트리. 이미 화면에 있는 DOM을 이어받는다(attach) → 첫 Patch부터 부분 갱신.
   let rendered = domToVNode(actual, { attach: true });
+  // 주석 사이 텍스트처럼 붙어 있는 텍스트 노드를 처음에 한 번 합쳐 둔다(diff·patch로).
+  // 그래야 테스트 영역 코드("ab")와 실제 영역이 같은 트리가 되어, 고치지 않은 Patch가 아무것도 바꾸지 않는다.
+  const normalized = domToVNode(actual);
+  patch(actual, diff(rendered, normalized));
+  rendered = normalized;
   const history = new VNodeHistory(rendered);
 
   const state = {
