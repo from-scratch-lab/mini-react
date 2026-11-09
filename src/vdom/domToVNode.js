@@ -1,4 +1,4 @@
-import { createVNode, createTextVNode } from './vnode.js';
+import { createVNode, createTextVNode, isTextVNode } from './vnode.js';
 
 const ELEMENT_NODE = 1;
 const TEXT = 3;
@@ -26,7 +26,7 @@ const VALID_ATTRIBUTE_NAME = new RegExp(`^[${NAME_START}][${NAME_CHAR}]*$`);
 /**
  * 실제 DOM 노드를 읽어 가상 노드로 바꾼다. DOM은 읽기만 한다.
  *
- * - 주석·처리 지시 노드는 버린다.
+ * - 주석·처리 지시 노드는 버린다. 그래서 붙게 된 텍스트(`a<!-- -->b`)는 하나로 합친다(attach일 때는 합치지 않는다).
  * - 줄바꿈이 들어 있는 공백 전용 텍스트(들여쓰기)는 버린다. 줄바꿈 없는 공백(`<b>a</b> <i>b</i>`)은 글자 사이 간격이라 남긴다.
  *   공백은 HTML의 ASCII 공백만 본다(&nbsp;는 내용이다).
  *   절충: 인라인 요소 사이의 줄바꿈(`<b>a</b>\n<i>b</i>`)도 들여쓰기로 보고 버리므로 화면의 "a b"가 "ab"가 된다.
@@ -94,7 +94,18 @@ function convert(node, options, preserveWhitespace) {
 
 function convertChildren(nodes, options, preserveWhitespace) {
   const children = [];
-  for (const child of nodes) children.push(...convert(child, options, preserveWhitespace));
+  for (const child of nodes) {
+    for (const vnode of convert(child, options, preserveWhitespace)) {
+      // 주석을 버리면 `a<!-- -->b`의 텍스트가 둘로 갈려 남는다. HTML로 쓰면 "ab" 하나가 되므로 읽을 때도 합친다.
+      // attach일 때는 합치지 않는다: 가상 노드 하나가 실제 텍스트 노드 하나를 가리켜야 TEXT 패치가 맞다.
+      const last = children[children.length - 1];
+      if (!options.attach && isTextVNode(vnode) && isTextVNode(last)) {
+        last.props.nodeValue += vnode.props.nodeValue;
+      } else {
+        children.push(vnode);
+      }
+    }
+  }
   return children;
 }
 
