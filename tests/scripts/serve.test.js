@@ -42,6 +42,20 @@ describe('scripts/serve.js', () => {
     expect((await get('/scripts/bench/scenarios.js')).status).toBe(200);
   });
 
+  it('LIS 실험 페이지만 교차 출처 격리 헤더를 붙인다 (performance.now() 해상도를 높이려고)', async () => {
+    const lis = await get('/demo/bench/lis.html');
+    expect(lis.headers.get('cross-origin-opener-policy')).toBe('same-origin');
+    expect(lis.headers.get('cross-origin-embedder-policy')).toBe('require-corp');
+    expect((await get('/demo/')).headers.get('cross-origin-embedder-policy')).toBeNull();
+  });
+
+  it('LIS 실험의 React 기준선용 UMD 파일 두 개만 node_modules에서 내보낸다', async () => {
+    expect((await get('/node_modules/react/umd/react.production.min.js')).status).toBe(200);
+    expect((await get('/node_modules/react-dom/umd/react-dom.production.min.js')).status).toBe(200);
+    expect((await get('/node_modules/react/package.json')).status).toBe(404);
+    expect((await get('/node_modules/react/umd/react.development.js')).status).toBe(404);
+  });
+
   it('demo·src·scripts/bench 밖의 파일과 경로 우회는 404', async () => {
     for (const path of ['/package.json', '/.claude/settings.json', '/demo/%2e%2e/package.json', '/demo-x', '/srcx/a.js', '/scripts/serve.js', '/scripts/bench/%2e%2e/serve.js']) {
       expect((await get(path)).status, path).toBe(404);
