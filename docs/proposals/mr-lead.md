@@ -12,6 +12,8 @@
 
 Node 22 + jsdom 26, `render()` 한 번, 행 = `<tr key><td>id</td><td>label</td></tr>`.
 MutationObserver 기록 수는 결정적(매번 같음), 시간은 jsdom이라 참고용(브라우저와 다름).
+
+> **정정(mr-perf 지적):** 이 스크립트는 한 jsdom 문서에서 render를 이어 불러 남은 노드 때문에 삽입 시간이 2~3배 부풀었다. 실행마다 새 창으로 잰 값은 빈 tbody 1k 생성 105ms(한 번에 넣어도 106ms)다. 아래 시간 열은 비교에 쓰지 말고, 기록 수만 유효하다. 정식 수치는 `docs/bench/`(mr-perf).
 스크립트: 공유 노트 폴더의 `lead-baseline-bench.mjs` (실행: `node lead-baseline-bench.mjs file:///<repo 경로>`) (mr-perf가 정식 `npm run bench`로 옮기길 제안).
 
 | 시나리오 (1k행) | 패치 수 | DOM 변경 기록 | jsdom 시간 |
