@@ -114,8 +114,25 @@ function diffNode(oldVNode, newVNode, ctx) {
       late.prev.value = oldVNode.props.value;
     }
   }
+  const childStart = patches.length;
   diffChildren(oldVNode, newVNode, ctx);
+  // option이 새로 생기거나 빠지거나 옮겨지면 브라우저가 select의 선택을 다시 정한다(빈 select면 첫 option).
+  // value prop이 그대로여도 다시 넣어야 처음부터 그린 것과 같아진다. 값이 같으면 patch가 DOM을 건드리지 않는다.
+  if (newVNode.type === 'select' && value != null && hasStructuralPatch(patches, childStart)) {
+    late ??= { set: {}, remove: [], prev: {} };
+    if (!('value' in late.set)) {
+      late.set.value = value;
+      late.prev.value = oldVNode.props.value;
+    }
+  }
   if (late) patches.push({ type: PatchType.PROPS, vnode: newVNode, ...late });
+}
+
+const STRUCTURAL = new Set([PatchType.CREATE, PatchType.REMOVE, PatchType.REPLACE, PatchType.MOVE]);
+
+function hasStructuralPatch(patches, start) {
+  for (let i = start; i < patches.length; i += 1) if (STRUCTURAL.has(patches[i].type)) return true;
+  return false;
 }
 
 /**

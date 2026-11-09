@@ -130,10 +130,11 @@ describe('measureMutations: 실제 DOM 변경을 세는 공용 측정', () => {
   });
 });
 
-describe('알려진 정확성 버그 (고치면 it.fails를 it으로 바꾼다)', () => {
+describe('fuzz가 찾았던 정확성 버그 (회귀 방지)', () => {
   // B6: diffChildren은 CREATE를 뒤에서부터 낸다. 빈 select에 option을 마지막 것부터 넣으면 하나만 고르는 select가
-  // 처음 들어온(마지막) option을 고른다. 처음부터 그리면 첫 option이 선택된다. perf의 연속 CREATE 묶기에서 고친다.
-  it.fails('B6: 빈 select에 option을 여러 개 만들면 첫 option이 선택된다', () => {
+  // 처음 들어온(마지막) option을 골랐다. 연속 CREATE를 fragment로 앞에서부터 넣어(feat/batch-insert) 고쳤다.
+  // 빈 select에 option을 한 번에 넣는 경우만이다. 기존 option 앞에 새 option을 넣을 때의 선택은 선택 그룹(B7) 쪽에서 다룬다.
+  it('B6: 빈 select에 option을 여러 개 만들면 첫 option이 선택된다', () => {
     const container = document.createElement('div');
     const v1 = h('select', null);
     patch(container, diff(null, v1));

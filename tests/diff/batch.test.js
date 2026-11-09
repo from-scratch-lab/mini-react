@@ -145,3 +145,21 @@ describe('전체 지우기 빠른 경로', () => {
     expect(texts(c)).toEqual(['c', 'd']);
   });
 });
+
+describe('value prop이 그대로인 select에 option이 새로 생길 때', () => {
+  const opts = (sfx) => ['a', 'b', 'c'].map((k) => h('option', { key: k + sfx, value: k }, k));
+
+  it('빈 select에 option을 한 번에 만들어도 value prop의 option이 선택된다', () => {
+    const c = document.createElement('div');
+    render(h('select', { value: 'c' }), c);
+    render(h('select', { value: 'c' }, ...opts('')), c);
+    expect(c.firstChild.value).toBe('c');
+  });
+
+  it('option을 모두 다른 key로 바꿔도 value prop의 option이 선택된다', () => {
+    const c = document.createElement('div');
+    render(h('select', { value: 'c' }, ...opts('')), c);
+    render(h('select', { value: 'c' }, ...opts('2')), c);
+    expect(c.firstChild.value).toBe('c');
+  });
+});
