@@ -974,6 +974,32 @@ button.ghost {
   max-width: 78ch;
 }
 
+/* 9절: 변화 감지 방법 비교표. 좁은 화면에서는 감싼 div만 가로로 스크롤한다(표는 기본 display라 스크린리더가 표로 읽는다). */
+.basics .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.basics table.compare {
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin: 6px 0 10px;
+}
+
+.basics table.compare th,
+.basics table.compare td {
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.basics table.compare th {
+  background: var(--card);
+  color: var(--heading);
+  font-weight: 600;
+}
+
 .timeline-wrap h3 {
   margin: 10px 0 4px;
   font-size: 0.92rem;
