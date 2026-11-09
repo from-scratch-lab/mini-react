@@ -36,9 +36,30 @@ export const PatchType = Object.freeze({
  *   대신 { vnode, name, value } 를 결과 배열의 handlers(열거되지 않는 속성)에 담는다.
  *   patch가 모든 DOM 패치를 마친 뒤 이 목록대로 요소의 핸들러 표만 갈아 끼운다.
  *   (Vue 3의 invoker, React의 "이벤트 때 props에서 핸들러를 읽기"와 같은 생각. 패치 수 = DOM을 바꾸는 일의 수로 맞춘다)
+ *
+ * options (실험용, 생략하면 지금 동작 그대로)
+ *   reconcileMode: 'lis'(기본) | 'lastPlacedIndex'
+ *     key 목록에서 "그대로 둘 노드"를 고르는 방법만 바꾼다. 앞뒤 건너뛰기·key 짝짓기·앵커(before)·patch는 같다.
+ *     'lastPlacedIndex'는 React의 접근을 참고한 자체 구현이다: 새 순서대로 훑으며 이전 위치가
+ *     지금까지 둔 위치(lastPlacedIndex)보다 앞이면 MOVE, 아니면 lastPlacedIndex를 그 위치로 올린다.
+ *   stats: 넘기면 자식 목록마다 어느 경로를 탔는지 센다 (docs/perf/lis-experiment.md)
+ *     lists: 비교한 자식 목록 수, fastPathOnly: 앞뒤 건너뛰기만으로 끝난 목록,
+ *     keyedMatch: 가운데 구간을 key로 짝지은 목록, placementSkipped: 가운데가 순서 그대로라 이동 판단을 건너뛴 목록,
+ *     placementRuns: 이동 판단(LIS 또는 lastPlacedIndex)을 실제로 돌린 목록
  */
-export function diff(oldVNode, newVNode) {
-  const ctx = { patches: [], handlers: [], oldNodes: collectNodes(oldVNode), seen: new Set() };
+export function diff(oldVNode, newVNode, options = {}) {
+  const reconcileMode = options.reconcileMode ?? 'lis';
+  if (reconcileMode !== 'lis' && reconcileMode !== 'lastPlacedIndex') {
+    throw new Error(`알 수 없는 reconcileMode: ${reconcileMode}`);
+  }
+  const ctx = {
+    patches: [],
+    handlers: [],
+    oldNodes: collectNodes(oldVNode),
+    seen: new Set(),
+    reconcileMode,
+    stats: options.stats ?? null,
+  };
   Object.defineProperty(ctx.patches, 'handlers', { value: ctx.handlers, enumerable: false });
   if (oldVNode === newVNode) return ctx.patches;
 
@@ -196,6 +217,10 @@ function diffChildren(oldParent, newParent, ctx) {
     console.warn(
       `[mini-react] <${newParent.type}>의 자식에 같은 key가 있습니다. 이 목록은 key 대신 위치로 비교합니다.`,
     );
+    if (ctx.stats) {
+      ctx.stats.lists += 1;
+      ctx.stats.keyedMatch += 1;
+    }
     const middle = matchMiddle(oldChildren, newChildren, 0, oldChildren.length, newChildren.length, ctx, true);
     placeMiddle(newParent, middle, ctx);
     return;
@@ -216,6 +241,11 @@ function diffChildren(oldParent, newParent, ctx) {
     newEnd -= 1;
   }
 
+  if (ctx.stats) {
+    ctx.stats.lists += 1;
+    if (oldEnd === head && newEnd === head) ctx.stats.fastPathOnly += 1;
+    else ctx.stats.keyedMatch += 1;
+  }
   for (let i = 0; i < head; i += 1) diffPair(oldChildren[i], newChildren, i, ctx);
   const middle = matchMiddle(oldChildren, newChildren, head, oldEnd, newEnd, ctx, false);
   for (let k = 0; k < newChildren.length - newEnd; k += 1) diffPair(oldChildren[oldEnd + k], newChildren, newEnd + k, ctx);
@@ -281,8 +311,16 @@ function placeMiddle(newParent, { oldSlice, newChildren, from, newEnd, matchedOl
     }
   });
   // 바뀐 것이 없으면(모두 짝이 있고 순서 그대로) LIS를 돌릴 필요가 없다
-  if (sequence.length === matchedOldIndex.length && sequence.every((j, k) => j === k)) return;
-  const stays = new Set(longestIncreasingSubsequence(sequence).map((k) => matchedNewIndexes[k]));
+  if (sequence.length === matchedOldIndex.length && sequence.every((j, k) => j === k)) {
+    if (ctx.stats && matchedOldIndex.length > 0) ctx.stats.placementSkipped += 1;
+    return;
+  }
+  if (ctx.stats) ctx.stats.placementRuns += 1;
+  const stays = new Set(
+    (ctx.reconcileMode === 'lis' ? longestIncreasingSubsequence(sequence) : lastPlacedStays(sequence)).map(
+      (k) => matchedNewIndexes[k],
+    ),
+  );
 
   for (let i = newEnd - from - 1; i >= 0; i -= 1) {
     const before = newChildren[from + i + 1] ?? null;
@@ -292,6 +330,22 @@ function placeMiddle(newParent, { oldSlice, newChildren, from, newEnd, matchedOl
       patches.push({ type: PatchType.MOVE, parent: newParent, vnode: newChildren[from + i], before });
     }
   }
+}
+
+/**
+ * 'lastPlacedIndex' 모드의 "그대로 둘 노드" (React의 접근을 참고한 자체 구현).
+ * sequence = 새 순서로 늘어놓은 이전 위치. 돌려주는 것은 그대로 둘 원소의 sequence 인덱스(증가 순).
+ * 고른 원소들의 이전 위치는 증가하므로, 뒤에서부터 before 앞에 넣는 placeMiddle이 그대로 맞게 동작한다.
+ */
+function lastPlacedStays(sequence) {
+  const stays = [];
+  let lastPlacedIndex = 0;
+  sequence.forEach((oldIndex, k) => {
+    if (oldIndex < lastPlacedIndex) return; // 옮긴다
+    lastPlacedIndex = oldIndex;
+    stays.push(k);
+  });
+  return stays;
 }
 
 function matchNames(children) {
