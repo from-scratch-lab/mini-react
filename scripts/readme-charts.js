@@ -147,7 +147,7 @@ function part1() {
   const items = [
     ['01', 'Phase 1 · Virtual DOM · Diff · Patch', ['패치 6종, key 목록, 실제 DOM ↔ 가상 노드', '검증 페이지: Patch · 뒤로 · 앞으로']],
     ['02', 'Phase 2 · Component · Hooks', ['FunctionComponent, useState · useEffect · useMemo', '루트만 상태, 자식은 순수 함수']],
-    ['03', '연결 · 정확성', ['setState → diff → patch 하나의 파이프라인', '브라우저 대조 fuzz로 폼 버그 4개 수정']],
+    ['03', '연결 · 정확성', ['setState → diff → patch 하나의 파이프라인', '표준 파서(jsdom) 대조 fuzz로 폼 버그 4개 수정']],
   ];
   items.forEach(([n, title, desc], i) => {
     const y = 122 + i * 104;
@@ -188,7 +188,7 @@ function lisSummary() {
   const sw = D['pattern-12'];
   const items = [
     { pct: (r1.A_js / r1.B_js) * 100, center: `${Math.round((r1.A_js / r1.B_js) * 100)}%`, sub: 'LIS ÷ 단방향', title: '1%만 옮길 때', note: [`합계 시간 ${fmt(r1.A_js)} vs ${fmt(r1.B_js)}ms`, `옮긴 노드 ${r1.moved_A} vs ${r1.moved_B}`], color: C.royal },
-    { pct: (sw.moved_A / sw.moved_B) * 100, center: '0.2%', sub: '옮긴 노드 비율', title: '두 행 swap', note: [`옮긴 노드 ${sw.moved_A} vs ${sw.moved_B}`, `React 18.3.1 실측도 ${sw.moved_C}`], color: C.royal },
+    { pct: (sw.moved_A / sw.moved_B) * 100, center: '0.2%', sub: '옮긴 노드 비율', title: '멀리 떨어진 두 행 교환', note: [`옮긴 노드 ${sw.moved_A} vs ${sw.moved_B}`, `React 18.3.1 실측도 ${sw.moved_C}`], color: C.royal },
     { pct: (r50.A_js / r50.B_js) * 100, center: `${Math.round((r50.A_js / r50.B_js) * 100)}%`, sub: 'LIS ÷ 단방향', title: '50% 옮길 때', note: [`합계 시간 ${fmt(r50.A_js)} vs ${fmt(r50.B_js)}ms`, `옮긴 노드 ${r50.moved_A} vs ${r50.moved_B}`], color: C.blue },
     { pct: (r100.A_js / r100.B_js) * 100, center: `${Math.round((r100.A_js / r100.B_js) * 100)}%`, sub: 'LIS ÷ 단방향', title: '전부 섞을 때', note: [`합계 시간 ${fmt(r100.A_js)} vs ${fmt(r100.B_js)}ms`, '옮길 노드가 비슷 → 이득 없음'], color: C.sky },
   ];
@@ -203,7 +203,7 @@ function lisSummary() {
     parts.push(lines(x + 20, 336, it.note.map(esc), 12, dark ? '#c7d6ff' : C.ink2));
     parts.push(`<rect x="${x + 20}" y="378" width="${colW - 40}" height="6" rx="3" fill="${dark ? '#ffffff' : C.mist}" fill-opacity="${dark ? 0.2 : 1}"/><rect x="${x + 20}" y="378" width="${Math.max(((colW - 40) * it.pct) / 100, 4)}" height="6" rx="3" fill="${dark ? '#ffffff' : it.color}"/>`);
   });
-  return slide(H, { title: 'Part 2 · LIS 차별화 연구 — 핵심 결과', subtitle: 'N=1,000 · LIS vs 단방향 스캔(React 방식 참고 구현) · Chrome 152, 63회 중앙값 · 낮을수록 LIS가 적게 씀', tag: 'PART 2' }, parts.join('\n'), 'LIS 핵심 결과: 1% 이동 59%, swap 옮긴 노드 0.2%, 50% 이동 79%, 전체 셔플 99%');
+  return slide(H, { title: 'Part 2 · LIS 차별화 연구 — 핵심 결과', subtitle: 'N=1,000 · LIS vs 단방향 스캔 · Chrome 152 · 63회 중앙값 · DOM 조작 JS 시간 · 낮을수록 LIS가 적게 씀', tag: 'PART 2' }, parts.join('\n'), 'LIS 핵심 결과: 1% 이동 59%, swap 옮긴 노드 0.2%, 50% 이동 79%, 전체 셔플 99%');
 }
 
 /** 트레이드오프: 영역 그래프(합계·commit) + 번호 카드 */
@@ -241,7 +241,7 @@ function lisTradeoff() {
   const rx = cx + cw + 22;
   const rw = W - 46 - rx;
   const notes = [
-    ['01', 'diff에서 조금 더 쓴다', ['LIS 계산 때문에 diff 시간 중앙값', '+2~6% (구간이 겹쳐 단정은 안 함)']],
+    ['01', 'diff 비용은 검출 못 함', ['LIS가 계산을 더 하지만 차이가', '측정 잡음(±10%) 안이었다']],
     ['02', 'commit에서 크게 아낀다', [`1% 이동: ${fmt(rows[0].B_commit, 3)} → ${fmt(rows[0].A_commit, 3)}ms`, `옮긴 노드 ${rows[0].moved_B} → ${rows[0].moved_A}`]],
     ['03', '많이 섞일수록 이득이 준다', [`합계 ${(rows[0].A_js / rows[0].B_js).toFixed(2)}× (1%) → ${(rows[5].A_js / rows[5].B_js).toFixed(2)}× (100%)`, '거의 다 섞이면 옮길 노드가 비슷']],
   ];
@@ -251,14 +251,14 @@ function lisTradeoff() {
     parts.push(`<text x="${rx + 68}" y="${y + 40}" font-size="15" font-weight="800" fill="${C.ink}">${esc(title)}</text>`);
     parts.push(lines(rx + 68, y + 64, desc.map(esc), 12.2));
   });
-  return slide(H, { title: '트레이드오프: diff ↔ commit', subtitle: 'N=1,000 · 노드 k%를 무작위 위치로 옮긴 갱신 · Chrome 152 · 63회 중앙값', tag: 'PART 2' }, parts.join('\n'), 'LIS 트레이드오프: diff는 조금 더, commit은 크게 덜, 많이 섞일수록 이득이 준다');
+  return slide(H, { title: '트레이드오프: diff ↔ commit', subtitle: 'N=1,000 · k%를 무작위 위치로 이동 · Chrome 152 · 63회 중앙값 · DOM 조작 JS 시간(레이아웃 제외)', tag: 'PART 2' }, parts.join('\n'), 'LIS 트레이드오프: diff는 조금 더, commit은 크게 덜, 많이 섞일수록 이득이 준다');
 }
 
 /** 패턴별 옮긴 노드 수: 둥근 세로 막대 */
 function lisPatterns() {
   const H = 470;
   const rows = [
-    ['Swap', '두 행 교환', D['pattern-12']],
+    ['Swap', '1번 ↔ N−2번 교환', D['pattern-12']],
     ['Block Shift', '10% 덩어리 이동', D['pattern-13']],
     ['Reversal', '뒤집기', D['pattern-14']],
     ['Shuffle', '무작위 섞기', D['pattern-15']],
@@ -340,7 +340,7 @@ function lisHeatmap() {
       parts.push(`<text x="${x + cw / 2}" y="${y + 60}" font-size="11" text-anchor="middle" fill="${ink}" fill-opacity="0.8">${fmt(r.A_js, 2)} / ${fmt(r.B_js, 2)} ms${overlap ? ' · 구간 겹침' : ''}</text>`);
     });
   });
-  parts.push(`<text x="72" y="${top + 3 * ch + 22}" font-size="12" fill="${C.ink2}">진할수록 LIS가 빠름 · 회색 = LIS가 느렸던 칸(중앙값) · "구간 겹침" = 두 방식의 Q1~Q3가 겹쳐 차이를 단정할 수 없는 칸</text>`);
+  parts.push(`<text x="72" y="${top + 3 * ch + 22}" font-size="12" fill="${C.ink2}">진할수록 LIS가 빠름 · 회색 = 중앙값 1 초과(같은 조건 재측정은 0.996×) · "구간 겹침" = 차이를 단정할 수 없는 칸</text>`);
   return slide(H, { title: '언제 이득인가: 크기 N × 옮긴 비율 k', subtitle: 'LIS 합계 시간 ÷ 단방향 합계 시간 · Chrome 152 · 63회 중앙값 · 1보다 작으면 LIS가 빠름', tag: 'PART 2' }, parts.join('\n'), 'N과 k에 따른 LIS 대 단방향 합계 시간 비율. N=5000, k=100%에서만 1.04로 LIS가 느림');
 }
 

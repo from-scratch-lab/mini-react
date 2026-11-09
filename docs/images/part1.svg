@@ -29,7 +29,7 @@
 <rect x="64" y="348" width="36" height="36" rx="8" fill="url(#gNavy)"/><text x="82" y="372" font-size="15" font-weight="800" text-anchor="middle" fill="#ffffff">03</text>
 <text x="116" y="363" font-size="15" font-weight="800" fill="#111827">연결 · 정확성</text>
 <text x="116" y="385" font-size="12.5" fill="#6b7280">setState → diff → patch 하나의 파이프라인</text>
-<text x="116" y="404" font-size="12.5" fill="#6b7280">브라우저 대조 fuzz로 폼 버그 4개 수정</text>
+<text x="116" y="404" font-size="12.5" fill="#6b7280">표준 파서(jsdom) 대조 fuzz로 폼 버그 4개 수정</text>
 <circle cx="420" cy="356" r="11" fill="#eef3ff"/><path d="M415,356 l4,4 l7,-8" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="474" y="122" width="440" height="298" rx="14" fill="#ffffff" stroke="#e5e9f2" filter="url(#sh2)"/>
 <text x="498" y="152" font-size="15" font-weight="800" fill="#111827">병합마다 늘어난 테스트</text>
