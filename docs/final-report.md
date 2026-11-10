@@ -1,6 +1,6 @@
 # 고도화 최종 보고 (2026-11-09)
 
-기준: 시작 `dev` 5cbca8b (테스트 237개) → 끝 `dev` (테스트 395개, 비판적 검토 반영 후). 계획: [ADR 0001](decisions/0001-plan.md), 마무리 결정: [ADR 0002](decisions/0002-conditional-items.md).
+기준: 시작 `dev` 5cbca8b (테스트 237개) → 끝 `dev` (테스트 396개, 비판적 검토 반영 후). 계획: [ADR 0001](decisions/0001-plan.md), 마무리 결정: [ADR 0002](decisions/0002-conditional-items.md).
 
 ## 바꾼 것
 
@@ -26,7 +26,7 @@
 
 ## 검사 결과
 
-- `bash .claude/check.sh` 통과: 테스트 395개, 실패 0.
+- `bash .claude/check.sh` 통과: 테스트 396개, 실패 0.
 - 성능 예산(결정적, CI): 모든 시나리오가 상한 이하. 상한은 최적화마다 측정값으로 낮췄다.
 - 차등 fuzz(정답지: HTML 표준 파서 구현 jsdom): CI 시드(7·20261109·1·재사용 31) 불일치 0. 긴 실행 시드 1·3·5·99·2026(각 4,000 patch) 불일치 0. 실제 Chrome에서는 돌리지 않았다.
 - LIS 두 모드: keyed 1,000쌍 + 일반 트리 1,000쌍에서 최종 DOM·key 순서·노드 정체성 문제 0.

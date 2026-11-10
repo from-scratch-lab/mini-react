@@ -217,6 +217,8 @@ function diffChildren(oldParent, newParent, ctx) {
     console.warn(
       `[mini-react] <${newParent.type}>의 자식에 같은 key가 있습니다. 이 목록은 key 대신 위치로 비교합니다.`,
     );
+    // 통계: 중복 key 목록은 key가 아니라 위치로 짝짓지만, "앞뒤 건너뛰기로 끝나지 않고 짝짓기까지 간 목록"이라 keyedMatch로 센다.
+    // 이동 판단(placementRuns·placementSkipped)은 아래 placeMiddle이 다른 목록과 똑같이 센다.
     if (ctx.stats) {
       ctx.stats.lists += 1;
       ctx.stats.keyedMatch += 1;
