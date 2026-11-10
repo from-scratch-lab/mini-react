@@ -80,7 +80,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <section id="render-inspector" aria-labelledby="render-inspector-title"></section>
     </section>
     <section id="world-cup-lab" role="tabpanel" aria-labelledby="phase-2-1" hidden></section>
-  </main>`;
+  </main>
+  <a class="game-entry" href="./game.html">NEON SURVIVOR ↗</a>`;
 
 const phaseNavigation = document.querySelector<HTMLElement>('#phase-navigation')!;
 const sidebarToggle = document.querySelector<HTMLButtonElement>('#sidebar-toggle')!;

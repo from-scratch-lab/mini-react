@@ -17,6 +17,7 @@ export function diff(previous: VTree, next: VTree): Operation[] {
     for (let i = common; i < after.length; i++) operations.push({ type: 'insert', path: [...parent, i], node: structuredClone(after[i]) });
   }
   function compareNode(before: VNode, after: VNode, path: number[]): void {
+    if (before === after) return;
     if (before.type !== after.type || (before.type === 'element' && after.type === 'element' && before.tag !== after.tag)) {
       operations.push({ type: 'replace', path, node: structuredClone(after) });
     } else if (before.type === 'element' && after.type === 'element') {

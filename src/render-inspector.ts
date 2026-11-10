@@ -159,9 +159,13 @@ export function createRenderInspector(demo: Element, panel: Element): (event: Re
       } else if (hook.kind === 'memo') {
         const action = hook.reused ? '이전 결과 재사용' : initial ? '첫 계산' : '다시 계산';
         hookDetails.push(`hooks[${index}] · useMemo [count] · ${action} · 누적 합 ${format(hook.value)}`);
-      } else {
+      } else if (hook.kind === 'effect') {
         const action = hook.cleaned ? 'cleanup 실행 → Effect 실행' : hook.ran ? 'Effect 실행' : '의존성이 같아 건너뜀';
         hookDetails.push(`hooks[${index}] · useEffect [running] · ${action}`);
+      } else if (hook.kind === 'frame') {
+        hookDetails.push(`hooks[${index}] · useFrame · ${hook.enabled ? '실행' : '중지'}`);
+      } else {
+        hookDetails.push(`hooks[${index}] · useScene · 슬롯 ${hook.slots}개`);
       }
     });
     state.textContent = initial ? `초기 상태 · ${changes.join(', ')}` : changes.join(', ') || '상태 변경 없음';

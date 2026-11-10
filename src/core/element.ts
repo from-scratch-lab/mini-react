@@ -1,6 +1,7 @@
 import type { VNode, VTree } from './vdom';
+import { SCENE, type SceneDescription } from './scene';
 
-export type Child = Description | string | number | boolean | null | undefined | Child[];
+export type Child = Description | SceneDescription | string | number | boolean | null | undefined | Child[];
 export type Component<P> = ((props: P) => Child) & { displayName?: string };
 type Props = Record<string, unknown>;
 export interface Description {
@@ -27,6 +28,7 @@ export function resolve(output: Child, components?: string[]): { tree: VTree; bi
       if (typeof item === 'string' || typeof item === 'number') {
         result.push({ type: 'text', text: String(item) }); return;
       }
+      if (item.type === SCENE) { result.push(item.node); return; }
       if (typeof item.type === 'function') {
         components?.push(item.type.displayName || item.type.name || '(익명)');
         append(item.type({ ...item.props, children: item.children })); return;

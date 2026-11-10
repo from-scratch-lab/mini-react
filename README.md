@@ -1,6 +1,20 @@
 # Mini React · Phase 1 + Phase 2
 
-Vanilla TypeScript + Vite로 구현한 Mini React 실험 페이지입니다. Phase 1의 DOM 편집·Diff·Patch 실험과 Phase 2의 함수형 컴포넌트·상태·Hooks 데모를 함께 제공합니다. UI 프레임워크나 Virtual DOM 라이브러리는 사용하지 않습니다.
+Vanilla TypeScript + Vite로 구현한 Mini React 실험 페이지입니다. Phase 1의 DOM 편집·Diff·Patch 실험과 Phase 2의 함수형 컴포넌트·상태·Hooks 데모를 함께 제공합니다. 과제 데모와 게임은 Vanilla TypeScript로 실행합니다. 렌더링 실험실은 비교 대상으로 실제 React를 사용합니다.
+
+
+## NEON SURVIVOR · 게임 특화 확장
+
+[게임 페이지](./game.html)에서 WASD/방향키로 이동하며 자동 공격과 레벨업으로 3분을 생존합니다. `useFrame`은 프레임 내 상태 변경을 묶고, `useScene`은 고정 슬롯의 평면 스프라이트를 기존 VDOM·Diff·Patch로 렌더링합니다. 상태와 Hooks는 루트만 사용하며 Canvas나 UI 프레임워크를 쓰지 않습니다. 기존 Phase 1·2 데모의 동기 setter 동작은 유지합니다.
+
+[렌더링 실험실](./experiment.html)에서 일반 Mini React, 게임 특화 Mini React, 실제 React 기본·memo 렌더러를 비교합니다. 같은 설정으로 두 렌더러를 순서대로 측정하거나 하나만 측정할 수 있습니다. 측정 시간은 3·10·20·60초 중에서 선택합니다. API·게임 규칙·지표 해석은 [게임 문서](./docs/GAME.md)를 참고하세요.
+
+```sh
+npm run dev
+# http://127.0.0.1:5173/game.html
+# http://127.0.0.1:5173/experiment.html
+PLAYWRIGHT_CHANNEL=chrome npm run test:e2e  # 설치된 Google Chrome 사용
+```
 
 ## Phase 2 · Component, State, Hooks
 

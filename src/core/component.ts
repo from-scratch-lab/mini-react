@@ -2,6 +2,7 @@ import { diff, type Operation } from './diff';
 import { patch } from './patch';
 import { resolve, type Binding, type Component } from './element';
 import type { VNode, VTree } from './vdom';
+import { SCENE, sameSprite, spriteNode, type SceneDescription, type SpriteSlot } from './scene';
 
 type Dependencies = readonly unknown[] | undefined;
 type Cleanup = void | (() => void);
@@ -9,11 +10,17 @@ type StateAction<T> = T | ((previous: T) => T);
 type StateHook = { kind: 'state'; value: unknown; set: (action: any) => void };
 type MemoHook = { kind: 'memo'; value: unknown; deps: Dependencies };
 type EffectHook = { kind: 'effect'; effect: () => Cleanup; deps: Dependencies; cleanup: Cleanup; pending: boolean };
-type Hook = StateHook | MemoHook | EffectHook;
+export type Frame = { time: number; delta: number };
+export interface RenderTiming { renderMs: number; diffMs: number; patchMs: number; operations: number }
+type FrameHook = { kind: 'frame'; callback: (frame: Frame) => void; enabled: boolean };
+type SceneHook = { kind: 'scene'; slots: readonly SpriteSlot[]; description: SceneDescription };
+type Hook = StateHook | MemoHook | EffectHook | FrameHook | SceneHook;
 type ObservedHook =
   | { kind: 'state'; value: unknown }
   | { kind: 'memo'; value: unknown; reused: boolean }
-  | { kind: 'effect'; ran: boolean; cleaned: boolean };
+  | { kind: 'effect'; ran: boolean; cleaned: boolean }
+  | { kind: 'frame'; enabled: boolean }
+  | { kind: 'scene'; slots: number };
 export type RenderObservation =
   | {
     type: 'commit'; components: readonly string[]; hooks: readonly ObservedHook[];
@@ -38,9 +45,13 @@ export class FunctionComponent<P> {
   private busy = false;
   private pending = false;
   private rendered = false;
+  private batching = false;
+  private frameId: number | null = null;
+  private frameTime: number | null = null;
 
   constructor(private component: Component<P>, private container: Element, private props: P,
-    private observe?: (event: RenderObservation) => void) {}
+    private observe?: (event: RenderObservation) => void,
+    private timing?: (sample: RenderTiming) => void) {}
 
   mount(): void {
     if (rendering) throw new Error('렌더링 중 다른 루트를 mount할 수 없습니다.');
@@ -53,7 +64,7 @@ export class FunctionComponent<P> {
   update(): void {
     if (rendering) throw new Error('렌더링 중 update를 호출할 수 없습니다.');
     if (!this.mounted) throw new Error('mount 후 update를 호출하세요.');
-    if (this.busy) { this.pending = true; return; }
+    if (this.busy || this.batching) { this.pending = true; return; }
     this.busy = true;
     try {
       let passes = 0;
@@ -61,6 +72,7 @@ export class FunctionComponent<P> {
         if (++passes > 100) throw new Error('상태 업데이트가 반복됩니다. Effect 의존성을 확인하세요.');
         this.pending = false; this.cursor = 0; this.draft = this.hooks.slice();
         const components = this.observe ? [this.component.displayName || this.component.name || '(익명)'] : undefined;
+        const renderStart = this.timing ? performance.now() : 0;
         current = this; rendering = true;
         let result: ReturnType<typeof resolve>;
         try {
@@ -71,14 +83,19 @@ export class FunctionComponent<P> {
         } finally { rendering = false; }
         const { tree, bindings } = result;
         const previousTree = this.tree;
+        const diffStart = this.timing ? performance.now() : 0;
         const operations = diff(previousTree, tree);
+        const patchStart = this.timing ? performance.now() : 0;
         patch(this.container, operations);
+        const patchEnd = this.timing ? performance.now() : 0;
         // Capture the decisions before Effect execution clears the pending flags.
         const observed = components && this.draft.map((hook, index): ObservedHook => {
           switch (hook.kind) {
             case 'state': return { kind: 'state', value: hook.value };
             case 'memo': return { kind: 'memo', value: hook.value, reused: this.hooks[index] === hook };
             case 'effect': return { kind: 'effect', ran: hook.pending, cleaned: hook.pending && !!hook.cleanup };
+            case 'frame': return { kind: 'frame', enabled: hook.enabled };
+            case 'scene': return { kind: 'scene', slots: hook.slots.length };
           }
         });
         this.tree = tree; this.hooks = this.draft; this.rendered = true;
@@ -94,7 +111,10 @@ export class FunctionComponent<P> {
         if (components && observed) this.observe?.({
           type: 'commit', components, hooks: observed, operations, previousTree: structuredClone(previousTree),
         });
+        this.timing?.({ renderMs: diffStart - renderStart, diffMs: patchStart - diffStart,
+          patchMs: patchEnd - patchStart, operations: operations.length });
       } while (this.pending);
+      this.syncFrames();
     } finally { this.busy = false; }
   }
 
@@ -102,6 +122,7 @@ export class FunctionComponent<P> {
     if (rendering || this.busy) throw new Error('렌더링 또는 Effect 실행 중 unmount할 수 없습니다.');
     if (!this.mounted) return;
     this.mounted = false;
+    this.stopFrames();
     const errors: unknown[] = [];
     for (const hook of this.hooks) {
       if (hook.kind === 'effect' && hook.cleanup) {
@@ -113,6 +134,35 @@ export class FunctionComponent<P> {
     this.tree = []; this.hooks = []; this.draft = []; this.rendered = false;
     owners.delete(this.container);
     if (errors.length) throw new AggregateError(errors, 'Effect cleanup 실패');
+  }
+
+  private stopFrames(): void {
+    if (this.frameId !== null) this.container.ownerDocument.defaultView!.cancelAnimationFrame(this.frameId);
+    this.frameId = null; this.frameTime = null;
+  }
+
+  private syncFrames(): void {
+    if (!this.mounted || !this.hooks.some(hook => hook.kind === 'frame' && hook.enabled)) {
+      this.stopFrames(); return;
+    }
+    if (this.frameId !== null) return;
+    this.frameId = this.container.ownerDocument.defaultView!.requestAnimationFrame(time => {
+      this.frameId = null;
+      const delta = this.frameTime === null ? 0 : Math.max(0, time - this.frameTime);
+      this.frameTime = time; this.batching = true;
+      try {
+        for (const hook of this.hooks) {
+          if (!this.mounted) break;
+          if (hook.kind === 'frame' && hook.enabled) hook.callback({ time, delta });
+        }
+      } catch (error) {
+        this.stopFrames(); throw error;
+      } finally { this.batching = false; }
+      try {
+        if (this.mounted && this.pending) this.update();
+        this.syncFrames();
+      } catch (error) { this.stopFrames(); throw error; }
+    });
   }
 
   private bindEvents(bindings: Binding[]): void {
@@ -172,6 +222,29 @@ export class FunctionComponent<P> {
     this.draft[index] = { kind: 'effect', effect, deps: copyDeps(deps), cleanup: old?.cleanup,
       pending: !old || !sameDeps(old.deps, deps) };
   }
+
+  frame(callback: (frame: Frame) => void, enabled: boolean): void {
+    const { index } = this.slot('frame');
+    this.draft[index] = { kind: 'frame', callback, enabled };
+  }
+
+  scene(slots: readonly SpriteSlot[]): SceneDescription {
+    const { index, previous } = this.slot('scene');
+    const old = previous as SceneHook | undefined;
+    const before = old?.description.node;
+    const nodes = slots.map((slot, position) => {
+      if (!Number.isFinite(slot.x) || !Number.isFinite(slot.y)) throw new Error('스프라이트 좌표는 유한한 수여야 합니다.');
+      return old?.slots[position] && sameSprite(old.slots[position], slot) && before?.type === 'element'
+        ? before.children[position] : spriteNode(slot);
+    });
+    const unchanged = before?.type === 'element' && nodes.length === before.children.length
+      && nodes.every((node, position) => node === before.children[position]);
+    const node: VNode = unchanged ? before! : Object.freeze({ type: 'element', tag: 'div',
+      attrs: Object.freeze({ class: 'scene', 'aria-hidden': 'true' }), children: Object.freeze(nodes) as unknown as VTree });
+    const description: SceneDescription = Object.freeze({ type: SCENE, node });
+    this.draft[index] = { kind: 'scene', slots: slots.map(slot => Object.freeze({ ...slot })), description };
+    return description;
+  }
 }
 
 function root(): FunctionComponent<any> {
@@ -181,3 +254,5 @@ function root(): FunctionComponent<any> {
 export function useState<T>(initial: T | (() => T)): [T, (action: StateAction<T>) => void] { return root().state(initial); }
 export function useMemo<T>(factory: () => T, deps?: readonly unknown[]): T { return root().memo(factory, deps); }
 export function useEffect(effect: () => Cleanup, deps?: readonly unknown[]): void { root().effect(effect, deps); }
+export function useFrame(callback: (frame: Frame) => void, enabled = true): void { root().frame(callback, enabled); }
+export function useScene(slots: readonly SpriteSlot[]): SceneDescription { return root().scene(slots); }

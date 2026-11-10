@@ -557,3 +557,7 @@ button:disabled { opacity: .45; cursor: default; }
   .world-cup-winner-photo img { animation: none; }
   .world-cup-confetti { display: none; }
 }
+
+/* Last in keyboard order so existing tab-to-panel navigation stays intact. */
+.game-entry { position: fixed; left: 1.5rem; bottom: 1.5rem; color: var(--color-accent); font-size: .75rem; text-decoration: none; }
+#app:has(#phase-navigation[hidden]) .game-entry { display: none; }
