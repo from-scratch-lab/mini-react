@@ -9,7 +9,7 @@
 <p>
   <img src="https://img.shields.io/badge/Vanilla-JS-1d4ed8?style=for-the-badge&labelColor=0b2069">
   <img src="https://img.shields.io/badge/runtime_deps-0-1d4ed8?style=for-the-badge&labelColor=0b2069">
-  <img src="https://img.shields.io/badge/tests-395_passing-1d4ed8?style=for-the-badge&labelColor=0b2069">
+  <img src="https://img.shields.io/badge/tests-396_passing-1d4ed8?style=for-the-badge&labelColor=0b2069">
   <img src="https://img.shields.io/badge/fuzz-0_mismatch-1d4ed8?style=for-the-badge&labelColor=0b2069">
 </p>
 
@@ -35,7 +35,7 @@
 
 ## ✅ Part 1 · 필수 기능 증명
 
-<img src="docs/images/part1.svg" alt="Part 1: Phase 1, Phase 2, 연결과 정확성. 테스트 237개에서 395개로" width="100%">
+<img src="docs/images/part1.svg" alt="Part 1: Phase 1, Phase 2, 연결과 정확성. 테스트 237개에서 396개로" width="100%">
 
 | 영역 | 구현한 것 |
 |---|---|
@@ -171,7 +171,7 @@ npm run serve                  # 데모 → http://127.0.0.1:5173/demo/
                                # LIS 실험 → http://127.0.0.1:5173/demo/bench/lis.html
 node scripts/fuzz-keyed.js     # 두 모드 정확성 fuzz (1,000쌍 + 1,000쌍)
 npm run bench                  # 대량 목록 벤치마크 (Node + jsdom)
-node scripts/readme-charts.js  # 이 README의 이미지 다시 만들기 (CSV에서 읽음)
+node scripts/readme-charts.js  # 이 README의 이미지 다시 만들기 (Part 2 수치는 CSV에서 읽고, 테스트 수 추이·공통 기반 수치는 스크립트 안 상수)
 ```
 
 <details>
@@ -181,6 +181,7 @@ node scripts/readme-charts.js  # 이 README의 이미지 다시 만들기 (CSV�
 - Node `^20.19.0 || >=22.12.0` (CI는 Node 20)
 - 의존성을 바꿀 때는 `npx npm@11 install <패키지>` (npm 10.9.x의 `npm install`은 vitest@4의 선택적 peer 의존성 계산에서 실패, `npm ci`는 정상)
 - `npm run serve`는 127.0.0.1에서만 열리고 `demo/` · `src/` · `scripts/bench/`와 React UMD 두 파일만 내보냅니다.
+- 데모 페이지는 Pretendard 글꼴 CSS를 jsdelivr에서 불러옵니다(프레임워크 아님). 오프라인이면 시스템 글꼴로 보입니다.
 
 ```
 src/

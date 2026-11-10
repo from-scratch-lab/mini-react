@@ -162,7 +162,7 @@ function part1() {
   parts.push(card(cx, 122, cw, 298));
   parts.push(`<text x="${cx + 24}" y="152" font-size="15" font-weight="800" fill="${C.ink}">병합마다 늘어난 테스트</text>`);
   parts.push(`<text x="${cx + 24}" y="172" font-size="12" fill="${C.ink2}">모든 병합은 check.sh 통과가 조건</text>`);
-  const pts = [237, 244, 268, 279, 290, 301, 320, 339, 351, 355, 392, 395];
+  const pts = [237, 244, 268, 279, 290, 301, 320, 339, 351, 355, 392, 396];
   const labels = ['시작', '', '벤치', '', '핸들러', 'fuzz', '', 'B7', '프리셋', '', 'LIS', ''];
   const last = pts[pts.length - 1];
   const px = (i) => cx + 40 + (i / (pts.length - 1)) * (cw - 80);
@@ -177,7 +177,7 @@ function part1() {
   });
   parts.push(`<rect x="${px(pts.length - 1) - 62}" y="${py(last) - 40}" width="62" height="26" rx="13" fill="${C.navy}"/><text x="${px(pts.length - 1) - 31}" y="${py(last) - 22}" font-size="13" font-weight="800" text-anchor="middle" fill="#ffffff">${last}</text>`);
   parts.push(`<text x="${px(0)}" y="${py(237) - 12}" font-size="12" font-weight="700" text-anchor="middle" fill="${C.ink2}">237</text>`);
-  return slide(H, { title: 'Part 1 · 필수 기능 증명', subtitle: '과제 요구사항을 조건마다 증거(함수·테스트 이름)로 확인 — 체크리스트 전 항목 충족', tag: 'PART 1' }, parts.join('\n'), 'Part 1 필수 기능 증명: Phase 1, Phase 2, 연결과 정확성, 테스트 237개에서 395개로');
+  return slide(H, { title: 'Part 1 · 필수 기능 증명', subtitle: '과제 요구사항을 조건마다 증거(함수·테스트 이름)로 확인 — 체크리스트 전 항목 충족', tag: 'PART 1' }, parts.join('\n'), 'Part 1 필수 기능 증명: Phase 1, Phase 2, 연결과 정확성, 테스트 237개에서 396개로');
 }
 
 /** Part 2 핵심 결과: 도넛 4개 + 아래 설명 카드 */
