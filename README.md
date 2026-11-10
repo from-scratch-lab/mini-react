@@ -9,7 +9,7 @@
 <p>
   <img src="https://img.shields.io/badge/Vanilla-JS-1d4ed8?style=for-the-badge&labelColor=0b2069">
   <img src="https://img.shields.io/badge/runtime_deps-0-1d4ed8?style=for-the-badge&labelColor=0b2069">
-  <img src="https://img.shields.io/badge/tests-392_passing-1d4ed8?style=for-the-badge&labelColor=0b2069">
+  <img src="https://img.shields.io/badge/tests-395_passing-1d4ed8?style=for-the-badge&labelColor=0b2069">
   <img src="https://img.shields.io/badge/fuzz-0_mismatch-1d4ed8?style=for-the-badge&labelColor=0b2069">
 </p>
 
@@ -35,7 +35,7 @@
 
 ## ✅ Part 1 · 필수 기능 증명
 
-<img src="docs/images/part1.svg" alt="Part 1: Phase 1, Phase 2, 연결과 정확성. 테스트 237개에서 392개로" width="100%">
+<img src="docs/images/part1.svg" alt="Part 1: Phase 1, Phase 2, 연결과 정확성. 테스트 237개에서 395개로" width="100%">
 
 | 영역 | 구현한 것 |
 |---|---|
