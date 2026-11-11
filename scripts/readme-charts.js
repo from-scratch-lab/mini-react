@@ -13,19 +13,19 @@ import { fileURLToPath } from 'node:url';
 const OUT = fileURLToPath(new URL('../docs/images/', import.meta.url));
 const CSV = fileURLToPath(new URL('../docs/perf/lis-data/2026-11-09.csv', import.meta.url));
 
-// 파랑 단색 계열 (남색 → 파랑 → 연파랑). LIS = 파랑, 단방향 스캔 = 연파랑, React = 남색
+// 토스풍 파랑 계열 (토스 파랑 #3182F6 + 회색 단계). LIS = 파랑, 단방향 스캔 = 연파랑, React = 진회색
 const C = {
-  navy: '#0b2069',
-  royal: '#1d4ed8',
-  blue: '#3b6ef5',
-  sky: '#8db0ff',
-  pale: '#c9d7fb',
-  mist: '#eef3ff',
-  ink: '#111827',
-  ink2: '#6b7280',
-  line: '#e5e9f2',
+  navy: '#333d4b',
+  royal: '#3182f6',
+  blue: '#4593fc',
+  sky: '#90c2ff',
+  pale: '#c9e2ff',
+  mist: '#e8f3ff',
+  ink: '#191f28',
+  ink2: '#6b7684',
+  line: '#e5e8eb',
   card: '#ffffff',
-  page: '#f6f8fc',
+  page: '#f9fafb',
 };
 const FONT = "Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif";
 const W = 960;
@@ -50,12 +50,12 @@ const D = readCsv();
 
 // ---------- 슬라이드 부품 ----------
 const DEFS = `<defs>
-<filter id="sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#1e2a55" flood-opacity="0.10"/></filter>
-<filter id="sh2" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#1e2a55" flood-opacity="0.08"/></filter>
+<filter id="sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#022047" flood-opacity="0.10"/></filter>
+<filter id="sh2" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#022047" flood-opacity="0.08"/></filter>
 <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.royal}" stop-opacity="0.55"/><stop offset="1" stop-color="${C.royal}" stop-opacity="0.04"/></linearGradient>
 <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.sky}" stop-opacity="0.45"/><stop offset="1" stop-color="${C.sky}" stop-opacity="0.05"/></linearGradient>
 <linearGradient id="gBar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.blue}"/><stop offset="1" stop-color="${C.royal}"/></linearGradient>
-<linearGradient id="gNavy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1c3aa9"/><stop offset="1" stop-color="${C.navy}"/></linearGradient>
+<linearGradient id="gNavy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4e5968"/><stop offset="1" stop-color="${C.navy}"/></linearGradient>
 </defs>`;
 
 /** 슬라이드 한 장: 흰 카드 + 제목·부제 + 오른쪽 위 태그 */
@@ -93,48 +93,49 @@ const lines = (x, y, arr, size = 12.5, color = C.ink2, gap = 19) =>
 
 // ---------- 슬라이드 ----------
 
-/** 배너 */
+/** 배너: 흰 카드 위에 큰 제목 + 오른쪽에 LIS 그림 (README 흰 바탕에 어울리게) */
 function banner() {
   const H = 300;
   const keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
   const next = ['A', 'F', 'C', 'D', 'B', 'E', 'G'];
   const stays = new Set(['A', 'C', 'D', 'E', 'G']);
-  const x0 = 590;
+  const MOVE = '#ff8a00';
+  const x0 = 588;
   const cell = 40;
   const box = (k, x, y, stay) =>
-    `<rect x="${x}" y="${y}" width="32" height="32" rx="8" fill="${stay ? '#5b8cff' : 'none'}" stroke="${stay ? '#5b8cff' : '#ffb27a'}" stroke-width="2"/><text x="${x + 16}" y="${y + 21}" font-size="14" font-weight="800" text-anchor="middle" fill="${stay ? '#ffffff' : '#ffb27a'}">${k}</text>`;
+    `<rect x="${x}" y="${y}" width="32" height="32" rx="9" fill="${stay ? C.royal : '#ffffff'}" stroke="${stay ? C.royal : MOVE}" stroke-width="2"/><text x="${x + 16}" y="${y + 21}" font-size="14" font-weight="800" text-anchor="middle" fill="${stay ? '#ffffff' : MOVE}">${k}</text>`;
   const parts = [
-    `<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#081a5c"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
-<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffb27a"/></marker></defs>`,
-    `<rect width="${W}" height="${H}" rx="18" fill="url(#bg)"/>`,
-    `<circle cx="${W - 60}" cy="40" r="120" fill="#ffffff" fill-opacity="0.04"/><circle cx="80" cy="${H}" r="150" fill="#ffffff" fill-opacity="0.04"/>`,
-    `<text x="52" y="96" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="-1.5">mini-react</text>`,
-    `<text x="54" y="134" font-size="17" fill="#c7d6ff">Virtual DOM · Diff · Patch · Hooks를 직접 구현하고,</text>`,
-    `<text x="54" y="160" font-size="17" fill="#c7d6ff">LIS 기반 keyed 재조정이 <tspan font-weight="800" fill="#ffffff">언제 이득이고 언제 아닌지</tspan> 측정했다</text>`,
+    `<defs><filter id="bsh" x="-5%" y="-10%" width="110%" height="130%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#022047" flood-opacity="0.07"/></filter>
+<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${MOVE}"/></marker></defs>`,
+    `<rect x="12" y="8" width="${W - 24}" height="${H - 28}" rx="28" fill="#ffffff" stroke="${C.line}" filter="url(#bsh)"/>`,
+    `<text x="52" y="66" font-size="14" font-weight="700" fill="${C.royal}">크래프톤 정글 13기 · 미니 React</text>`,
+    `<text x="50" y="118" font-size="50" font-weight="800" fill="${C.ink}" letter-spacing="-1.8">mini-react</text>`,
+    `<text x="52" y="156" font-size="17.5" fill="#4e5968">컴포넌트가 마운트되고, 클릭 한 번에 바뀌고,</text>`,
+    `<text x="52" y="182" font-size="17.5" fill="#4e5968">언마운트되기까지 <tspan font-weight="800" fill="${C.ink}">바뀐 곳만 고치는 엔진</tspan>을 직접 만들었다</text>`,
   ];
-  const chip = (x, a, b) => {
-    const w = textWidth(a, 13) + textWidth(b, 13) + 40;
-    return [`<rect x="${x}" y="198" width="${w}" height="36" rx="18" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.3"/><text x="${x + 18}" y="221" font-size="13" font-weight="800" fill="#ffffff">${esc(a)}<tspan font-weight="400" fill="#dbe5ff"> ${esc(b)}</tspan></text>`, w];
-  };
-  const [c1, w1] = chip(52, 'Part 1', '필수 기능 증명');
-  const [c2] = chip(52 + w1 + 12, 'Part 2', 'LIS 차별화 연구');
-  parts.push(c1, c2, `<text x="54" y="270" font-size="12.5" fill="#9fb6f5">크래프톤 정글 13기 · Vanilla JS · 런타임 의존성 0</text>`);
-  parts.push(`<rect x="${x0 - 22}" y="44" width="352" height="214" rx="16" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.15"/>`);
-  parts.push(`<text x="${x0}" y="78" font-size="12" fill="#9fb6f5">이전</text><text x="${x0}" y="200" font-size="12" fill="#9fb6f5">다음</text>`);
-  keys.forEach((k, i) => parts.push(box(k, x0 + 36 + i * cell, 60, stays.has(k))));
-  next.forEach((k, i) => parts.push(box(k, x0 + 36 + i * cell, 182, stays.has(k))));
+  let cx = 52;
+  for (const [i, label] of ['마운트', '업데이트', 'LIS', '언마운트'].entries()) {
+    const w = textWidth(label, 13) + 30;
+    parts.push(`<rect x="${cx}" y="208" width="${w}" height="32" rx="16" fill="${i === 2 ? C.mist : '#f2f4f6'}"/><text x="${cx + w / 2}" y="229" font-size="13" font-weight="700" text-anchor="middle" fill="${i === 2 ? C.royal : '#4e5968'}">${esc(label)}</text>`);
+    cx += w + 8;
+    if (i < 3) parts.push(`<text x="${cx - 2}" y="229" font-size="13" fill="${C.ink2}">→</text>`), (cx += 14);
+  }
+  parts.push(`<rect x="${x0 - 22}" y="40" width="352" height="210" rx="22" fill="${C.page}"/>`);
+  parts.push(`<text x="${x0}" y="76" font-size="12" font-weight="600" fill="${C.ink2}">이전</text><text x="${x0}" y="198" font-size="12" font-weight="600" fill="${C.ink2}">다음</text>`);
+  keys.forEach((k, i) => parts.push(box(k, x0 + 36 + i * cell, 58, stays.has(k))));
+  next.forEach((k, i) => parts.push(box(k, x0 + 36 + i * cell, 180, stays.has(k))));
   for (const k of stays) {
     const a = x0 + 36 + keys.indexOf(k) * cell + 16;
     const b = x0 + 36 + next.indexOf(k) * cell + 16;
-    parts.push(`<line x1="${a}" y1="96" x2="${b}" y2="178" stroke="#5b8cff" stroke-opacity="0.45" stroke-width="1.5"/>`);
+    parts.push(`<line x1="${a}" y1="94" x2="${b}" y2="176" stroke="${C.royal}" stroke-opacity="0.3" stroke-width="1.5"/>`);
   }
   for (const k of ['B', 'F']) {
     const a = x0 + 36 + keys.indexOf(k) * cell + 16;
     const b = x0 + 36 + next.indexOf(k) * cell + 16;
-    parts.push(`<path d="M${a},96 C${a},138 ${b},138 ${b},176" fill="none" stroke="#ffb27a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>`);
+    parts.push(`<path d="M${a},94 C${a},136 ${b},136 ${b},174" fill="none" stroke="${MOVE}" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>`);
   }
-  parts.push(`<text x="${x0 + 36}" y="240" font-size="12.5" fill="#dbe5ff"><tspan fill="#5b8cff" font-weight="800">■</tspan> 그대로 둔다 (LIS)    <tspan fill="#ffb27a" font-weight="800">■</tspan> 옮긴다 (2개)</text>`);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="mini-react: LIS 기반 keyed 재조정이 언제 이득인지 측정한 미니 React" font-family="${FONT}">
+  parts.push(`<text x="${x0 + 36}" y="238" font-size="12.5" fill="#4e5968"><tspan fill="${C.royal}" font-weight="800">■</tspan> 그대로 둔다 (LIS)    <tspan fill="${MOVE}" font-weight="800">■</tspan> 옮긴다 (2개)</text>`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="mini-react: 컴포넌트가 마운트되고 바뀌고 언마운트되기까지 바뀐 곳만 고치는 엔진" font-family="${FONT}">
 ${parts.join('\n')}
 </svg>
 `;

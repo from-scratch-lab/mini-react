@@ -69,10 +69,7 @@ const app = mountComponent(Counter, document.querySelector('#root'), {}, {
 
 종합 데모(`demo/integrated/`)에서 **맨 아래 → 맨 위**를 한 번 누른 장면입니다. 아래 그림 넷은 모두 **같은 커밋(렌더 #2)** 을 보여 줍니다. 위에서 아래로 Phase 2(상태) → Phase 1(diff · patch) → Part 2(LIS) 순서입니다.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="images/demo-app-dark.png">
-  <img src="images/demo-app-light.png" alt="스프린트 백로그 앱. 맨 아래에 있던 'useEffect 정리 함수'가 맨 위로 올라왔고 뒤로가기 버튼이 켜졌다">
-</picture>
+<img src="images/demo-app.png" alt="스프린트 백로그 앱. 맨 아래에 있던 'useEffect 정리 함수'가 맨 위로 올라왔고 뒤로가기 버튼이 켜졌다" width="100%">
 
 **① 상태가 바뀐다 (Phase 2)** — 루트 컴포넌트의 `useState` 하나가 목록 기록(past · present · future)을 들고 있습니다.
 
@@ -83,10 +80,7 @@ const app = mountComponent(Counter, document.querySelector('#root'), {}, {
 | `5. useMemo` 총점 | 21 | 21 (deps가 바뀌어 다시 계산, 값은 같음) |
 | `6. useMemo` 우선 항목 수 | 1 | 1 (같음) |
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="images/demo-state-dark.png">
-  <img src="images/demo-state-light.png" alt="hooks 배열 9칸. 0번 useState의 present가 바뀌었고 past가 1개가 됐다. useMemo 두 칸은 deps가 바뀌어 다시 계산했지만 값은 같다">
-</picture>
+<img src="images/demo-state.png" alt="hooks 배열 9칸. 0번 useState의 present가 바뀌었고 past가 1개가 됐다. useMemo 두 칸은 deps가 바뀌어 다시 계산했지만 값은 같다" width="100%">
 
 **② diff가 패치 2개만 낸다 (Phase 1)** — 가상 노드 117개를 비교해 실제로 고칠 곳은 둘입니다.
 
@@ -95,17 +89,11 @@ const app = mountComponent(Counter, document.querySelector('#root'), {}, {
 - 이벤트 핸들러 40개는 렌더마다 새 함수지만 패치가 아니라 [핸들러 상자](perf/handler-box.md) 교체로 처리해 DOM을 건드리지 않습니다
 - 실제 DOM 변경 기록(MutationObserver)은 3건: 속성 1건 + 이동 1번(빼기 + 넣기 2건)
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="images/demo-patches-dark.png">
-  <img src="images/demo-patches-light.png" alt="패치 목록: PROPS 1개(button disabled true에서 false), MOVE 1개(li key 5 위치 이동), 이벤트 핸들러 교체 40건은 DOM 변경 없음">
-</picture>
+<img src="images/demo-patches.png" alt="패치 목록: PROPS 1개(button disabled true에서 false), MOVE 1개(li key 5 위치 이동), 이벤트 핸들러 교체 40건은 DOM 변경 없음" width="100%">
 
 **③ 왜 1개만 옮기나 (Part 2)** — 새 순서대로 이전 위치를 늘어놓으면 `[4, 0, 1, 2, 3]`. 이 중 가장 긴 증가 부분 수열 `[0, 1, 2, 3]`은 이미 순서가 맞으니 두고 나머지 하나만 옮깁니다. React의 `lastPlacedIndex` 규칙이면 같은 입력에서 4개를 옮깁니다(규칙대로 센 값. 실제 React 18.3.1이 옮긴 수가 이 규칙과 같다는 것은 [Part 2](#-part-2--lis-차별화-연구)에서 측정했습니다).
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="images/demo-lis-dark.png">
-  <img src="images/demo-lis-light.png" alt="LIS 카드: 이전 위치 4, 0, 1, 2, 3 중 0~3은 고정, 4만 이동. 이 구현 1번 이동, React의 lastPlacedIndex 규칙 4번 이동">
-</picture>
+<img src="images/demo-lis.png" alt="LIS 카드: 이전 위치 4, 0, 1, 2, 3 중 0~3은 고정, 4만 이동. 이 구현 1번 이동, React의 lastPlacedIndex 규칙 4번 이동" width="100%">
 
 <br>
 
