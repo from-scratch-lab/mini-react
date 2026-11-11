@@ -829,6 +829,11 @@ button.ghost {
   padding: 2px 10px;
 }
 
+/* 언마운트 버튼 뒤에 "최신 따라가기"가 붙으면 둘을 나란히 오른쪽에 둔다 */
+.pipeline-head button + button {
+  margin-left: 0;
+}
+
 .stage {
   background: var(--card);
   border-radius: var(--radius);
@@ -871,6 +876,11 @@ button.ghost {
 .hook-list li.changed {
   background: var(--warn-bg);
   color: var(--warn-text);
+  border-radius: 4px;
+}
+
+.hook-list li.cleanup {
+  background: var(--accent-soft);
   border-radius: 4px;
 }
 
@@ -1366,4 +1376,21 @@ button.ghost {
 
 .index-card span {
   color: var(--muted);
+}
+
+/* 발표의 주인공: 한 줄을 다 쓰는 강조 카드 */
+.index-card.featured {
+  grid-column: 1 / -1;
+  padding: 28px;
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.index-card.featured strong {
+  font-size: 1.4em;
+}
+
+.index-card.featured small {
+  color: var(--accent);
+  font-weight: 600;
 }

@@ -18,6 +18,17 @@ export const CONCEPTS = {
     ],
     react: 'React도 첫 렌더는 전체를 만들지만, 서버에서 그린 HTML이 있으면 새로 만들지 않고 이어받습니다(hydration). 이 프로젝트의 Phase 1 페이지가 비슷한 일을 합니다.',
   },
+  unmount: {
+    title: '언마운트 (unmount): 정리 함수를 부르고 화면에서 지운다',
+    basics: 'render-commit',
+    body: (c) => [
+      `먼저 useEffect가 돌려준 정리 함수 ${c.cleanups}개를 부릅니다. 이 데모에서는 Ctrl+Z 단축키 리스너를 document에서 떼어 냅니다.`,
+      'diff(이전 트리, null)는 "루트를 통째로 지워라"는 REMOVE 하나만 내놓고, patch가 앱 영역을 비웁니다. 기억하던 트리도 버립니다.',
+      '언마운트한 뒤에는 setState가 와도 다시 그리지 않습니다. "다시 마운트"는 새 인스턴스라 상태가 처음 값부터 시작합니다.',
+    ],
+    react:
+      'React는 컴포넌트마다 언마운트가 있어서, 목록에서 행 하나가 사라지면 그 행 컴포넌트의 effect 정리만 돕니다. 이 프로젝트는 과제 조건상 훅이 루트에만 있어 생명주기도 루트 단위입니다.',
+  },
   reorder: {
     title: 'key로 재정렬: LIS로 이동을 최소화한다',
     basics: 'lis',

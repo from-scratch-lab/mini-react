@@ -35,6 +35,7 @@
           <li><b>편집</b>: 제목 <code>&lt;span&gt;</code>이 <code>&lt;input&gt;</code>으로 바뀌어 <code>REPLACE</code>.</li>
           <li><b>☆</b>(우선순위): 행의 class는 <code>PROPS</code>, ★ 글자와 "우선 N개"는 <code>TEXT</code>. <b>+1</b>: 점수와 합계 <code>TEXT</code> 2개.</li>
           <li><b>첫 항목 +1 ×3</b>: setState를 3번 불러도 렌더는 1번(배칭). 타임라인 번호가 하나만 늘어납니다.</li>
+          <li><b>새로 고침(F5)</b>: 모니터의 렌더 #1이 마운트입니다. 트리 전체를 <code>CREATE</code> 1개로 만들고, 훅 칸이 처음 값으로 생깁니다. 모니터의 <b>언마운트</b>를 누르면 정리 함수가 돌고 <code>REMOVE</code> 1개로 앱이 사라지며, <b>다시 마운트</b>는 처음 상태부터 새로 그립니다.</li>
           <li><b>← 뒤로가기 · 앞으로가기 → · 초기화</b> (<code>Ctrl+Z</code> / <code>Ctrl+Shift+Z</code>): 이전 상태로 다시 렌더하면 diff가 필요한 만큼만 되돌립니다. ×3 뒤에는 뒤로가기를 3번 해야 처음으로 돌아갑니다.</li>
         </ul>
       </details>
@@ -88,7 +89,7 @@
           실제 DOM이 바뀌면 브라우저는 레이아웃을 다시 계산하고(Reflow) 화면을 다시 칠해야 합니다(Repaint). 같은 작업 안의 변경은 모아서 한 번에
           처리하지만, 바꾸는 노드가 많거나 중간에 크기·위치를 읽으면(강제 동기 레이아웃) 비용이 커집니다.
           가상 DOM은 화면 구조를 가벼운 자바스크립트 객체(<code>{ type, props, children, key }</code>)로 들고 있다가,
-          새 트리와 비교해 <b>꼭 바뀐 곳만</b> 실제 DOM에 반영합니다. 오른쪽 패널 ④의 "변경 기록"이 가상 노드 수보다 훨씬 적은 이유입니다.
+          새 트리와 비교해 <b>꼭 바뀐 곳만</b> 실제 DOM에 반영합니다. 위 모니터 ④의 "변경 기록"이 가상 노드 수보다 훨씬 적은 이유입니다.
         </p>
         <p>
           측정해 보면 이렇습니다(<code>docs/benchmarks.md</code>, 1,000행 표, 실제 DOM 변경은 <code>MutationObserver</code> 기록 수).
@@ -134,7 +135,7 @@
       <section id="basics-render-commit">
         <h3>5. 렌더 단계와 커밋 단계</h3>
         <p>
-          한 번의 업데이트는 두 단계로 나뉩니다. <b>렌더 단계</b>는 컴포넌트를 실행하고 이전 트리와 비교해 바꿀 것을 정합니다(오른쪽 ①~③).
+          한 번의 업데이트는 두 단계로 나뉩니다. <b>렌더 단계</b>는 컴포넌트를 실행하고 이전 트리와 비교해 바꿀 것을 정합니다(위 모니터 ①~③).
           실제 DOM은 건드리지 않습니다. <b>커밋 단계</b>는 정해진 변경을 실제 DOM에 한 번에 반영합니다(④). 이 구현은 그 직후 useEffect를 동기로 실행합니다.
         </p>
         <p>
@@ -149,7 +150,7 @@
         <h3>6. 훅: 함수는 매번 새로 실행되는데 상태는 어디에 남는가</h3>
         <p>
           컴포넌트 함수는 렌더할 때마다 처음부터 실행되므로 지역 변수는 매번 초기화됩니다. 그래서 상태는 함수 밖, 컴포넌트마다 하나씩 있는
-          <code>hooks</code> 배열에 둡니다. 훅은 "이번 렌더에서 몇 번째로 불렸는가"로 자기 칸을 찾습니다. 오른쪽 ①의 번호가 그 칸입니다.
+          <code>hooks</code> 배열에 둡니다. 훅은 "이번 렌더에서 몇 번째로 불렸는가"로 자기 칸을 찾습니다. 위 모니터 ①의 번호가 그 칸입니다.
         </p>
         <ul>
           <li><code>useState</code>: 칸에 값을 두고, setState는 값을 바꾼 뒤 다시 렌더를 예약합니다.</li>
@@ -206,7 +207,7 @@
       <section id="basics-change-detection">
         <h3>9. DOM 변화 감지: 무엇이 바뀌었는지 브라우저에게 듣는 방법</h3>
         <p>
-          오른쪽 패널 ④와 Phase 1 페이지의 "실제 DOM 변경 N건"은 <code>MutationObserver</code>로 셉니다. 지켜볼 노드와 종류
+          위 모니터 ④와 Phase 1 페이지의 "실제 DOM 변경 N건"은 <code>MutationObserver</code>로 셉니다. 지켜볼 노드와 종류
           (<code>childList</code> 자식 추가·삭제, <code>attributes</code> 속성, <code>characterData</code> 글자, <code>subtree</code> 자손 포함)를 정해 두면,
           브라우저가 변경을 기록(MutationRecord)으로 모아 두었다가 마이크로태스크에서 한 번에 알려 줍니다. 이 페이지는 patch 직후
           <code>takeRecords()</code>로 쌓인 기록을 바로 꺼내 셉니다. 그래서 "방금 그 patch가 바꾼 것"만 정확히 셀 수 있습니다.
