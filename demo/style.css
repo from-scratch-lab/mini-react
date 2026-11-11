@@ -1,65 +1,42 @@
 /*
- * 디자인 토큰: react.dev 학습 페이지(본문 #404756, 제목 #23272f, 링크 #087ea4, 카드 #f6f7f9·16px,
- * Note #f4fbf9/#2b6e62, Pitfall #fef5e7/#c76a15)를 바탕으로, 한글은 Pretendard로 읽기 좋게 맞췄다.
+ * 디자인 토큰: 토스(toss.im)처럼 흰 바탕 + 토스 파랑 #3182F6 + 연회색 카드, 큰 굵은 제목과 넉넉한 여백.
+ * 회색 단계는 토스 디자인 시스템의 grey 50~900(#f9fafb ~ #191f28)을 따른다.
+ * README에 흰 바탕 캡처로 붙이므로 라이트 테마 하나만 둔다.
  */
 :root {
   --page-width: 1440px;
   --bg: #ffffff;
   --panel: #ffffff;
-  --card: #f6f7f9;
-  --text: #404756;
-  --heading: #23272f;
-  --muted: #6b7385;
-  --line: #e5e7eb;
-  --accent: #087ea4;
+  --card: #f9fafb;
+  --card-strong: #f2f4f6;
+  --text: #4e5968;
+  --heading: #191f28;
+  --muted: #8b95a1;
+  --line: #e5e8eb;
+  --accent: #3182f6;
+  --accent-strong: #1b64da;
   --accent-text: #ffffff;
-  --accent-soft: #e6f7ff;
-  --code-bg: #16181d;
-  --code-text: #e4e6eb;
-  --inline-code: rgba(153, 161, 179, 0.14);
-  --note-bg: #f4fbf9;
-  --note-text: #2b6e62;
-  --warn-bg: #fef5e7;
-  --warn-text: #c76a15;
-  --deep-bg: #f5f3ff;
-  --deep-text: #5b46b8;
-  --bezel: #23272f;
-  --key-shadow: #d4d8e0;
-  --op-create: #1f9d55;
-  --op-remove: #d64545;
-  --op-replace: #9b5bd0;
-  --op-props: #087ea4;
-  --op-text: #c76a15;
-  --op-move: #0e9aa7;
-  --radius: 16px;
+  --accent-soft: #e8f3ff;
+  --code-bg: #f9fafb;
+  --code-text: #333d4b;
+  --inline-code: #f2f4f6;
+  --note-bg: #f0faf6;
+  --note-text: #03865a;
+  --warn-bg: #fff8e6;
+  --warn-text: #d56f00;
+  --deep-bg: #e8f3ff;
+  --deep-text: #1b64da;
+  --bezel: #ffffff;
+  --key-shadow: #e5e8eb;
+  --shadow: 0 2px 6px rgba(2, 32, 71, 0.04), 0 12px 32px rgba(2, 32, 71, 0.07);
+  --op-create: #03b26c;
+  --op-remove: #f04452;
+  --op-replace: #a234c7;
+  --op-props: #3182f6;
+  --op-text: #fe9800;
+  --op-move: #18a5a5;
+  --radius: 20px;
   color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1b1e24;
-    --panel: #23272f;
-    --card: #2b303a;
-    --text: #c9cdd6;
-    --heading: #f3f4f6;
-    --muted: #99a1b3;
-    --line: #343a46;
-    --accent: #58c4dc;
-    --accent-text: #16181d;
-    --accent-soft: #10303a;
-    --code-bg: #16181d;
-    --code-text: #e4e6eb;
-    --inline-code: rgba(153, 161, 179, 0.18);
-    --note-bg: #13302b;
-    --note-text: #7fd6c2;
-    --warn-bg: #3a2a12;
-    --warn-text: #f2b56b;
-    --deep-bg: #2a2440;
-    --deep-text: #c2b5ff;
-    --bezel: #0f1115;
-    --key-shadow: #12151a;
-    color-scheme: dark;
-  }
 }
 
 * {
@@ -1393,4 +1370,240 @@ button.ghost {
 .index-card.featured small {
   color: var(--accent);
   font-weight: 600;
+}
+
+/* ───────── 토스풍 마감: 흰 바탕 위에 그림자 있는 흰 카드, 납작한 회색 버튼, 큰 제목 ───────── */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.page-head {
+  padding: 28px 16px 12px;
+}
+
+.page-head h1 {
+  font-size: 2rem;
+  line-height: 1.3;
+}
+
+.page-head p {
+  font-size: 1.05rem;
+}
+
+/* 내비게이션: 밑줄 대신 회색 알약 */
+.site-nav {
+  padding-top: 18px;
+  gap: 6px;
+}
+
+.site-nav a {
+  border-bottom: 0;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.site-nav a:hover {
+  background: var(--card);
+  color: var(--text);
+}
+
+.site-nav a[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 버튼: 테두리 없는 회색 · 파랑 */
+button {
+  border: 0;
+  background: var(--card-strong);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-weight: 600;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--line);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+button.primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+
+.timeline button.current {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+input:not([type]),
+input[type='text'],
+textarea {
+  border-radius: 12px;
+}
+
+/* 종합 페이지: 모니터·키보드를 흰 카드 두 장으로 */
+.flow li {
+  border: 0;
+  background: var(--card-strong);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.monitor {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 12px 12px 16px;
+  box-shadow: var(--shadow);
+}
+
+.monitor-bar {
+  color: var(--muted);
+  padding: 4px 10px 12px;
+}
+
+.monitor-dots i,
+.monitor-dots i:nth-child(2),
+.monitor-dots i:nth-child(3) {
+  background: var(--line);
+}
+
+.monitor-screen {
+  padding: 12px 12px 4px;
+}
+
+.monitor-stand {
+  height: 24px;
+}
+
+.monitor-stand span {
+  display: none;
+}
+
+.pipeline-head h2 {
+  font-size: 1.4rem;
+}
+
+.step {
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.keyboard {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 24px 26px 26px;
+  box-shadow: var(--shadow);
+}
+
+.keyboard-head h2 {
+  font-size: 1.3rem;
+}
+
+.keyboard .toolbar button,
+.keyboard .add-form button {
+  background: var(--card-strong);
+  border: 0;
+  border-radius: 12px;
+  padding: 9px 16px;
+  color: var(--heading);
+}
+
+.keyboard .toolbar button:hover:not(:disabled),
+.keyboard .add-form button:hover:not(:disabled) {
+  background: var(--line);
+}
+
+.keyboard .toolbar button:active,
+.keyboard .add-form button:active:not(:disabled) {
+  transform: scale(0.97);
+  border-bottom-width: 0;
+}
+
+.keyboard .add-form button.primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.keyboard .add-form button.primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+
+.keyboard .backlog {
+  border: 1px solid var(--card-strong);
+  border-radius: 16px;
+}
+
+.keyboard .backlog li + li {
+  border-top: 1px solid var(--card-strong);
+}
+
+/* 첫 화면 카드 */
+.index {
+  gap: 14px;
+}
+
+.index-card {
+  border: 0;
+  background: var(--card);
+  border-radius: 24px;
+  padding: 24px 26px;
+  transition: background-color 0.15s ease;
+}
+
+.index-card:hover {
+  background: var(--card-strong);
+}
+
+.index-card strong {
+  color: var(--heading);
+  font-size: 1.15rem;
+}
+
+.index-card.featured {
+  background: var(--accent);
+  border: 0;
+  padding: 34px 32px;
+}
+
+.index-card.featured:hover {
+  background: var(--accent-strong);
+}
+
+.index-card.featured strong {
+  color: #ffffff;
+  font-size: 1.7rem;
+}
+
+.index-card.featured span,
+.index-card.featured small {
+  color: #dbeafe;
+}
+
+/* 기본 개념: 테두리 대신 연회색 카드 */
+.basics > section {
+  border: 0;
+  background: var(--card);
+  border-radius: 24px;
+  padding: 22px 26px;
+}
+
+.basics > section:target {
+  box-shadow: 0 0 0 2px var(--accent);
 }

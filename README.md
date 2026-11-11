@@ -1,16 +1,16 @@
 <div align="center">
 
-<img src="docs/images/banner.svg" alt="mini-react — Virtual DOM · Diff · Patch · Hooks를 직접 구현하고, LIS 기반 keyed 재조정이 언제 이득인지 측정했다" width="100%">
+<img src="docs/images/banner.svg" alt="mini-react — 컴포넌트가 마운트되고, 클릭 한 번에 바뀌고, 언마운트되기까지 바뀐 곳만 고치는 엔진을 직접 만들었다" width="100%">
 
 <br>
 
 **컴포넌트 하나가 마운트되고, 클릭 한 번에 바뀌고, 언마운트되기까지**
 
 <p>
-  <img src="https://img.shields.io/badge/Vanilla-JS-1d4ed8?style=for-the-badge&labelColor=0b2069">
-  <img src="https://img.shields.io/badge/runtime_deps-0-1d4ed8?style=for-the-badge&labelColor=0b2069">
-  <img src="https://img.shields.io/badge/tests-402_passing-1d4ed8?style=for-the-badge&labelColor=0b2069">
-  <img src="https://img.shields.io/badge/fuzz-0_mismatch-1d4ed8?style=for-the-badge&labelColor=0b2069">
+  <img src="https://img.shields.io/badge/Vanilla-JS-3182f6?style=flat-square&labelColor=333d4b">
+  <img src="https://img.shields.io/badge/runtime_deps-0-3182f6?style=flat-square&labelColor=333d4b">
+  <img src="https://img.shields.io/badge/tests-402_passing-3182f6?style=flat-square&labelColor=333d4b">
+  <img src="https://img.shields.io/badge/fuzz-0_mismatch-3182f6?style=flat-square&labelColor=333d4b">
 </p>
 
 <sub>크래프톤 정글 13기 · 미니 React 구현 과제 · 구현(`src/`)과 데모는 React 없이 Vanilla JS</sub>
@@ -45,10 +45,7 @@ flowchart LR
 
 빈 `<div id="app">`에 `mountComponent(App, root)`를 부르면 시작합니다. 모니터의 **렌더 #1** 이 이 장면입니다.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-mount-dark.png">
-  <img src="docs/images/demo-mount-light.png" alt="첫 렌더(mount) 설명 카드: 가상 노드 117개짜리 트리를 만들고, diff는 CREATE 하나, patch가 실제 DOM을 한 번에 만든다. hooks 배열에 상태 칸이 호출 순서대로 생긴다">
-</picture>
+<img src="docs/images/demo-mount.png" alt="첫 렌더(mount) 설명 카드: 가상 노드 117개짜리 트리를 만들고, diff는 CREATE 하나, patch가 실제 DOM을 한 번에 만든다. hooks 배열에 상태 칸이 호출 순서대로 생긴다" width="100%">
 
 1. **상태 칸 만들기** — 컴포넌트를 처음 실행하면서 `useState` · `useMemo` · `useEffect`가 불린 순서대로 hooks 배열에 칸이 생기고 초기값이 들어갑니다(이 데모는 9칸).
 2. **첫 가상 트리** — 컴포넌트가 돌려준 `h(...)` 호출들이 가상 노드 객체가 됩니다(117개). 아직 실제 DOM은 없습니다.
@@ -62,10 +59,7 @@ flowchart LR
 
 **"맨 아래 → 맨 위"** 를 한 번 누른 장면(렌더 #2)입니다.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-app-dark.png">
-  <img src="docs/images/demo-app-light.png" alt="스프린트 백로그 앱. 맨 아래에 있던 'useEffect 정리 함수'가 맨 위로 올라왔고 뒤로가기 버튼이 켜졌다">
-</picture>
+<img src="docs/images/demo-app.png" alt="스프린트 백로그 앱. 맨 아래에 있던 'useEffect 정리 함수'가 맨 위로 올라왔고 뒤로가기 버튼이 켜졌다" width="100%">
 
 | 순서 | 무슨 일이 일어나나 |
 |:---:|---|
@@ -83,12 +77,14 @@ flowchart LR
 | 5 · 6번 `useMemo` | 총점 · 우선 항목 수 | 21 · 1 | 21 · 1 (목록이 새 배열이라 다시 계산, 값은 같음) |
 | 나머지 6칸 | 입력 글자, 편집 중 항목, 단축키 effect 등 | 그대로 | 그대로 |
 
+<img src="docs/images/demo-state.png" alt="모니터의 hooks 배열 9칸. 0번 useState의 present가 바뀌어 '값 바뀜', past가 1개가 됐다. 5·6번 useMemo는 deps가 바뀌어 다시 계산했지만 값은 같다" width="100%">
+
+> **훅이 상태를 찾는 법** — 함수 컴포넌트는 렌더할 때마다 처음부터 다시 실행되니 지역 변수에 상태를 둘 수 없습니다. 그래서 값은 엔진이 들고 있는 **hooks 배열**에 두고, `useState`는 "이번 렌더에서 몇 번째로 불렸는가"로 자기 칸을 찾습니다. 조건문 안에서 훅을 부르면 안 되는 이유입니다.
+> `useState`는 값을 넣는 칸(바꾸면 다시 그리기 예약), `useMemo`는 계산 결과를 아껴 두는 칸(재료가 그대로면 다시 계산 안 함), `useEffect`는 화면을 고친 뒤에 할 일을 적어 두는 칸입니다.
+
 **화면: 새 트리 노드 117개 중 고칠 곳 2개**
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-patches-dark.png">
-  <img src="docs/images/demo-patches-light.png" alt="패치 목록: PROPS 1개(button disabled true에서 false), MOVE 1개(li key 5 위치 이동), 이벤트 핸들러 교체 40건은 DOM 변경 없음">
-</picture>
+<img src="docs/images/demo-patches.png" alt="패치 목록: PROPS 1개(button disabled true에서 false), MOVE 1개(li key 5 위치 이동), 이벤트 핸들러 교체 40건은 DOM 변경 없음" width="100%">
 
 - `MOVE` 행 하나를 맨 앞으로, `PROPS` 뒤로가기 버튼 켜기. 나머지 네 행은 **같은 DOM 노드**를 그대로 씁니다.
 - 렌더마다 클릭 함수 40개도 새로 만들어지지만 DOM은 건드리지 않고 **상자 속 함수만** 바꿉니다([핸들러 상자](docs/perf/handler-box.md)). 상자가 없던 때는 1,000행 벤치마크에서 같은 데이터를 다시 그려도 패치가 2,000개 나왔습니다(지금은 0).
@@ -97,10 +93,7 @@ flowchart LR
 
 ## 3. 왜 하나만 옮겼나: LIS
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-lis-dark.png">
-  <img src="docs/images/demo-lis-light.png" alt="LIS 카드: 이전 위치 4, 0, 1, 2, 3 중 0~3은 고정, 4만 이동. 이 구현 1번 이동, React의 lastPlacedIndex 규칙 4번 이동">
-</picture>
+<img src="docs/images/demo-lis.png" alt="LIS 카드: 이전 위치 4, 0, 1, 2, 3 중 0~3은 고정, 4만 이동. 이 구현 1번 이동, React의 lastPlacedIndex 규칙 4번 이동" width="100%">
 
 새 순서대로 각 행의 이전 위치를 늘어놓으면 `[4, 0, 1, 2, 3]`. 그중 **가장 긴 증가 부분 수열(LIS)** `[0, 1, 2, 3]`은 이미 순서가 맞으니 두고 나머지만 옮깁니다(Vue 3와 같은 방식). React의 `lastPlacedIndex` 규칙대로면 같은 입력에서 4개를 옮깁니다.
 
@@ -123,10 +116,7 @@ flowchart LR
 
 모니터의 **언마운트** 버튼을 누르면 됩니다. **다시 마운트**는 새 인스턴스라 처음 상태부터 그립니다.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-unmount-dark.png">
-  <img src="docs/images/demo-unmount-light.png" alt="언마운트 설명 카드: useEffect가 돌려준 정리 함수 1개를 부르고, diff(이전 트리, null)는 REMOVE 하나, patch가 앱 영역을 비운다. 이후 setState는 다시 그리지 않는다">
-</picture>
+<img src="docs/images/demo-unmount.png" alt="언마운트 설명 카드: useEffect가 돌려준 정리 함수 1개를 부르고, diff(이전 트리, null)는 REMOVE 하나, patch가 앱 영역을 비운다. 이후 setState는 다시 그리지 않는다" width="100%">
 
 ```js
 useEffect(() => {
@@ -182,19 +172,6 @@ const app = mountComponent(Counter, document.querySelector('#root'), {}, {
 // 처음: ['CREATE'] → 버튼을 누르면 ['TEXT'] (<strong>의 0 → 2만 고친다)
 // app.unmount();
 ```
-</details>
-
-<details>
-<summary><b>4분 발표 순서</b></summary>
-<br>
-
-| 시간 | 장면 | 말할 것 |
-|---|---|---|
-| 0:00–0:35 | ① 마운트 (데모 새로 고침 → 렌더 #1) | 상태 칸 → 첫 트리 → CREATE 1 → DOM + 리스너 · 상자 |
-| 0:35–1:50 | ② "맨 아래 → 맨 위" (렌더 #2) | 상자에서 함수 → setState(값 변경 + 예약) → 새 트리 → 고칠 곳 2개, 핸들러 40개는 상자 교체 |
-| 1:50–3:20 | ③ LIS 카드 → 패턴 그래프 | 1개만 옮긴 이유, 2 대 997, 다 섞이면 이득 없음 → LIS 기본값 |
-| 3:20–3:45 | ④ 언마운트 버튼 | 정리 함수 → REMOVE 1 → 이후 setState 무시 |
-| 3:45–4:00 | 정확성과 범위 | fuzz · 테스트, 하지 않은 것 |
 </details>
 
 <details>

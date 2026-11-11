@@ -1,36 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" role="img" aria-label="mini-react: LIS 기반 keyed 재조정이 언제 이득인지 측정한 미니 React" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#081a5c"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
-<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffb27a"/></marker></defs>
-<rect width="960" height="300" rx="18" fill="url(#bg)"/>
-<circle cx="900" cy="40" r="120" fill="#ffffff" fill-opacity="0.04"/><circle cx="80" cy="300" r="150" fill="#ffffff" fill-opacity="0.04"/>
-<text x="52" y="96" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="-1.5">mini-react</text>
-<text x="54" y="134" font-size="17" fill="#c7d6ff">Virtual DOM · Diff · Patch · Hooks를 직접 구현하고,</text>
-<text x="54" y="160" font-size="17" fill="#c7d6ff">LIS 기반 keyed 재조정이 <tspan font-weight="800" fill="#ffffff">언제 이득이고 언제 아닌지</tspan> 측정했다</text>
-<rect x="52" y="198" width="178.32" height="36" rx="18" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.3"/><text x="70" y="221" font-size="13" font-weight="800" fill="#ffffff">Part 1<tspan font-weight="400" fill="#dbe5ff"> 필수 기능 증명</tspan></text>
-<rect x="242.32" y="198" width="187.94" height="36" rx="18" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.3"/><text x="260.32" y="221" font-size="13" font-weight="800" fill="#ffffff">Part 2<tspan font-weight="400" fill="#dbe5ff"> LIS 차별화 연구</tspan></text>
-<text x="54" y="270" font-size="12.5" fill="#9fb6f5">크래프톤 정글 13기 · Vanilla JS · 런타임 의존성 0</text>
-<rect x="568" y="44" width="352" height="214" rx="16" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.15"/>
-<text x="590" y="78" font-size="12" fill="#9fb6f5">이전</text><text x="590" y="200" font-size="12" fill="#9fb6f5">다음</text>
-<rect x="626" y="60" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="642" y="81" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">A</text>
-<rect x="666" y="60" width="32" height="32" rx="8" fill="none" stroke="#ffb27a" stroke-width="2"/><text x="682" y="81" font-size="14" font-weight="800" text-anchor="middle" fill="#ffb27a">B</text>
-<rect x="706" y="60" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="722" y="81" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">C</text>
-<rect x="746" y="60" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="762" y="81" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">D</text>
-<rect x="786" y="60" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="802" y="81" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">E</text>
-<rect x="826" y="60" width="32" height="32" rx="8" fill="none" stroke="#ffb27a" stroke-width="2"/><text x="842" y="81" font-size="14" font-weight="800" text-anchor="middle" fill="#ffb27a">F</text>
-<rect x="866" y="60" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="882" y="81" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">G</text>
-<rect x="626" y="182" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="642" y="203" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">A</text>
-<rect x="666" y="182" width="32" height="32" rx="8" fill="none" stroke="#ffb27a" stroke-width="2"/><text x="682" y="203" font-size="14" font-weight="800" text-anchor="middle" fill="#ffb27a">F</text>
-<rect x="706" y="182" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="722" y="203" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">C</text>
-<rect x="746" y="182" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="762" y="203" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">D</text>
-<rect x="786" y="182" width="32" height="32" rx="8" fill="none" stroke="#ffb27a" stroke-width="2"/><text x="802" y="203" font-size="14" font-weight="800" text-anchor="middle" fill="#ffb27a">B</text>
-<rect x="826" y="182" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="842" y="203" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">E</text>
-<rect x="866" y="182" width="32" height="32" rx="8" fill="#5b8cff" stroke="#5b8cff" stroke-width="2"/><text x="882" y="203" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">G</text>
-<line x1="642" y1="96" x2="642" y2="178" stroke="#5b8cff" stroke-opacity="0.45" stroke-width="1.5"/>
-<line x1="722" y1="96" x2="722" y2="178" stroke="#5b8cff" stroke-opacity="0.45" stroke-width="1.5"/>
-<line x1="762" y1="96" x2="762" y2="178" stroke="#5b8cff" stroke-opacity="0.45" stroke-width="1.5"/>
-<line x1="802" y1="96" x2="842" y2="178" stroke="#5b8cff" stroke-opacity="0.45" stroke-width="1.5"/>
-<line x1="882" y1="96" x2="882" y2="178" stroke="#5b8cff" stroke-opacity="0.45" stroke-width="1.5"/>
-<path d="M682,96 C682,138 802,138 802,176" fill="none" stroke="#ffb27a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
-<path d="M842,96 C842,138 682,138 682,176" fill="none" stroke="#ffb27a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
-<text x="626" y="240" font-size="12.5" fill="#dbe5ff"><tspan fill="#5b8cff" font-weight="800">■</tspan> 그대로 둔다 (LIS)    <tspan fill="#ffb27a" font-weight="800">■</tspan> 옮긴다 (2개)</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" role="img" aria-label="mini-react: 컴포넌트가 마운트되고 바뀌고 언마운트되기까지 바뀐 곳만 고치는 엔진" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif">
+<defs><filter id="bsh" x="-5%" y="-10%" width="110%" height="130%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#022047" flood-opacity="0.07"/></filter>
+<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff8a00"/></marker></defs>
+<rect x="12" y="8" width="936" height="272" rx="28" fill="#ffffff" stroke="#e5e8eb" filter="url(#bsh)"/>
+<text x="52" y="66" font-size="14" font-weight="700" fill="#3182f6">크래프톤 정글 13기 · 미니 React</text>
+<text x="50" y="118" font-size="50" font-weight="800" fill="#191f28" letter-spacing="-1.8">mini-react</text>
+<text x="52" y="156" font-size="17.5" fill="#4e5968">컴포넌트가 마운트되고, 클릭 한 번에 바뀌고,</text>
+<text x="52" y="182" font-size="17.5" fill="#4e5968">언마운트되기까지 <tspan font-weight="800" fill="#191f28">바뀐 곳만 고치는 엔진</tspan>을 직접 만들었다</text>
+<rect x="52" y="208" width="69" height="32" rx="16" fill="#f2f4f6"/><text x="86.5" y="229" font-size="13" font-weight="700" text-anchor="middle" fill="#4e5968">마운트</text>
+<text x="127" y="229" font-size="13" fill="#6b7684">→</text>
+<rect x="143" y="208" width="82" height="32" rx="16" fill="#f2f4f6"/><text x="184" y="229" font-size="13" font-weight="700" text-anchor="middle" fill="#4e5968">업데이트</text>
+<text x="231" y="229" font-size="13" fill="#6b7684">→</text>
+<rect x="247" y="208" width="52.62" height="32" rx="16" fill="#e8f3ff"/><text x="273.31" y="229" font-size="13" font-weight="700" text-anchor="middle" fill="#3182f6">LIS</text>
+<text x="305.62" y="229" font-size="13" fill="#6b7684">→</text>
+<rect x="321.62" y="208" width="82" height="32" rx="16" fill="#f2f4f6"/><text x="362.62" y="229" font-size="13" font-weight="700" text-anchor="middle" fill="#4e5968">언마운트</text>
+<rect x="566" y="40" width="352" height="210" rx="22" fill="#f9fafb"/>
+<text x="588" y="76" font-size="12" font-weight="600" fill="#6b7684">이전</text><text x="588" y="198" font-size="12" font-weight="600" fill="#6b7684">다음</text>
+<rect x="624" y="58" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="640" y="79" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">A</text>
+<rect x="664" y="58" width="32" height="32" rx="9" fill="#ffffff" stroke="#ff8a00" stroke-width="2"/><text x="680" y="79" font-size="14" font-weight="800" text-anchor="middle" fill="#ff8a00">B</text>
+<rect x="704" y="58" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="720" y="79" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">C</text>
+<rect x="744" y="58" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="760" y="79" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">D</text>
+<rect x="784" y="58" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="800" y="79" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">E</text>
+<rect x="824" y="58" width="32" height="32" rx="9" fill="#ffffff" stroke="#ff8a00" stroke-width="2"/><text x="840" y="79" font-size="14" font-weight="800" text-anchor="middle" fill="#ff8a00">F</text>
+<rect x="864" y="58" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="880" y="79" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">G</text>
+<rect x="624" y="180" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="640" y="201" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">A</text>
+<rect x="664" y="180" width="32" height="32" rx="9" fill="#ffffff" stroke="#ff8a00" stroke-width="2"/><text x="680" y="201" font-size="14" font-weight="800" text-anchor="middle" fill="#ff8a00">F</text>
+<rect x="704" y="180" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="720" y="201" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">C</text>
+<rect x="744" y="180" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="760" y="201" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">D</text>
+<rect x="784" y="180" width="32" height="32" rx="9" fill="#ffffff" stroke="#ff8a00" stroke-width="2"/><text x="800" y="201" font-size="14" font-weight="800" text-anchor="middle" fill="#ff8a00">B</text>
+<rect x="824" y="180" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="840" y="201" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">E</text>
+<rect x="864" y="180" width="32" height="32" rx="9" fill="#3182f6" stroke="#3182f6" stroke-width="2"/><text x="880" y="201" font-size="14" font-weight="800" text-anchor="middle" fill="#ffffff">G</text>
+<line x1="640" y1="94" x2="640" y2="176" stroke="#3182f6" stroke-opacity="0.3" stroke-width="1.5"/>
+<line x1="720" y1="94" x2="720" y2="176" stroke="#3182f6" stroke-opacity="0.3" stroke-width="1.5"/>
+<line x1="760" y1="94" x2="760" y2="176" stroke="#3182f6" stroke-opacity="0.3" stroke-width="1.5"/>
+<line x1="800" y1="94" x2="840" y2="176" stroke="#3182f6" stroke-opacity="0.3" stroke-width="1.5"/>
+<line x1="880" y1="94" x2="880" y2="176" stroke="#3182f6" stroke-opacity="0.3" stroke-width="1.5"/>
+<path d="M680,94 C680,136 800,136 800,174" fill="none" stroke="#ff8a00" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+<path d="M840,94 C840,136 680,136 680,174" fill="none" stroke="#ff8a00" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+<text x="624" y="238" font-size="12.5" fill="#4e5968"><tspan fill="#3182f6" font-weight="800">■</tspan> 그대로 둔다 (LIS)    <tspan fill="#ff8a00" font-weight="800">■</tspan> 옮긴다 (2개)</text>
 </svg>
