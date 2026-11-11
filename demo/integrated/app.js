@@ -6,6 +6,7 @@ import {
   useEffect,
   useMemo,
   vnodeToHTML,
+  PatchType,
 } from '../../src/index.js';
 import { describePatch } from '../shared/describe.js';
 import { flash } from '../shared/flash.js';
@@ -330,10 +331,15 @@ function Summary({ count, total, priorityCount }) {
 
 /* ───────────── 오른쪽: 렌더 파이프라인 패널 ───────────── */
 
-function PipelineInspector({ commits }) {
+/**
+ * mounted·onUnmount·onRemount를 받으면 앱 루트의 생명주기 버튼(언마운트 ↔ 다시 마운트)을 그린다.
+ * 버튼이 앱 안에 있으면 언마운트와 함께 사라지므로, 별도 루트인 이 패널에 둔다.
+ */
+function PipelineInspector({ commits, mounted, onUnmount, onRemount }) {
   const [selected, setSelected] = useState(null); // null이면 항상 최신 렌더를 보여 준다
   const commit = (selected != null && commits.find((c) => c.n === selected)) || commits.at(-1);
   if (!commit) return h('p', { class: 'empty' }, '아직 렌더가 없습니다.');
+  const unmounting = commit.kind === 'unmount';
 
   return h(
     'div',
@@ -343,27 +349,30 @@ function PipelineInspector({ commits }) {
       { class: 'pipeline-head' },
       h('h2', null, '렌더 파이프라인'),
       h('span', { class: 'commit-title', 'data-role': 'commit-title' }, `렌더 #${commit.n} · ${commit.label}`),
+      mounted == null ? null : h(LifecycleButton, { mounted, onUnmount, onRemount }),
       selected != null
         ? h('button', { type: 'button', 'data-action': 'follow-latest', onClick: () => setSelected(null) }, '최신 따라가기')
         : null,
     ),
     h(ConceptCard, { commit }),
-    h(Stage, { area: 'hooks', step: '①', title: 'setState → 상태 (hooks 배열)' }, h(HookList, { hooks: commit.hooks })),
     h(
       Stage,
-      { area: 'vdom', step: '②', title: '컴포넌트 다시 실행 → 새 가상 트리', note: `가상 노드 ${commit.nodeCount}개` },
+      { area: 'hooks', step: '①', title: unmounting ? 'unmount → useEffect 정리 함수 실행' : 'setState → 상태 (hooks 배열)' },
+      h(HookList, { hooks: commit.hooks }),
+    ),
+    h(
+      Stage,
+      unmounting
+        ? { area: 'vdom', step: '②', title: '새 가상 트리 없음 (null)' }
+        : { area: 'vdom', step: '②', title: '컴포넌트 다시 실행 → 새 가상 트리', note: `새 가상 트리 노드 ${commit.nodeCount}개` },
       h('pre', { class: 'vdom', 'data-role': 'vdom' }, commit.vdom),
     ),
-    h(Stage, { area: 'patches', step: '③', title: 'diff(이전 트리, 새 트리) → 패치 목록' }, h(PatchSummary, { commit })),
     h(
       Stage,
-      { area: 'dom', step: '④', title: 'patch → 실제 DOM' },
-      h(
-        'p',
-        { 'data-role': 'mutations' },
-        `실제 DOM 변경 기록 ${commit.mutations}건 (MutationObserver · 노드 이동은 빼기+넣기 2건) · 가상 노드 ${commit.nodeCount}개 중 바뀐 곳만 고쳤습니다.`,
-      ),
+      { area: 'patches', step: '③', title: unmounting ? 'diff(이전 트리, null) → 패치 목록' : 'diff(이전 트리, 새 트리) → 패치 목록' },
+      h(PatchSummary, { commit }),
     ),
+    h(Stage, { area: 'dom', step: '④', title: 'patch → 실제 DOM' }, h('p', { 'data-role': 'mutations' }, mutationSummary(commit))),
     h(
       'div',
       { class: 'timeline-wrap' },
@@ -394,6 +403,20 @@ function PipelineInspector({ commits }) {
   );
 }
 
+function LifecycleButton({ mounted, onUnmount, onRemount }) {
+  return mounted
+    ? h('button', { type: 'button', class: 'lifecycle', 'data-action': 'unmount', onClick: onUnmount }, '언마운트')
+    : h('button', { type: 'button', class: 'lifecycle primary', 'data-action': 'remount', onClick: onRemount }, '다시 마운트');
+}
+
+/** ④ 문구: 이번 패치가 새 트리에 비해 얼마나 작은 일이었는지 발표 용어로 말한다. */
+function mutationSummary(commit) {
+  const records = `실제 DOM 변경 기록 ${commit.mutations}건 (MutationObserver · 노드 이동은 빼기+넣기 2건)`;
+  if (commit.kind === 'mount') return `${records} · 새 가상 트리 노드 ${commit.nodeCount}개를 CREATE 하나로 한 번에 만들었습니다.`;
+  if (commit.kind === 'unmount') return `${records} · 이전 트리 노드 ${commit.removedCount}개를 REMOVE 하나로 지웠습니다.`;
+  return `${records} · 새 가상 트리 노드 ${commit.nodeCount}개 중 고칠 곳 ${commit.patches.length}개.`;
+}
+
 function Stage({ area, step, title, note, children }) {
   return h(
     'section',
@@ -410,10 +433,11 @@ function HookList({ hooks }) {
     hooks.map((hook) =>
       h(
         'li',
-        { class: hook.changed ? 'changed' : hook.recomputed ? 'recomputed' : null },
+        { class: hook.cleanup ? 'cleanup' : hook.changed ? 'changed' : hook.recomputed ? 'recomputed' : null },
         h('code', null, hook.kind),
         ' ',
         hook.text,
+        hook.cleanup ? h('small', { class: 'hook-tag' }, ' 정리 함수 실행') : null,
         hook.changed ? h('small', { class: 'hook-tag' }, ' 값 바뀜') : null,
         hook.recomputed && !hook.changed
           ? h('small', { class: 'hook-tag' }, hook.kind === 'useEffect' ? ' deps 바뀜 → 다시 실행' : ' deps 바뀜 → 다시 계산, 값은 같음')
@@ -560,11 +584,22 @@ export function startIntegrated({ root, inspector }) {
     panel.unmount();
   };
 
+  // 앱 루트의 생명주기. mounting: mount() 안에서 첫 커밋을 기록하는 중, alive: 화면에 붙어 있음
+  let app;
+  let mounting = false;
+  let alive = false;
+
+  function pushCommit(entry) {
+    commits.push({ n: (commits.at(-1)?.n ?? 0) + 1, ...entry });
+    if (commits.length > MAX_COMMITS) commits.shift();
+  }
+
   function record(patches, component) {
     const records = observer ? observer.takeRecords() : [];
-    const label = labels.length > 0 ? [...new Set(labels)].join(' + ') : commits.length === 0 ? '첫 렌더' : '(알 수 없음)';
+    const firstLabel = commits.length === 0 ? '첫 렌더' : '첫 렌더 (다시 마운트)';
+    const label = mounting ? firstLabel : labels.length > 0 ? [...new Set(labels)].join(' + ') : '(알 수 없음)';
     // 설명할 개념: 첫 렌더면 mount, 아니면 마지막으로 한 동작의 개념. 재정렬이면 이번 LIS 계산에 쓸 위치 정보도 남긴다.
-    const conceptKey = commits.length === 0 ? 'mount' : concepts.at(-1) ?? null;
+    const conceptKey = mounting ? 'mount' : concepts.at(-1) ?? null;
     const concept = { key: conceptKey };
     if (conceptKey === 'reorder') concept.reorder = reorderInfo(itemsOf(previousHooks[0]?.value), itemsOf(component.hooks[0]?.value));
     labels = [];
@@ -577,9 +612,9 @@ export function startIntegrated({ root, inspector }) {
     }));
     previousHooks = component.hooks.map((hook) => ({ value: hook.value, deps: hook.deps }));
     const domPatches = patches.filter((p) => !isHandlerOnly(p));
-    commits.push({
-      n: (commits.at(-1)?.n ?? 0) + 1,
+    pushCommit({
       label,
+      kind: mounting ? 'mount' : 'update',
       concept,
       hooks,
       vdom: vnodeToHTML(component.vnode),
@@ -589,40 +624,110 @@ export function startIntegrated({ root, inspector }) {
       handlerCount: (patches.handlers?.length ?? 0) + patches.reduce((sum, p) => sum + handlerChanges(p), 0),
       mutations: records.length,
     });
-    if (commits.length > MAX_COMMITS) commits.shift();
+  }
+
+  // 패널은 별도의 루트 컴포넌트다. 새 기록을 props로 넘기고 다시 그린다(패널도 diff로 바뀐 부분만 patch).
+  // 패널 오류가 앱의 오류로 섞이지 않게 여기서 따로 처리한다.
+  function refreshPanel() {
+    try {
+      panel.props = { commits: [...commits], mounted: alive, onUnmount: unmountApp, onRemount: remountApp };
+      panel.update();
+    } catch (error) {
+      console.error('[파이프라인 패널]', error);
+    }
   }
 
   const App = createBacklogApp(track, () => root);
-
-  let app;
-  try {
-    app = mountComponent(App, root, {}, {
-      onCommit(patches, component) {
-        try {
-          record(patches, component);
-        } catch (error) {
-          labels = [];
-          concepts = [];
-          console.error('[파이프라인 기록]', error);
-          return;
-        }
-        // 패널은 별도의 루트 컴포넌트다. 새 기록을 props로 넘기고 다시 그린다(패널도 diff로 바뀐 부분만 patch).
-        // 패널 오류가 앱의 오류로 섞이지 않게 여기서 따로 처리한다.
-        try {
-          panel.props = { commits: [...commits] };
-          panel.update();
-        } catch (error) {
-          console.error('[파이프라인 패널]', error);
-        }
-      },
-      onError(error) {
-        // 렌더·patch가 실패하면 onCommit이 불리지 않는다. 그 동작의 라벨과 (되돌리기를 포함한) DOM 기록은 버린다.
+  const appOptions = {
+    onCommit(patches, component) {
+      try {
+        record(patches, component);
+      } catch (error) {
         labels = [];
         concepts = [];
-        observer?.takeRecords();
-        console.error(error);
-      },
+        console.error('[파이프라인 기록]', error);
+        return;
+      } finally {
+        mounting = false;
+      }
+      refreshPanel();
+    },
+    onError(error) {
+      // 렌더·patch가 실패하면 onCommit이 불리지 않는다. 그 동작의 라벨과 (되돌리기를 포함한) DOM 기록은 버린다.
+      labels = [];
+      concepts = [];
+      observer?.takeRecords();
+      console.error(error);
+    },
+  };
+
+  /** 새 인스턴스로 mount한다. 상태는 이어지지 않으므로 이전 기록과 비교할 훅 값·라벨도 비운다. */
+  function mountApp() {
+    labels = [];
+    concepts = [];
+    previousHooks = [];
+    observer?.takeRecords();
+    mounting = true;
+    alive = true;
+    try {
+      app = mountComponent(App, root, {}, appOptions);
+    } catch (error) {
+      alive = false;
+      throw error;
+    } finally {
+      mounting = false;
+    }
+  }
+
+  /**
+   * 앱 루트를 unmount하고 그 과정을 렌더 기록 하나로 남긴다.
+   * unmount()는 패치를 돌려주지 않고 onCommit도 부르지 않으므로, 지우기 전에 정리 함수와 이전 트리를 읽어 둔다.
+   */
+  function unmountApp() {
+    if (!alive) return;
+    const hooks = app.hooks.map((hook) => ({
+      kind: hook.kind,
+      text: describeHook(hook),
+      changed: false,
+      recomputed: false,
+      cleanup: hook.kind === 'useEffect' && typeof hook.cleanup === 'function',
+    }));
+    const removed = app.vnode;
+    labels = [];
+    concepts = [];
+    observer?.takeRecords();
+    alive = false;
+    app.unmount();
+    const records = observer ? observer.takeRecords() : [];
+    previousHooks = [];
+    pushCommit({
+      label: '언마운트',
+      kind: 'unmount',
+      concept: { key: 'unmount' },
+      hooks,
+      cleanups: hooks.filter((hook) => hook.cleanup).length,
+      vdom: '(null: 그릴 트리가 없음)',
+      nodeCount: 0,
+      removedCount: countNodes(removed),
+      patches: removed ? [{ type: PatchType.REMOVE, text: describePatch({ type: PatchType.REMOVE, vnode: removed }) }] : [],
+      handlerCount: 0,
+      mutations: records.length,
     });
+    refreshPanel();
+  }
+
+  function remountApp() {
+    if (alive) return;
+    try {
+      mountApp();
+    } catch (error) {
+      console.error('[다시 마운트]', error);
+      refreshPanel();
+    }
+  }
+
+  try {
+    mountApp();
   } catch (error) {
     // 첫 렌더가 실패하면 앱 인스턴스가 없으므로 여기서 패널과 observer를 정리한다.
     cleanupPanel();

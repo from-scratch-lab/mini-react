@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { flushUpdates } from '../../src/index.js';
 import { startIntegrated } from '../../demo/integrated/app.js';
 
@@ -368,5 +368,66 @@ describe('종합 데모: 정리', () => {
 
     await click(action('follow-latest', inspector));
     expect(commitTitle()).toContain('렌더 #3');
+  });
+});
+
+describe('종합 데모: 생명주기 (마운트 → 업데이트 → 언마운트)', () => {
+  const conceptTitle = () => $('[data-role="concept"] h3', inspector).textContent;
+  const mutationsText = () => $('[data-role="mutations"]', inspector).textContent;
+  const pressKey = (init) => document.body.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }));
+
+  it('④ 문구는 새 트리 노드 수와 고칠 곳의 수를 함께 말한다', async () => {
+    expect(mutationsText()).toMatch(/새 가상 트리 노드 \d+개를 CREATE 하나로 한 번에 만들었습니다/);
+    await click(action('rotate'));
+    expect(mutationsText()).toMatch(/새 가상 트리 노드 \d+개 중 고칠 곳 2개/);
+  });
+
+  it('모니터의 언마운트 버튼을 누르면 정리 함수가 돌고 앱 영역이 비며, REMOVE 하나로 기록된다', async () => {
+    const removed = vi.spyOn(document, 'removeEventListener');
+    try {
+      await click(action('unmount', inspector));
+      expect(root.innerHTML).toBe('');
+      expect(removed).toHaveBeenCalledWith('keydown', expect.any(Function));
+    } finally {
+      removed.mockRestore();
+    }
+    expect(commitTitle()).toBe('렌더 #2 · 언마운트');
+    expect(patchTypes()).toEqual(['REMOVE']);
+    expect(conceptTitle()).toContain('언마운트');
+    // 정리 함수를 돌려준 effect(단축키)만 "정리 함수 실행"으로 표시한다
+    expect($$('[data-role="hooks"] li.cleanup', inspector)).toHaveLength(1);
+    expect(mutationsText()).toMatch(/REMOVE 하나로 지웠습니다/);
+    expect(action('unmount', inspector)).toBeNull();
+    expect(action('remount', inspector)).not.toBeNull();
+  });
+
+  it('다시 마운트는 새 인스턴스로 처음 상태부터 CREATE 하나로 그리고, 단축키도 다시 붙는다', async () => {
+    const first = titles()[0];
+    await click(action('rotate'));
+    expect(titles()[0]).not.toBe(first);
+    await click(action('unmount', inspector));
+    await click(action('remount', inspector));
+
+    expect(rows()).toHaveLength(5);
+    expect(titles()[0]).toBe(first); // 상태는 이어지지 않고 처음 값부터
+    expect(commitTitle()).toBe('렌더 #4 · 첫 렌더 (다시 마운트)');
+    expect(patchTypes()).toEqual(['CREATE']);
+    expect(conceptTitle()).toContain('첫 렌더');
+    expect($$('[data-role="hooks"] li.changed', inspector)).toHaveLength(0);
+    expect(action('unmount', inspector)).not.toBeNull();
+
+    await click(action('rotate'));
+    pressKey({ key: 'z', ctrlKey: true });
+    await flushUpdates();
+    expect(titles()[0]).toBe(first);
+  });
+
+  it('바깥 unmount는 다시 마운트한 앱도 정리한다', async () => {
+    await click(action('unmount', inspector));
+    await click(action('remount', inspector));
+    app.unmount();
+    expect(root.innerHTML).toBe('');
+    expect(inspector.innerHTML).toBe('');
+    app = { unmount() {} };
   });
 });
