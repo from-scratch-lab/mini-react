@@ -1,40 +1,40 @@
 /*
- * 디자인 토큰: 토스(toss.im)처럼 흰 바탕 + 토스 파랑 #3182F6 + 연회색 카드, 큰 굵은 제목과 넉넉한 여백.
- * 회색 단계는 토스 디자인 시스템의 grey 50~900(#f9fafb ~ #191f28)을 따른다.
+ * 디자인 토큰: 흰 바탕 + 진한 로열블루 띠(제목 영역) + 연파랑 카드, 굵은 남색 제목.
+ * 글자는 흰 바탕 대비 4.5:1 이상(본문 #2b3441 약 12:1, 강조 #1f4fd1 약 6.6:1, 보조 #4e5968 약 7:1)이 되게 골랐다.
  * README에 흰 바탕 캡처로 붙이므로 라이트 테마 하나만 둔다.
  */
 :root {
   --page-width: 1440px;
   --bg: #ffffff;
   --panel: #ffffff;
-  --card: #f9fafb;
-  --card-strong: #f2f4f6;
-  --text: #4e5968;
-  --heading: #191f28;
-  --muted: #8b95a1;
-  --line: #e5e8eb;
-  --accent: #3182f6;
-  --accent-strong: #1b64da;
+  --card: #f3f6fb;
+  --card-strong: #e6ecf5;
+  --text: #2b3441;
+  --heading: #0b1a3a;
+  --muted: #4e5968;
+  --line: #d3dbe6;
+  --accent: #1f4fd1;
+  --accent-strong: #163da8;
   --accent-text: #ffffff;
-  --accent-soft: #e8f3ff;
-  --code-bg: #f9fafb;
-  --code-text: #333d4b;
-  --inline-code: #f2f4f6;
+  --accent-soft: #e6eeff;
+  --code-bg: #f3f6fb;
+  --code-text: #1b2533;
+  --inline-code: #e6ecf5;
   --note-bg: #f0faf6;
-  --note-text: #03865a;
+  --note-text: #036b48;
   --warn-bg: #fff8e6;
-  --warn-text: #d56f00;
-  --deep-bg: #e8f3ff;
-  --deep-text: #1b64da;
+  --warn-text: #a85400;
+  --deep-bg: #e6eeff;
+  --deep-text: #163da8;
   --bezel: #ffffff;
   --key-shadow: #e5e8eb;
   --shadow: 0 2px 6px rgba(2, 32, 71, 0.04), 0 12px 32px rgba(2, 32, 71, 0.07);
-  --op-create: #03b26c;
-  --op-remove: #f04452;
+  --op-create: #028a54;
+  --op-remove: #d22d3c;
   --op-replace: #a234c7;
-  --op-props: #3182f6;
-  --op-text: #fe9800;
-  --op-move: #18a5a5;
+  --op-props: #1f4fd1;
+  --op-text: #c96a00;
+  --op-move: #0b7f86;
   --radius: 20px;
   color-scheme: light;
 }
@@ -1606,4 +1606,146 @@ textarea {
 
 .basics > section:target {
   box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* ───────── 강한 대비: 제목 영역은 진한 로열블루 띠, 모니터 머리는 파란 막대 ───────── */
+.site-nav {
+  max-width: none;
+  margin: 0;
+  padding: 14px max(16px, calc((100% - var(--page-width)) / 2 + 16px));
+  background: #ffffff;
+  border-bottom: 1px solid var(--line);
+}
+
+.site-nav a {
+  color: var(--text);
+}
+
+.site-nav a[aria-current='page'] {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.page-head {
+  max-width: none;
+  margin: 0 0 24px;
+  padding: 44px max(16px, calc((100% - var(--page-width)) / 2 + 16px)) 40px;
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.page-head h1 {
+  color: #ffffff;
+  font-size: 2.3rem;
+  font-weight: 800;
+}
+
+.page-head p {
+  color: #e4ecff;
+  max-width: 980px;
+}
+
+.page-head b,
+.page-head strong {
+  color: #ffffff;
+}
+
+.page-head code {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.page-head .flow li {
+  background: #ffffff;
+  color: var(--heading);
+}
+
+.page-head .flow li + li::before {
+  color: var(--accent);
+}
+
+/* 안내 상자는 파란 띠 위의 흰 카드 */
+.page-head .tips {
+  margin-top: 18px;
+  background: #ffffff;
+  color: var(--text);
+  border: 0;
+  border-radius: 20px;
+  padding: 16px 24px;
+  max-width: 980px;
+}
+
+.page-head .tips b,
+.page-head .tips strong,
+.page-head .tips summary {
+  color: var(--heading);
+}
+
+.page-head .tips code {
+  background: var(--inline-code);
+  color: var(--heading);
+}
+
+/* 모니터: 흰 카드 위에 파란 머리 막대 */
+.monitor {
+  padding: 0 0 16px;
+  overflow: hidden;
+}
+
+.monitor-bar {
+  background: var(--accent);
+  color: #ffffff;
+  padding: 12px 20px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.monitor-dots i,
+.monitor-dots i:nth-child(2),
+.monitor-dots i:nth-child(3) {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.monitor-screen {
+  padding: 4px 24px;
+}
+
+.commit-title {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* 키보드 머리도 같은 굵은 제목 */
+.keyboard-head h2,
+.pipeline-head h2 {
+  color: var(--heading);
+  font-weight: 800;
+}
+
+.keyboard-hint {
+  color: var(--muted);
+}
+
+/* 패치 종류 칩: 흰 글자가 잘 보이게 굵게 */
+.op {
+  font-weight: 700;
+}
+
+/* 기본 개념 절 제목 */
+.basics h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+/* 첫 화면 강조 카드는 띠보다 한 단계 진하게 */
+.index-card.featured {
+  background: var(--accent-strong);
+}
+
+.index-card.featured:hover {
+  background: #102f86;
+}
+
+.page-head .flow li b {
+  color: var(--accent);
 }

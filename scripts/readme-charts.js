@@ -13,19 +13,19 @@ import { fileURLToPath } from 'node:url';
 const OUT = fileURLToPath(new URL('../docs/images/', import.meta.url));
 const CSV = fileURLToPath(new URL('../docs/perf/lis-data/2026-11-09.csv', import.meta.url));
 
-// 토스풍 파랑 계열 (토스 파랑 #3182F6 + 회색 단계). LIS = 파랑, 단방향 스캔 = 연파랑, React = 진회색
+// 강한 대비 파랑 계열 (로열블루 #1F4FD1 + 남색 글자). LIS = 로열블루, 단방향 스캔 = 연파랑, React = 남색
 const C = {
-  navy: '#333d4b',
-  royal: '#3182f6',
-  blue: '#4593fc',
-  sky: '#90c2ff',
-  pale: '#c9e2ff',
-  mist: '#e8f3ff',
-  ink: '#191f28',
-  ink2: '#6b7684',
-  line: '#e5e8eb',
+  navy: '#0b1a3a',
+  royal: '#1f4fd1',
+  blue: '#3a6ae0',
+  sky: '#8fb0f5',
+  pale: '#c7d6fb',
+  mist: '#e6eeff',
+  ink: '#0b1a3a',
+  ink2: '#4e5968',
+  line: '#d3dbe6',
   card: '#ffffff',
-  page: '#f9fafb',
+  page: '#f3f6fb',
 };
 const FONT = "Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif";
 const W = 960;
@@ -93,49 +93,78 @@ const lines = (x, y, arr, size = 12.5, color = C.ink2, gap = 19) =>
 
 // ---------- 슬라이드 ----------
 
-/** 배너: 흰 카드 위에 큰 제목 + 오른쪽에 LIS 그림 (README 흰 바탕에 어울리게) */
+/** 배너: 진한 로열블루 띠에 흰 큰 제목, 오른쪽 흰 카드에 LIS 그림 */
 function banner() {
   const H = 300;
   const keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
   const next = ['A', 'F', 'C', 'D', 'B', 'E', 'G'];
   const stays = new Set(['A', 'C', 'D', 'E', 'G']);
-  const MOVE = '#ff8a00';
+  const MOVE = '#e05d00';
   const x0 = 588;
   const cell = 40;
   const box = (k, x, y, stay) =>
-    `<rect x="${x}" y="${y}" width="32" height="32" rx="9" fill="${stay ? C.royal : '#ffffff'}" stroke="${stay ? C.royal : MOVE}" stroke-width="2"/><text x="${x + 16}" y="${y + 21}" font-size="14" font-weight="800" text-anchor="middle" fill="${stay ? '#ffffff' : MOVE}">${k}</text>`;
+    `<rect x="${x}" y="${y}" width="32" height="32" rx="9" fill="${stay ? C.royal : '#ffffff'}" stroke="${stay ? C.royal : MOVE}" stroke-width="2.5"/><text x="${x + 16}" y="${y + 21}" font-size="14" font-weight="800" text-anchor="middle" fill="${stay ? '#ffffff' : MOVE}">${k}</text>`;
   const parts = [
-    `<defs><filter id="bsh" x="-5%" y="-10%" width="110%" height="130%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#022047" flood-opacity="0.07"/></filter>
-<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${MOVE}"/></marker></defs>`,
-    `<rect x="12" y="8" width="${W - 24}" height="${H - 28}" rx="28" fill="#ffffff" stroke="${C.line}" filter="url(#bsh)"/>`,
-    `<text x="52" y="66" font-size="14" font-weight="700" fill="${C.royal}">크래프톤 정글 13기 · 미니 React</text>`,
-    `<text x="50" y="118" font-size="50" font-weight="800" fill="${C.ink}" letter-spacing="-1.8">mini-react</text>`,
-    `<text x="52" y="156" font-size="17.5" fill="#4e5968">컴포넌트가 마운트되고, 클릭 한 번에 바뀌고,</text>`,
-    `<text x="52" y="182" font-size="17.5" fill="#4e5968">언마운트되기까지 <tspan font-weight="800" fill="${C.ink}">바뀐 곳만 고치는 엔진</tspan>을 직접 만들었다</text>`,
+    `<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${MOVE}"/></marker></defs>`,
+    `<rect width="${W}" height="${H}" rx="24" fill="${C.royal}"/>`,
+    `<text x="52" y="66" font-size="14" font-weight="700" fill="#c7d6fb">크래프톤 정글 13기 · 미니 React</text>`,
+    `<text x="50" y="120" font-size="52" font-weight="800" fill="#ffffff" letter-spacing="-1.8">mini-react</text>`,
+    `<text x="52" y="158" font-size="17.5" fill="#e4ecff">컴포넌트가 마운트되고, 클릭 한 번에 바뀌고,</text>`,
+    `<text x="52" y="184" font-size="17.5" fill="#e4ecff">언마운트되기까지 <tspan font-weight="800" fill="#ffffff">바뀐 곳만 고치는 엔진</tspan>을 직접 만들었다</text>`,
   ];
   let cx = 52;
   for (const [i, label] of ['마운트', '업데이트', 'LIS', '언마운트'].entries()) {
     const w = textWidth(label, 13) + 30;
-    parts.push(`<rect x="${cx}" y="208" width="${w}" height="32" rx="16" fill="${i === 2 ? C.mist : '#f2f4f6'}"/><text x="${cx + w / 2}" y="229" font-size="13" font-weight="700" text-anchor="middle" fill="${i === 2 ? C.royal : '#4e5968'}">${esc(label)}</text>`);
+    parts.push(`<rect x="${cx}" y="210" width="${w}" height="32" rx="16" fill="#ffffff"/><text x="${cx + w / 2}" y="231" font-size="13" font-weight="800" text-anchor="middle" fill="${C.royal}">${esc(label)}</text>`);
     cx += w + 8;
-    if (i < 3) parts.push(`<text x="${cx - 2}" y="229" font-size="13" fill="${C.ink2}">→</text>`), (cx += 14);
+    if (i < 3) parts.push(`<text x="${cx - 2}" y="231" font-size="14" font-weight="700" fill="#ffffff">→</text>`), (cx += 16);
   }
-  parts.push(`<rect x="${x0 - 22}" y="40" width="352" height="210" rx="22" fill="${C.page}"/>`);
-  parts.push(`<text x="${x0}" y="76" font-size="12" font-weight="600" fill="${C.ink2}">이전</text><text x="${x0}" y="198" font-size="12" font-weight="600" fill="${C.ink2}">다음</text>`);
+  parts.push(`<rect x="${x0 - 22}" y="38" width="352" height="214" rx="20" fill="#ffffff"/>`);
+  parts.push(`<text x="${x0}" y="76" font-size="12" font-weight="700" fill="${C.ink2}">이전</text><text x="${x0}" y="198" font-size="12" font-weight="700" fill="${C.ink2}">다음</text>`);
   keys.forEach((k, i) => parts.push(box(k, x0 + 36 + i * cell, 58, stays.has(k))));
   next.forEach((k, i) => parts.push(box(k, x0 + 36 + i * cell, 180, stays.has(k))));
   for (const k of stays) {
     const a = x0 + 36 + keys.indexOf(k) * cell + 16;
     const b = x0 + 36 + next.indexOf(k) * cell + 16;
-    parts.push(`<line x1="${a}" y1="94" x2="${b}" y2="176" stroke="${C.royal}" stroke-opacity="0.3" stroke-width="1.5"/>`);
+    parts.push(`<line x1="${a}" y1="94" x2="${b}" y2="176" stroke="${C.royal}" stroke-opacity="0.35" stroke-width="1.5"/>`);
   }
   for (const k of ['B', 'F']) {
     const a = x0 + 36 + keys.indexOf(k) * cell + 16;
     const b = x0 + 36 + next.indexOf(k) * cell + 16;
-    parts.push(`<path d="M${a},94 C${a},136 ${b},136 ${b},174" fill="none" stroke="${MOVE}" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>`);
+    parts.push(`<path d="M${a},94 C${a},136 ${b},136 ${b},174" fill="none" stroke="${MOVE}" stroke-width="2.2" stroke-dasharray="5 4" marker-end="url(#ar)"/>`);
   }
-  parts.push(`<text x="${x0 + 36}" y="238" font-size="12.5" fill="#4e5968"><tspan fill="${C.royal}" font-weight="800">■</tspan> 그대로 둔다 (LIS)    <tspan fill="${MOVE}" font-weight="800">■</tspan> 옮긴다 (2개)</text>`);
+  parts.push(`<text x="${x0 + 36}" y="238" font-size="12.5" font-weight="600" fill="${C.ink2}"><tspan fill="${C.royal}" font-weight="800">■</tspan> 그대로 둔다 (LIS)    <tspan fill="${MOVE}" font-weight="800">■</tspan> 옮긴다 (2개)</text>`);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="mini-react: 컴포넌트가 마운트되고 바뀌고 언마운트되기까지 바뀐 곳만 고치는 엔진" font-family="${FONT}">
+${parts.join('\n')}
+</svg>
+`;
+}
+
+/** 흐름도: 마운트 → 클릭·업데이트 → LIS → 언마운트 네 장면 카드 */
+function flow() {
+  const H = 230;
+  const steps = [
+    ['1', '마운트', ['첫 렌더', 'CREATE 1개로 전부 만들기']],
+    ['2', '클릭 → 업데이트', ['setState → 새 가상 트리', 'diff → 고칠 곳 2개만 patch']],
+    ['3', 'diff 안쪽: LIS', ['순서가 맞는 행은 그대로', '1개만 옮기기']],
+    ['4', '언마운트', ['정리 함수 실행', 'REMOVE 1개로 지우기']],
+  ];
+  const gap = 34;
+  const cw = (W - 40 - gap * 3) / 4;
+  const parts = [];
+  steps.forEach(([n, title, sub], i) => {
+    const x = 20 + i * (cw + gap);
+    const accent = i === 2;
+    parts.push(`<rect x="${x}" y="20" width="${cw}" height="${H - 40}" rx="20" fill="${accent ? C.royal : C.page}" stroke="${accent ? C.royal : C.line}" stroke-width="1.5"/>`);
+    parts.push(`<rect x="${x + 22}" y="44" width="38" height="38" rx="11" fill="${accent ? '#ffffff' : C.royal}"/><text x="${x + 41}" y="70" font-size="18" font-weight="800" text-anchor="middle" fill="${accent ? C.royal : '#ffffff'}">${n}</text>`);
+    parts.push(`<text x="${x + 22}" y="120" font-size="19" font-weight="800" fill="${accent ? '#ffffff' : C.ink}" letter-spacing="-0.4">${esc(title)}</text>`);
+    sub.forEach((line, j) => parts.push(`<text x="${x + 22}" y="${150 + j * 24}" font-size="14" font-weight="600" fill="${accent ? '#e4ecff' : C.ink2}">${esc(line)}</text>`));
+    if (i < 3) {
+      const ax = x + cw + 6;
+      parts.push(`<path d="M${ax},${H / 2} L${ax + gap - 14},${H / 2}" stroke="${C.royal}" stroke-width="3" stroke-linecap="round"/><path d="M${ax + gap - 20},${H / 2 - 7} L${ax + gap - 12},${H / 2} L${ax + gap - 20},${H / 2 + 7}" fill="none" stroke="${C.royal}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`);
+    }
+  });
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="네 장면: 1 마운트(CREATE 1개), 2 클릭 후 업데이트(고칠 곳 2개만 patch), 3 LIS(1개만 옮기기), 4 언마운트(정리 함수, REMOVE 1개)" font-family="${FONT}">
 ${parts.join('\n')}
 </svg>
 `;
@@ -368,7 +397,7 @@ function foundation() {
   return slide(H, { title: '공통 기반: 하지 않아도 될 일 줄이기', subtitle: 'A·B 비교 전에 두 모드가 함께 쓰는 엔진 개선 · npm run bench 1,000행 · 연한 막대 = 시작, 진한 막대 = 지금', tag: 'BASE' }, parts.join('\n'), '공통 기반: 같은 데이터 다시 렌더 패치 2000에서 0, 10행 갱신 2100에서 100, 생성 DOM 변경 1000에서 1, 지우기 1000에서 1');
 }
 
-const SLIDES = { banner, part1, 'lis-summary': lisSummary, 'lis-tradeoff': lisTradeoff, 'lis-patterns': lisPatterns, 'lis-heatmap': lisHeatmap, foundation };
+const SLIDES = { banner, flow, part1, 'lis-summary': lisSummary, 'lis-tradeoff': lisTradeoff, 'lis-patterns': lisPatterns, 'lis-heatmap': lisHeatmap, foundation };
 
 mkdirSync(OUT, { recursive: true });
 for (const [name, make] of Object.entries(SLIDES)) writeFileSync(`${OUT}${name}.svg`, make());

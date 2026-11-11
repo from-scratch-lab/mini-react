@@ -7,10 +7,10 @@
 **컴포넌트 하나가 마운트되고, 클릭 한 번에 바뀌고, 언마운트되기까지**
 
 <p>
-  <img src="https://img.shields.io/badge/Vanilla-JS-3182f6?style=flat-square&labelColor=333d4b">
-  <img src="https://img.shields.io/badge/runtime_deps-0-3182f6?style=flat-square&labelColor=333d4b">
-  <img src="https://img.shields.io/badge/tests-402_passing-3182f6?style=flat-square&labelColor=333d4b">
-  <img src="https://img.shields.io/badge/fuzz-0_mismatch-3182f6?style=flat-square&labelColor=333d4b">
+  <img src="https://img.shields.io/badge/Vanilla-JS-1f4fd1?style=flat-square&labelColor=0b1a3a">
+  <img src="https://img.shields.io/badge/runtime_deps-0-1f4fd1?style=flat-square&labelColor=0b1a3a">
+  <img src="https://img.shields.io/badge/tests-402_passing-1f4fd1?style=flat-square&labelColor=0b1a3a">
+  <img src="https://img.shields.io/badge/fuzz-0_mismatch-1f4fd1?style=flat-square&labelColor=0b1a3a">
 </p>
 
 <sub>크래프톤 정글 13기 · 미니 React 구현 과제 · 구현(`src/`)과 데모는 React 없이 Vanilla JS</sub>
@@ -30,12 +30,7 @@ npm run serve   # → http://127.0.0.1:5173/demo/integrated/
 
 종합 데모 하나로 아래 네 장면을 그대로 따라 할 수 있습니다. **새로 고침 → "맨 아래 → 맨 위" → 모니터의 "언마운트"** 순서입니다.
 
-```mermaid
-flowchart LR
-  M["① 마운트<br/>첫 렌더 · CREATE 1"] --> C["② 클릭 → 업데이트<br/>setState → 새 트리 → diff → patch"]
-  C --> L["③ diff 안쪽<br/>LIS로 1개만 이동"]
-  L --> U["④ 언마운트<br/>정리 함수 → REMOVE 1"]
-```
+<img src="docs/images/flow.svg" alt="네 장면: 1 마운트(CREATE 1개), 2 클릭 후 업데이트(고칠 곳 2개만 patch), 3 LIS(1개만 옮기기), 4 언마운트(정리 함수, REMOVE 1개)" width="100%">
 
 엔진은 두 부분으로 나뉩니다. **훅(Phase 2)** 이 상태를 기억하고 "화면이 이렇게 생겨야 한다"는 새 가상 트리를 만들고, **diff · patch(Phase 1)** 가 이전 트리와 비교해 실제 DOM의 바뀐 곳만 고칩니다.
 
