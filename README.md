@@ -16,9 +16,108 @@
 <sub>크래프톤 정글 13기 · 미니 React 구현 과제</sub><br>
 <sub>구현(`src/`)과 과제 데모 3종은 Vanilla JS이며 React를 쓰지 않습니다. `react`·`react-dom` 18.3.1은 Part 2 실험의 <b>비교 기준선</b>으로만 devDependency에 있고, 테스트가 이를 검사합니다.</sub>
 
-[전략](#-두-단계-전략) · [Part 1 필수 기능](#-part-1--필수-기능-증명) · [Part 2 LIS 연구](#-part-2--lis-차별화-연구) · [트레이드오프](#-트레이드오프-어디서-무엇을-내주고-얻나) · [실행](#-실행-방법) · [문서](#-문서)
+[빠른 실행](#-빠른-실행) · [클릭 한 번 따라가기](#-클릭-한-번-따라가기) · [4분 발표 순서](#-4분-발표-순서) · [전략](#-두-단계-전략) · [Part 1 필수 기능](#-part-1--필수-기능-증명) · [Part 2 LIS 연구](#-part-2--lis-차별화-연구) · [트레이드오프](#-트레이드오프-어디서-무엇을-내주고-얻나) · [문서](#-문서)
 
 </div>
+
+<br>
+
+## ⚡ 빠른 실행
+
+```bash
+npm ci
+npm run serve   # → http://127.0.0.1:5173/demo/integrated/
+```
+
+종합 데모에서 **맨 아래 → 맨 위**를 누르고 위쪽 모니터를 보세요. 아래 장면이 그대로 나옵니다. 다른 명령은 [실행 방법](#-실행-방법)에 있습니다.
+
+<details>
+<summary><b>엔진 사용 예제 · Counter 컴포넌트</b></summary>
+<br>
+
+```js
+import { h, mountComponent, useState, useEffect, useMemo } from './src/index.js';
+
+// 자식 컴포넌트: 훅 없이 props만 받는 순수 함수
+function Label({ value }) {
+  return h('strong', {}, value);
+}
+
+// 루트 컴포넌트: 상태와 훅은 여기에만
+function Counter() {
+  const [count, setCount] = useState(0);
+  const doubled = useMemo(() => count * 2, [count]);
+  useEffect(() => {
+    document.title = `count: ${count}`;
+  }, [count]);
+  return h('button', { onClick: () => setCount((n) => n + 1) }, '두 배: ', h(Label, { value: doubled }));
+}
+
+const app = mountComponent(Counter, document.querySelector('#root'), {}, {
+  onCommit: (patches) => console.log(patches.map((p) => p.type)), // 렌더마다 적용한 패치
+});
+// 처음: ['CREATE'] → 버튼을 누르면 ['TEXT'] (<strong>의 0 → 2만 고친다)
+// app.unmount();
+```
+</details>
+
+<br>
+
+## 👆 클릭 한 번 따라가기
+
+종합 데모(`demo/integrated/`)에서 **맨 아래 → 맨 위**를 한 번 누른 장면입니다. 아래 그림 넷은 모두 **같은 커밋(렌더 #2)** 을 보여 줍니다. 위에서 아래로 Phase 2(상태) → Phase 1(diff · patch) → Part 2(LIS) 순서입니다.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-app-dark.png">
+  <img src="docs/images/demo-app-light.png" alt="스프린트 백로그 앱. 맨 아래에 있던 'useEffect 정리 함수'가 맨 위로 올라왔고 뒤로가기 버튼이 켜졌다">
+</picture>
+
+**① 상태가 바뀐다 (Phase 2)** — 루트 컴포넌트의 `useState` 하나가 목록 기록(past · present · future)을 들고 있습니다.
+
+| hooks 칸 | 누르기 전 | 누른 뒤 |
+|---|---|---|
+| `0. useState` present | id 1 · 2 · 3 · 4 · 5 순서 | **id 5** · 1 · 2 · 3 · 4 순서 |
+| `0. useState` past | 0개 | **1개** (뒤로가기 가능) |
+| `5. useMemo` 총점 | 21 | 21 (deps가 바뀌어 다시 계산, 값은 같음) |
+| `6. useMemo` 우선 항목 수 | 1 | 1 (같음) |
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-state-dark.png">
+  <img src="docs/images/demo-state-light.png" alt="hooks 배열 9칸. 0번 useState의 present가 바뀌었고 past가 1개가 됐다. useMemo 두 칸은 deps가 바뀌어 다시 계산했지만 값은 같다">
+</picture>
+
+**② diff가 패치 2개만 낸다 (Phase 1)** — 가상 노드 117개를 비교해 실제로 고칠 곳은 둘입니다.
+
+- `PROPS` 뒤로가기 버튼의 `disabled`: true → false
+- `MOVE` `<li key="5">` 하나를 맨 앞으로. 나머지 네 행은 같은 DOM 노드 그대로
+- 이벤트 핸들러 40개는 렌더마다 새 함수지만 패치가 아니라 [핸들러 상자](docs/perf/handler-box.md) 교체로 처리해 DOM을 건드리지 않습니다
+- 실제 DOM 변경 기록(MutationObserver)은 3건: 속성 1건 + 이동 1번(빼기 + 넣기 2건)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-patches-dark.png">
+  <img src="docs/images/demo-patches-light.png" alt="패치 목록: PROPS 1개(button disabled true에서 false), MOVE 1개(li key 5 위치 이동), 이벤트 핸들러 교체 40건은 DOM 변경 없음">
+</picture>
+
+**③ 왜 1개만 옮기나 (Part 2)** — 새 순서대로 이전 위치를 늘어놓으면 `[4, 0, 1, 2, 3]`. 이 중 가장 긴 증가 부분 수열 `[0, 1, 2, 3]`은 이미 순서가 맞으니 두고 나머지 하나만 옮깁니다. React의 `lastPlacedIndex` 규칙이면 같은 입력에서 4개를 옮깁니다(규칙대로 센 값. 실제 React 18.3.1이 옮긴 수가 이 규칙과 같다는 것은 [Part 2](#-part-2--lis-차별화-연구)에서 측정했습니다).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-lis-dark.png">
+  <img src="docs/images/demo-lis-light.png" alt="LIS 카드: 이전 위치 4, 0, 1, 2, 3 중 0~3은 고정, 4만 이동. 이 구현 1번 이동, React의 lastPlacedIndex 규칙 4번 이동">
+</picture>
+
+<br>
+
+## 🎤 4분 발표 순서
+
+README를 위에서부터 내려가며 발표할 수 있게 짰습니다. 데모를 옆에 띄워 두면 같은 장면을 직접 눌러 보여 줄 수 있습니다.
+
+| 시간 | README에서 보여 줄 곳 | 말할 내용 |
+|---|---|---|
+| 0:00–0:30 | [클릭 한 번 따라가기](#-클릭-한-번-따라가기)의 앱 그림 | 버튼 하나를 누르면 상태 → 새 가상 트리 → diff → patch가 한 번 돈다. 이 한 번을 끝까지 따라간다 |
+| 0:30–1:20 | ① 상태 표 | hooks는 배열 칸이고 호출 순서로 자기 칸을 찾는다. 바뀐 칸은 0번 하나, useMemo는 값이 같다 |
+| 1:20–2:10 | ② 패치 그림 | 가상 노드 117개를 비교해 고칠 곳은 2개. 핸들러 40개는 패치가 아니다. DOM 변경 기록 3건 |
+| 2:10–3:10 | ③ LIS 카드 → [Part 2](#-part-2--lis-차별화-연구) 요약 그림 | 1개만 옮긴 이유가 LIS. 언제 이득이고 언제 이득이 없는지 React 18.3.1까지 같은 계수기로 쟀다 |
+| 3:10–4:00 | [Part 1](#-part-1--필수-기능-증명) 버그 표 · [React와의 차이](#-실제-react와의-차이) | 정답지를 HTML 파서로 둔 fuzz와 엣지 케이스 조사로 폼 버그 4개를 찾아 고쳤다. 하지 않은 것(Fiber 등)과 주장하지 않는 것 |
 
 <br>
 
@@ -173,6 +272,8 @@ node scripts/fuzz-keyed.js     # 두 모드 정확성 fuzz (1,000쌍 + 1,000쌍)
 npm run bench                  # 대량 목록 벤치마크 (Node + jsdom)
 node scripts/readme-charts.js  # 이 README의 이미지 다시 만들기 (Part 2 수치는 CSV에서 읽고, 테스트 수 추이·공통 기반 수치는 스크립트 안 상수)
 ```
+
+<sub>"클릭 한 번 따라가기"의 데모 캡처(`docs/images/demo-*.png`)는 Chrome 155에서 폭 1100px · 2배율로, 종합 데모를 처음 연 뒤 맨 아래 → 맨 위를 한 번 눌러 찍었습니다. 화면이 바뀌면 다시 찍어야 합니다.</sub>
 
 <details>
 <summary><b>환경 참고 · 폴더 구성</b></summary>
