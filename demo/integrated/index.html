@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>종합 · 렌더 파이프라인</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+    <link rel="stylesheet" href="../style.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="데모 페이지">
+      <a href="../">mini-react</a>
+      <a href="../phase1/">Phase 1 · Diff</a>
+      <a href="../phase2/">Phase 2 · Hooks</a>
+      <a href="./" aria-current="page">종합</a>
+      <a href="../bench/">벤치마크</a>
+    </nav>
+    <header class="page-head">
+      <h1>종합 · 상태 변경부터 실제 DOM까지</h1>
+      <p>
+        아래 <b>키보드</b>(스프린트 백로그 앱)를 조작하면 위 <b>모니터</b>에 렌더 한 번이 거친 네 단계가 나타납니다.
+        Phase 2의 훅이 상태를 바꾸면, Phase 1의 diff가 이전·새 가상 트리를 비교하고 patch가 <b>바뀐 실제 DOM만</b> 고칩니다.
+      </p>
+      <ol class="flow" aria-label="렌더 파이프라인">
+        <li><b>①</b> setState</li>
+        <li><b>②</b> 컴포넌트 실행 → 새 가상 트리</li>
+        <li><b>③</b> diff → 패치</li>
+        <li><b>④</b> patch → 실제 DOM</li>
+      </ol>
+      <details class="tips" open>
+        <summary>이렇게 해 보세요</summary>
+        <ul>
+          <li><b>맨 아래 → 맨 위</b>: key가 있으면 <code>MOVE</code> 1개. "key로 비교"를 끄고 다시 하면 위치 비교라 <code>TEXT</code>가 줄줄이 생깁니다.</li>
+          <li><b>편집</b>: 제목 <code>&lt;span&gt;</code>이 <code>&lt;input&gt;</code>으로 바뀌어 <code>REPLACE</code>.</li>
+          <li><b>☆</b>(우선순위): 행의 class는 <code>PROPS</code>, ★ 글자와 "우선 N개"는 <code>TEXT</code>. <b>+1</b>: 점수와 합계 <code>TEXT</code> 2개.</li>
+          <li><b>첫 항목 +1 ×3</b>: setState를 3번 불러도 렌더는 1번(배칭). 타임라인 번호가 하나만 늘어납니다.</li>
+          <li><b>새로 고침(F5)</b>: 모니터의 렌더 #1이 마운트입니다. 트리 전체를 <code>CREATE</code> 1개로 만들고, 훅 칸이 처음 값으로 생깁니다. 모니터의 <b>언마운트</b>를 누르면 정리 함수가 돌고 <code>REMOVE</code> 1개로 앱이 사라지며, <b>다시 마운트</b>는 처음 상태부터 새로 그립니다.</li>
+          <li><b>← 뒤로가기 · 앞으로가기 → · 초기화</b> (<code>Ctrl+Z</code> / <code>Ctrl+Shift+Z</code>): 이전 상태로 다시 렌더하면 diff가 필요한 만큼만 되돌립니다. ×3 뒤에는 뒤로가기를 3번 해야 처음으로 돌아갑니다.</li>
+        </ul>
+      </details>
+    </header>
+
+    <main class="integrated">
+      <!-- 모니터: 렌더 한 번의 과정을 보여 주는 화면 -->
+      <section class="monitor" aria-label="렌더 파이프라인">
+        <div class="monitor-bar" aria-hidden="true">
+          <span class="monitor-dots"><i></i><i></i><i></i></span>
+          <span class="monitor-title">render pipeline · 상태가 바뀌면 화면은 이렇게 다시 그려집니다</span>
+        </div>
+        <div id="inspector" class="monitor-screen"></div>
+      </section>
+      <div class="monitor-stand" aria-hidden="true"><span></span></div>
+
+      <!-- 키보드: 직접 조작하는 앱 -->
+      <section class="keyboard" aria-label="스프린트 백로그">
+        <div class="keyboard-head">
+          <h2>스프린트 백로그</h2>
+          <span class="badge">FunctionComponent + useState · useMemo · useEffect</span>
+          <span class="keyboard-hint">여기서 조작하면 위 모니터에 결과가 나타납니다</span>
+        </div>
+        <div id="app"></div>
+      </section>
+    </main>
+
+    <section class="basics" aria-labelledby="basics-title">
+      <h2 id="basics-title">React의 본질: 기본 개념</h2>
+      <p class="basics-lead">
+        아래 키보드(앱)를 조작하면 위 모니터의 "방금 일어난 일" 카드가 이 개념 중 하나로 이어집니다.
+        이 페이지의 모든 화면(앱과 파이프라인 패널)도 아래 원리로 그려집니다.
+      </p>
+
+      <section id="basics-ui-function">
+        <h3>1. UI = f(state): 화면은 상태의 함수다</h3>
+        <p>
+          React의 출발점은 "DOM을 어떻게 바꿀지" 대신 "지금 상태라면 화면이 어떤 모습이어야 하는지"만 적게 하는 것입니다(선언형).
+          컴포넌트는 props와 state를 받아 가상 트리를 돌려주는 함수입니다. 같은 입력이면 같은 트리를 돌려줘야 하므로 렌더 중에는
+          부수 효과(서버 요청, 타이머, DOM 조작)를 하지 않고 <code>useEffect</code>로 미룹니다.
+        </p>
+        <p>
+          상태가 바뀌면 함수를 처음부터 다시 실행해 새 트리를 만들고, "이전 트리와 무엇이 다른가"는 라이브러리가 알아냅니다.
+          개발자는 바뀐 부분을 직접 찾아 고치지 않습니다.
+        </p>
+      </section>
+
+      <section id="basics-virtual-dom">
+        <h3>2. 가상 DOM이 필요한 이유: Reflow와 Repaint</h3>
+        <p>
+          실제 DOM이 바뀌면 브라우저는 레이아웃을 다시 계산하고(Reflow) 화면을 다시 칠해야 합니다(Repaint). 같은 작업 안의 변경은 모아서 한 번에
+          처리하지만, 바꾸는 노드가 많거나 중간에 크기·위치를 읽으면(강제 동기 레이아웃) 비용이 커집니다.
+          가상 DOM은 화면 구조를 가벼운 자바스크립트 객체(<code>{ type, props, children, key }</code>)로 들고 있다가,
+          새 트리와 비교해 <b>꼭 바뀐 곳만</b> 실제 DOM에 반영합니다. 위 모니터 ④의 "변경 기록"이 가상 노드 수보다 훨씬 적은 이유입니다.
+        </p>
+        <p>
+          측정해 보면 이렇습니다(<code>docs/benchmarks.md</code>, 1,000행 표, 실제 DOM 변경은 <code>MutationObserver</code> 기록 수).
+          10행마다 글자를 바꾸면 가상 노드 약 9,000개를 비교하지만 실제 DOM 변경은 100건입니다. 두 행의 자리를 바꾸면 노드 이동 2번(기록 4건)으로 끝나고,
+          같은 key 순서를 React 방식(4절)으로 처리하면 997번 옮깁니다. 같은 데이터로 다시 그리면 실제 DOM 변경은 0건입니다.
+        </p>
+        <p>
+          가상 DOM이 언제나 직접 조작보다 빠른 것은 아닙니다. 핵심은 "어디를 바꿀지 사람이 계산하지 않아도 충분히 적게 바꾼다"는 데 있습니다.
+        </p>
+      </section>
+
+      <section id="basics-reconcile">
+        <h3>3. 재조정(reconciliation): 두 가지 가정으로 O(n)에 비교한다</h3>
+        <p>두 트리를 완벽하게 비교하면 O(n³)이 걸립니다. React는 두 가지 가정을 두고 O(n)으로 줄입니다.</p>
+        <ul>
+          <li><b>타입이 다르면 다른 트리다.</b> <code>&lt;span&gt;</code>이 <code>&lt;input&gt;</code>이 되면 안쪽을 비교하지 않고 통째로 교체합니다(REPLACE).</li>
+          <li><b>형제 목록은 key로 짝을 찾는다.</b> key가 같으면 같은 항목으로 보고 내용만 비교하고, 자리가 바뀌었으면 옮깁니다(MOVE). key가 없으면 같은 위치끼리 비교합니다.</li>
+        </ul>
+        <p>
+          이 구현의 diff가 내놓는 패치는 6가지입니다. <code>CREATE</code>(추가), <code>REMOVE</code>(삭제), <code>REPLACE</code>(타입 변경),
+          <code>PROPS</code>(속성), <code>TEXT</code>(글자), <code>MOVE</code>(key 재정렬)입니다.
+        </p>
+      </section>
+
+      <section id="basics-lis">
+        <h3>4. LIS: key 목록에서 이동을 최소로 만드는 알고리즘</h3>
+        <p>
+          새 순서대로 각 항목의 "이전 위치"를 적으면 수열이 하나 나옵니다. 예를 들어 <code>[a b c d e]</code>가 <code>[e a b c d]</code>가 되면
+          수열은 <code>[4, 0, 1, 2, 3]</code>입니다. 이 수열에서 <b>증가하는 가장 긴 부분 수열(LIS)</b>은 <code>[0, 1, 2, 3]</code>(a b c d)입니다.
+          이 항목들은 서로의 순서가 이미 맞으므로 그대로 두고, 나머지(e)만 옮기면 됩니다. 이동 1번입니다.
+        </p>
+        <p>
+          LIS는 "각 길이별로 끝값이 가장 작은 수열"을 유지하며 이분 탐색하면 O(n log n)에 구합니다(<code>src/diff/lis.js</code>).
+          옮길 때는 목록을 뒤에서부터 처리합니다. 그러면 "바로 뒤 형제"가 항상 이미 제자리에 있어서 그 앞에 넣기만 하면 됩니다.
+        </p>
+        <p>
+          <b>실제 React는 LIS를 쓰지 않습니다.</b> 앞에서부터 훑으며 지금까지 둔 항목의 이전 위치 최댓값(lastPlacedIndex)보다
+          앞에 있던 항목을 옮깁니다. 위 예에서는 e가 먼저 놓여 최댓값이 4가 되므로 a b c d를 모두 옮깁니다(4번).
+          대신 구현이 단순하고 "뒤로 미는" 흔한 경우에 강합니다. LIS 방식은 Vue 3와 Inferno가 씁니다.
+        </p>
+      </section>
+
+      <section id="basics-render-commit">
+        <h3>5. 렌더 단계와 커밋 단계</h3>
+        <p>
+          한 번의 업데이트는 두 단계로 나뉩니다. <b>렌더 단계</b>는 컴포넌트를 실행하고 이전 트리와 비교해 바꿀 것을 정합니다(위 모니터 ①~③).
+          실제 DOM은 건드리지 않습니다. <b>커밋 단계</b>는 정해진 변경을 실제 DOM에 한 번에 반영합니다(④). 이 구현은 그 직후 useEffect를 동기로 실행합니다.
+        </p>
+        <p>
+          이 구현은 두 단계를 한 번에 끝까지 실행합니다. 실제 React는 렌더 단계를 Fiber라는 작은 작업 단위로 쪼갭니다.
+          <code>startTransition</code> 등으로 표시한 낮은 우선순위 업데이트는 렌더 도중 브라우저에 양보하거나, 더 급한 업데이트가 오면 버리고 다시 시작할 수 있습니다(Concurrent 렌더링).
+          클릭 같은 보통 업데이트는 멈추지 않습니다. 커밋 단계는 화면이 어긋나지 않도록 언제나 한 번에 합니다.
+          effect 시점도 다릅니다. React의 <code>useLayoutEffect</code>는 커밋 직후 화면을 그리기 전에 동기로, <code>useEffect</code>는 보통 화면을 그린 뒤 비동기로 실행됩니다.
+        </p>
+      </section>
+
+      <section id="basics-hooks">
+        <h3>6. 훅: 함수는 매번 새로 실행되는데 상태는 어디에 남는가</h3>
+        <p>
+          컴포넌트 함수는 렌더할 때마다 처음부터 실행되므로 지역 변수는 매번 초기화됩니다. 그래서 상태는 함수 밖, 컴포넌트마다 하나씩 있는
+          <code>hooks</code> 배열에 둡니다. 훅은 "이번 렌더에서 몇 번째로 불렸는가"로 자기 칸을 찾습니다. 위 모니터 ①의 번호가 그 칸입니다.
+        </p>
+        <ul>
+          <li><code>useState</code>: 칸에 값을 두고, setState는 값을 바꾼 뒤 다시 렌더를 예약합니다.</li>
+          <li><code>useMemo</code>: deps가 그대로면 이전 계산 결과를 돌려줍니다. 바뀌었을 때만 다시 계산합니다.</li>
+          <li><code>useEffect</code>: 화면 반영 뒤에 실행하고, 다음 실행 전과 사라질 때 정리 함수를 부릅니다.</li>
+        </ul>
+        <p>
+          조건문 안에서 훅을 부르면 칸 순서가 어긋나 다른 상태를 읽게 됩니다. 이 구현은 훅 개수가 바뀌거나 그 자리 훅의 종류가 바뀌면
+          바로 오류를 냅니다. 하지만 같은 종류끼리 순서만 바뀌면(예: useState 두 개가 자리를 바꿈) 잡지 못하고 조용히 다른 상태를 읽습니다.
+          그래서 "조건문·반복문 안에서 훅을 부르지 않는다"는 규칙 자체를 지켜야 합니다.
+        </p>
+      </section>
+
+      <section id="basics-batching">
+        <h3>7. 배칭: 여러 setState를 렌더 한 번으로</h3>
+        <p>
+          setState마다 바로 다시 그리면 한 이벤트에서 상태 세 개를 바꿀 때 렌더가 세 번 일어나고, 중간의 어정쩡한 화면이 보일 수도 있습니다.
+          그래서 setState는 렌더를 "예약"만 하고, 지금 하던 일이 끝난 뒤(마이크로태스크) 한 번에 다시 그립니다.
+          이 구현의 setState는 값을 바로 바꾸고 렌더만 미룹니다. 그래서 함수(<code>prev =&gt; prev + 1</code>)를 넘기면 매번 방금 바뀐 값을 받아
+          세 번의 +1이 모두 반영됩니다. 실제 React는 setState를 큐에 쌓아 두었다가 렌더 때 차례로 계산하므로 방식은 다르지만 결과는 같습니다.
+          React 18부터는 <code>createRoot</code>로 띄운 앱이면 이벤트·타이머·Promise 어디서든 자동으로 배칭합니다.
+        </p>
+      </section>
+
+      <section id="basics-dom-api">
+        <h3>8. Document와 Window: 브라우저가 DOM을 다루게 해 주는 두 객체</h3>
+        <p>
+          <code>window</code>는 브라우저 탭 하나를 나타내는 전역 객체입니다. 타이머(<code>setTimeout</code>), 다음 화면 그리기 직전 콜백
+          (<code>requestAnimationFrame</code>), 마이크로태스크(<code>queueMicrotask</code>), 주소(<code>location</code>), 창 크기 같은
+          "페이지 바깥 환경"을 맡습니다. 이 구현의 배칭은 <code>queueMicrotask</code>로 렌더를 예약합니다(7절).
+        </p>
+        <p>
+          <code>document</code>는 그 탭에 올라간 HTML 문서, 곧 DOM 트리의 입구입니다. 노드를 찾고(<code>querySelector</code>)
+          만듭니다(<code>createElement</code>, <code>createTextNode</code>). SVG 요소는 네임스페이스가 달라 <code>createElementNS</code>로 만들어야
+          화면에 그려집니다. 이 구현의 patch도 그렇게 합니다. HTML 문자열을 읽을 때는 <code>&lt;template&gt;</code>에 넣어 파싱합니다.
+          template의 내용은 문서와 분리된 DocumentFragment라서 화면이 바뀌지 않고 스크립트도 실행되지 않습니다.
+        </p>
+        <ul>
+          <li>
+            <b>속성(attribute)과 프로퍼티(property)는 다릅니다.</b> 사용자가 한 번 입력한 뒤에는 <code>setAttribute('value', 'a')</code>가
+            기본값(<code>defaultValue</code>)만 바꾸고, 화면 값은 <code>input.value</code> 프로퍼티입니다. 그래서 patch는 value·checked 같은 폼 상태를 프로퍼티로도 맞춥니다.
+          </li>
+          <li>
+            <b>쓰기는 모아서, 읽기는 조심해서.</b> DOM을 바꾼 직후 <code>offsetHeight</code>·<code>getBoundingClientRect()</code>처럼 크기·위치를 읽으면
+            브라우저가 미뤄 둔 Reflow를 그 자리에서 해야 합니다(2절의 강제 동기 레이아웃).
+          </li>
+          <li>
+            이 프로젝트에서 DOM 트리를 바꾸는 코드는 <code>src/diff/patch.js</code> 한 곳뿐입니다. 실제 영역을 가상 트리로 읽는 <code>domToVNode</code>는
+            읽기만 하고, 입력 칸에 포커스를 주는 것 같은 부수 효과는 <code>useEffect</code>에서 합니다.
+          </li>
+        </ul>
+      </section>
+
+      <section id="basics-change-detection">
+        <h3>9. DOM 변화 감지: 무엇이 바뀌었는지 브라우저에게 듣는 방법</h3>
+        <p>
+          위 모니터 ④와 Phase 1 페이지의 "실제 DOM 변경 N건"은 <code>MutationObserver</code>로 셉니다. 지켜볼 노드와 종류
+          (<code>childList</code> 자식 추가·삭제, <code>attributes</code> 속성, <code>characterData</code> 글자, <code>subtree</code> 자손 포함)를 정해 두면,
+          브라우저가 변경을 기록(MutationRecord)으로 모아 두었다가 마이크로태스크에서 한 번에 알려 줍니다. 이 페이지는 patch 직후
+          <code>takeRecords()</code>로 쌓인 기록을 바로 꺼내 셉니다. 그래서 "방금 그 patch가 바꾼 것"만 정확히 셀 수 있습니다.
+        </p>
+        <div class="table-scroll">
+        <table class="compare">
+          <thead>
+            <tr><th>방법</th><th>무엇을 알려 주나</th><th>한계</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>MutationObserver</code></td><td>DOM 구조·속성·글자 변경 (누가 바꿨든)</td><td>프로퍼티(<code>input.value</code>, <code>checked</code>) 변경은 보지 못함</td></tr>
+            <tr><td><code>input</code>·<code>change</code> 이벤트</td><td>사용자가 폼 값을 바꾼 순간</td><td>스크립트가 값을 바꾸면 발생하지 않음</td></tr>
+            <tr><td><code>ResizeObserver</code>·<code>IntersectionObserver</code></td><td>요소 크기 변화, 화면에 보이는지</td><td>구조 변화가 아니라 레이아웃 결과를 봄</td></tr>
+            <tr><td>폴링(<code>setInterval</code>로 비교)</td><td>무엇이든 직접 비교</td><td>느리고, 주기 사이 변경은 놓침</td></tr>
+            <tr><td>Mutation Events (<code>DOMNodeInserted</code> 등)</td><td>변경마다 즉시 동기 호출</td><td>느려서 폐기됨. 새 코드에 쓰지 않음</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p>
+          표의 첫 줄 한계가 가상 DOM에도 그대로 있습니다. 사용자가 체크박스를 누르면 프로퍼티만 바뀌어서 가상 트리도 MutationObserver도
+          그 사실을 모릅니다. React가 폼을 "제어 컴포넌트"(값을 state에 두고 렌더마다 되돌려 씀)로 다루기를 권하는 이유입니다.
+        </p>
+      </section>
+
+      <section id="basics-components">
+        <h3>10. 컴포넌트로 나누기: 화면을 함수 단위로 자르는 기준</h3>
+        <p>
+          위 백로그 앱은 <code>BacklogApp</code>(루트) 아래 <code>Toolbar</code>, <code>AddForm</code>, <code>BacklogList</code>,
+          <code>BacklogItem</code>, <code>Summary</code>로 나뉘어 있습니다. 자르는 기준은 세 가지입니다.
+        </p>
+        <ul>
+          <li><b>반복되는 것.</b> 목록의 한 줄(<code>BacklogItem</code>)처럼 같은 모양이 여러 번 나오면 함수 하나로 만들고 데이터만 바꿔 부릅니다.</li>
+          <li><b>한 가지 일만 하는 것.</b> 입력 폼, 도구 막대, 합계처럼 화면의 한 영역이 한 가지 역할을 하면 떼어 냅니다.</li>
+          <li><b>같은 이유로 바뀌는 것.</b> 함께 고쳐야 하는 마크업은 한 컴포넌트에 두면, 고칠 때 한 곳만 보면 됩니다.</li>
+        </ul>
+        <p>
+          이 과제에서 자식 컴포넌트는 <b>props만 받아 가상 트리를 돌려주는 순수 함수</b>입니다. 상태도 훅도 없으므로, 같은 props면 언제나 같은 화면입니다.
+          이 구현은 자식 컴포넌트를 렌더할 때 그 함수를 바로 불러 결과 트리에 펼쳐 넣습니다. 실제 React는 컴포넌트마다 별도의 Fiber를 두어
+          자식도 자기 상태와 훅을 가질 수 있고, props가 같으면 그 자식만 다시 실행하지 않고 건너뛸 수도 있습니다(<code>React.memo</code>).
+        </p>
+      </section>
+
+      <section id="basics-state-location">
+        <h3>11. State는 어디에 두는가: Lifting State Up</h3>
+        <p>
+          규칙은 하나입니다. <b>그 상태를 읽거나 바꾸는 모든 컴포넌트의 가장 가까운 공통 조상</b>에 둡니다. 형제끼리는 서로의 상태를 볼 수 없으므로,
+          두 자식이 같은 값을 써야 하면 상태를 부모로 "끌어올리고" 자식에게는 값(props)과 그 값을 바꾸는 함수(콜백)를 내려 줍니다.
+          데이터는 위에서 아래로, 이벤트는 아래에서 위로 흐릅니다.
+        </p>
+        <ul>
+          <li>
+            백로그 앱에서는 목록을 <code>BacklogList</code>가 보여 주고 <code>Summary</code>가 합계를 보여 주고 <code>AddForm</code>이 항목을 더합니다.
+            셋의 공통 조상이 루트 <code>BacklogApp</code>이므로 목록 상태는 루트에 있습니다. 이 과제는 규칙을 더 강하게 적용해 상태를 <b>루트에만</b> 둡니다.
+          </li>
+          <li>
+            <b>계산할 수 있는 값은 상태로 두지 않습니다.</b> 합계와 우선순위 개수는 목록에서 계산되므로 <code>useMemo</code>로 구합니다.
+            따로 상태로 두면 목록을 바꿀 때마다 함께 맞춰야 하고, 하나라도 빠뜨리면 화면이 어긋납니다.
+          </li>
+          <li>
+            <b>함께 바뀌는 값은 한 상태로 묶습니다.</b> 뒤로가기를 위해 목록을 <code>{ past, present, future }</code> 하나로 두었습니다.
+            따로 두면 한 상태를 바꾸는 함수가 다른 두 상태의 최신 값을 볼 수 없어서, 뒤로가기처럼 셋을 함께 옮기는 동작에서 서로 어긋나기 쉽습니다.
+            하나로 묶으면 <code>prev =&gt; …</code> 한 번으로 셋을 같은 시점의 값으로 함께 바꿀 수 있습니다.
+          </li>
+        </ul>
+      </section>
+    </section>
+  </body>
+</html>

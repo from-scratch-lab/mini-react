@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>mini-react</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="데모 페이지">
+      <a href="./" aria-current="page">mini-react</a>
+      <a href="./phase1/">Phase 1 · Diff</a>
+      <a href="./phase2/">Phase 2 · Hooks</a>
+      <a href="./integrated/">종합</a>
+      <a href="./bench/">벤치마크</a>
+    </nav>
+    <header class="page-head">
+      <h1>mini-react</h1>
+      <p>크래프톤 정글 13기 · Virtual DOM, Diff, Hooks를 직접 구현한 미니 React</p>
+    </header>
+    <main class="index">
+      <a class="index-card featured" href="./integrated/">
+        <small>여기서 시작하세요</small>
+        <strong>종합 · 컴포넌트의 일생</strong>
+        <span>마운트 → 클릭 한 번의 업데이트(상태 → 새 가상 트리 → diff → 실제 DOM) → 언마운트를 위 모니터에서 단계별로</span>
+      </a>
+      <a class="index-card" href="./phase1/">
+        <strong>Phase 1</strong>
+        <span>Virtual DOM + Diff + Patch 검증 페이지</span>
+      </a>
+      <a class="index-card" href="./phase2/">
+        <strong>Phase 2</strong>
+        <span>Component · State · Hooks로 만든 학습 트래커</span>
+      </a>
+      <a class="index-card" href="./bench/">
+        <strong>벤치마크</strong>
+        <span>대량 목록 시나리오를 이 브라우저에서: DOM 변경 수와 Reflow를 포함한 시간</span>
+      </a>
+    </main>
+  </body>
+</html>

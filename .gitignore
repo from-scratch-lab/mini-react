@@ -1,0 +1,22 @@
+# 🟦 공통 — 프로젝트별 항목(build/, node_modules/ 등)은 맨 아래 "프로젝트" 구역에 추가한다.
+
+# 비밀 정보
+.env
+.env.*
+!.env.example
+secrets/
+
+# Claude Code 개인 설정과 로그 (팀 설정인 .claude/settings.json은 커밋한다)
+.claude/settings.local.json
+.claude/logs/
+
+# 에디터·OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── 프로젝트 (🟩 특화) ──
+node_modules/
+dist/
+coverage/
