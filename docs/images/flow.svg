@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="230" viewBox="0 0 960 230" role="img" aria-label="네 장면: 1 마운트(CREATE 1개), 2 클릭 후 업데이트(고칠 곳 2개만 patch), 3 LIS(1개만 옮기기), 4 언마운트(정리 함수, REMOVE 1개)" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif">
+<rect x="20" y="20" width="204.5" height="190" rx="20" fill="#f3f6fb" stroke="#d3dbe6" stroke-width="1.5"/>
+<rect x="42" y="44" width="38" height="38" rx="11" fill="#1f4fd1"/><text x="61" y="70" font-size="18" font-weight="800" text-anchor="middle" fill="#ffffff">1</text>
+<text x="42" y="120" font-size="19" font-weight="800" fill="#0b1a3a" letter-spacing="-0.4">마운트</text>
+<text x="42" y="150" font-size="14" font-weight="600" fill="#4e5968">첫 렌더</text>
+<text x="42" y="174" font-size="14" font-weight="600" fill="#4e5968">CREATE 1개로 전부 만들기</text>
+<path d="M230.5,115 L250.5,115" stroke="#1f4fd1" stroke-width="3" stroke-linecap="round"/><path d="M244.5,108 L252.5,115 L244.5,122" fill="none" stroke="#1f4fd1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="258.5" y="20" width="204.5" height="190" rx="20" fill="#f3f6fb" stroke="#d3dbe6" stroke-width="1.5"/>
+<rect x="280.5" y="44" width="38" height="38" rx="11" fill="#1f4fd1"/><text x="299.5" y="70" font-size="18" font-weight="800" text-anchor="middle" fill="#ffffff">2</text>
+<text x="280.5" y="120" font-size="19" font-weight="800" fill="#0b1a3a" letter-spacing="-0.4">클릭 → 업데이트</text>
+<text x="280.5" y="150" font-size="14" font-weight="600" fill="#4e5968">setState → 새 가상 트리</text>
+<text x="280.5" y="174" font-size="14" font-weight="600" fill="#4e5968">diff → 고칠 곳 2개만 patch</text>
+<path d="M469,115 L489,115" stroke="#1f4fd1" stroke-width="3" stroke-linecap="round"/><path d="M483,108 L491,115 L483,122" fill="none" stroke="#1f4fd1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="497" y="20" width="204.5" height="190" rx="20" fill="#1f4fd1" stroke="#1f4fd1" stroke-width="1.5"/>
+<rect x="519" y="44" width="38" height="38" rx="11" fill="#ffffff"/><text x="538" y="70" font-size="18" font-weight="800" text-anchor="middle" fill="#1f4fd1">3</text>
+<text x="519" y="120" font-size="19" font-weight="800" fill="#ffffff" letter-spacing="-0.4">diff 안쪽: LIS</text>
+<text x="519" y="150" font-size="14" font-weight="600" fill="#e4ecff">순서가 맞는 행은 그대로</text>
+<text x="519" y="174" font-size="14" font-weight="600" fill="#e4ecff">1개만 옮기기</text>
+<path d="M707.5,115 L727.5,115" stroke="#1f4fd1" stroke-width="3" stroke-linecap="round"/><path d="M721.5,108 L729.5,115 L721.5,122" fill="none" stroke="#1f4fd1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="735.5" y="20" width="204.5" height="190" rx="20" fill="#f3f6fb" stroke="#d3dbe6" stroke-width="1.5"/>
+<rect x="757.5" y="44" width="38" height="38" rx="11" fill="#1f4fd1"/><text x="776.5" y="70" font-size="18" font-weight="800" text-anchor="middle" fill="#ffffff">4</text>
+<text x="757.5" y="120" font-size="19" font-weight="800" fill="#0b1a3a" letter-spacing="-0.4">언마운트</text>
+<text x="757.5" y="150" font-size="14" font-weight="600" fill="#4e5968">정리 함수 실행</text>
+<text x="757.5" y="174" font-size="14" font-weight="600" fill="#4e5968">REMOVE 1개로 지우기</text>
+</svg>

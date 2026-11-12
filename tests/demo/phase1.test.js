@@ -249,3 +249,26 @@ describe('Phase 1 프리셋 시나리오 (다양한 태그로 여러 변화 확�
     }
   });
 });
+
+describe('Phase 1 기록 이동이 실패할 때', () => {
+  it('뒤로가기가 patch 도중 실패하면 화면과 함께 기록 위치도 그대로 남는다', () => {
+    const base = textarea().value;
+    edit(`${base}\n<p data-nav="1">x</p>`);
+    button('patch').click(); // 2번째 기록: data-nav 속성이 있는 p
+    edit(base);
+    button('patch').click(); // 3번째 기록: p 없음
+    expect(status()).toBe('3 / 3');
+
+    const original = Element.prototype.setAttribute;
+    vi.spyOn(Element.prototype, 'setAttribute').mockImplementation(function setAttribute(name, value) {
+      if (name === 'data-nav') throw new DOMException('테스트용 실패', 'InvalidCharacterError');
+      return original.call(this, name, value);
+    });
+    button('back').click(); // 2번째 기록으로 가려면 data-nav p를 만들어야 하는데 실패한다
+
+    expect(root.querySelector('[data-role="warnings"]').textContent).toContain('테스트용 실패');
+    expect(actual.querySelector('p')).toBeNull(); // 화면은 3번째 기록 그대로
+    expect(status()).toBe('3 / 3'); // 기록 위치도 3번째 그대로
+    expect(textarea().value).toBe(base);
+  });
+});

@@ -93,10 +93,12 @@ export function startPhase1({ actual, root }) {
   }
 
   function navigate(index) {
+    const from = history.index;
     const target = history.go(index);
     if (!target) return;
     state.warnings = [];
-    tryApply(target);
+    // 적용에 실패하면 화면은 직전 트리로 되돌아가므로, 기록 위치도 원래 칸으로 돌려 둘을 맞춘다.
+    if (tryApply(target) === null) history.go(from);
     draw();
   }
 
